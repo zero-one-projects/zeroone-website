@@ -1,0 +1,65 @@
+@media (max-width: 700px) {
+    .hero-section {
+        padding: 64px 0 32px 0;
+        max-width: 98vw;
+    }
+
+    .hero-title {
+        font-size: 2.1rem;
+        letter-spacing: -1px;
+    }
+
+    .hero-title-thin {
+        font-size: 1.3rem;
+    }
+
+    .hero-desc {
+        font-size: 1rem;
+        max-width: 98vw;
+    }
+}
+
+.hero-title-thin {
+    color: #fff;
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 200;
+    letter-spacing: 0.5px;
+}
+
+.hero-section {
+    padding: 120px 0 60px 0;
+    text-align: left;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.hero-title {
+    color: #fff;
+    font-size: 4rem;
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 200;
+    margin-bottom: 0.5rem;
+    letter-spacing: -2px;
+}
+
+.hero-title .accent {
+    color: #FFB86B;
+    font-family: 'Inter', 'Arial', sans-serif;
+    font-weight: 200;
+    letter-spacing: 0.5px;
+}
+
+.hero-subtitle {
+    color: #fff;
+    font-size: 2.5rem;
+    font-weight: 400;
+    margin-bottom: 2rem;
+    letter-spacing: -1px;
+}
+
+.hero-desc {
+    color: #fff;
+    font-size: 1.2rem;
+    max-width: 540px;
+    font-style: italic;
+}

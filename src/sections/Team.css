@@ -1,0 +1,128 @@
+@media (max-width: 700px) {
+    .team-section {
+        padding: 28px 0 16px 0;
+        max-width: 99vw;
+    }
+
+    .team-grid {
+        gap: 1.1rem;
+        justify-content: center;
+    }
+
+    .team-card {
+        width: 98vw;
+        max-width: 320px;
+        padding: 1rem 0.5rem 1rem 0.5rem;
+    }
+
+    .team-photo {
+        width: 62px;
+        height: 62px;
+    }
+
+    .team-name {
+        font-size: 0.99rem;
+    }
+
+    .team-role {
+        font-size: 0.91rem;
+    }
+}
+
+.team-section {
+    padding: 48px 0 32px 0;
+    max-width: 900px;
+    margin: 0 auto;
+    background: transparent;
+}
+
+.team-title {
+    color: #FFB86B;
+    font-size: 1.7rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    letter-spacing: -1px;
+    font-family: 'Inter', Arial, sans-serif;
+}
+
+
+.team-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.2rem;
+    justify-content: flex-start;
+}
+
+.team-card {
+    background: #181A20;
+    border-radius: 12px;
+    padding: 1.3rem 1rem 1.1rem 1rem;
+    color: #F5F6FA;
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+    transition: box-shadow 0.18s, transform 0.18s;
+    margin-bottom: 0.5rem;
+}
+
+.team-card:hover {
+    box-shadow: 0 6px 18px rgba(255, 184, 107, 0.13);
+    transform: translateY(-4px) scale(1.03);
+}
+
+.team-photo {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 0.7rem;
+    border: 2.5px solid #FFB86B;
+    background: #23262F;
+}
+
+.team-name {
+    font-size: 1.08rem;
+    font-weight: 600;
+    margin-bottom: 0.18rem;
+    color: #FFB86B;
+    text-align: center;
+    letter-spacing: 0.01em;
+}
+
+.team-role {
+    font-size: 0.97rem;
+    color: #B0B8C1;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    letter-spacing: 0.01em;
+}
+
+.team-bio {
+    font-size: 0.95rem;
+    color: #b0b8c1;
+    margin-bottom: 0.7rem;
+    text-align: center;
+}
+
+.team-expertise {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+}
+
+.team-expertise li {
+    background: #181A20;
+    color: #FFB86B;
+    border-radius: 6px;
+    padding: 0.18rem 0.7rem;
+    font-size: 0.85rem;
+    font-family: 'Fira Mono', 'Inter', Arial, sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
