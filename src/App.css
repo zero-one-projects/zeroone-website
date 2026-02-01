@@ -1,7 +1,7 @@
 .App {
   min-height: 100vh;
-  background: #111216;
-  color: #fff;
+  background: var(--main-bg);
+  color: var(--main-text);
   font-family: 'Inter', 'Fira Mono', Arial, sans-serif;
   display: flex;
   flex-direction: column;
@@ -26,13 +26,13 @@
   font-weight: 700;
   letter-spacing: 2px;
   margin-bottom: 0.5rem;
-  color: #fff;
+  color: #FFB86B;
   font-family: 'Fira Mono', 'Inter', Arial, sans-serif;
 }
 
 .tagline {
   font-size: 1.3rem;
-  color: #fff;
+  color: #222;
   margin-bottom: 0;
   font-family: 'Fira Mono', 'Inter', Arial, sans-serif;
 }
@@ -40,10 +40,11 @@
 
 /* Team Section */
 .team-section {
-  background: transparent;
+  background: #fff;
   padding: 60px 0 40px 0;
   text-align: center;
 }
+
 
 .team-list {
   display: flex;
@@ -51,19 +52,6 @@
   gap: 2rem;
   margin-top: 2.5rem;
   flex-wrap: wrap;
-}
-
-.team-member {
-  background: #111216;
-  border-radius: 8px;
-  padding: 1.5rem 2rem;
-  min-width: 180px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  border: 1px solid #222;
-  transition: box-shadow 0.2s, border 0.2s;
 }
 
 .team-member:hover {

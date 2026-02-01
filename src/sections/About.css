@@ -18,17 +18,22 @@
     max-width: 700px;
     margin: 0 auto;
     text-align: left;
+    background: var(--main-bg);
+    color: var(--main-text);
 }
 
 .section-heading {
-    color: #FFB86B;
+    color: var(--label-blue);
     font-size: 1.5rem;
     font-family: 'Fira Mono', 'Inter', Arial, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
     margin-bottom: 1.2rem;
 }
 
 .about-desc {
-    color: #fff;
+    color: var(--main-text);
     font-size: 1.1rem;
     line-height: 1.7;
 }

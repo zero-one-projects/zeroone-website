@@ -1,3 +1,25 @@
+/* Global color variables */
+
+:root {
+  --main-bg: #0a192f;
+  --main-text: #fff;
+  --accent: #FFB86B;
+  --label-blue: #3478f6;
+}
+
+[data-theme='light'] {
+  --main-bg: #f7fafc;
+  --main-text: #1a2233;
+  --accent: #FFB86B;
+  --label-blue: #3478f6;
+}
+
+[data-theme='light'] {
+  --main-bg: #f7fafc;
+  --main-text: #1a2233;
+  --accent: #FFB86B;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -7,10 +29,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
+body,
+html {
   margin: 0;
   padding: 0;
   font-family: 'Inter', Arial, sans-serif;
-  background: #111216;
-  color: #fff;
+  background: var(--main-bg);
+  color: var(--main-text);
 }

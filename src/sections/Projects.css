@@ -14,7 +14,8 @@
     max-width: 1000px;
     margin: 0 auto;
     text-align: center;
-    color: #fff;
+    color: var(--main-text);
+    background: var(--main-bg);
 }
 
 .projects-list-alt {

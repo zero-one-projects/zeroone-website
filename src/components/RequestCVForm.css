@@ -1,0 +1,87 @@
+.request-cv-form {
+    background: var(--main-bg);
+    color: var(--main-text);
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+    padding: 32px 28px;
+    min-width: 320px;
+    max-width: 420px;
+    margin: 40px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+
+.request-cv-form h3 {
+    color: var(--accent);
+    margin-bottom: 18px;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+
+.request-cv-form input,
+.request-cv-form textarea {
+    background: var(--main-bg);
+    color: var(--main-text);
+    border: 1px solid #bbb;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--label-blue);
+    font-size: 1.1rem;
+    font-family: 'Fira Mono', 'Inter', Arial, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.request-cv-form textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+
+.request-cv-form button {
+    margin-top: 6px;
+    margin-bottom: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid #bbb;
+    padding: 10px 20px;
+    cursor: pointer;
+    background: var(--main-bg);
+    color: var(--main-text);
+    transition: background 0.2s;
+}
+
+
+
+.request-cv-form .send-btn {
+    border: 1px solid var(--accent);
+    margin-right: 10px;
+    color: var(--accent);
+}
+
+
+.request-cv-form .cancel-btn {
+    border: 1px solid #bbb;
+}
+
+
+
+.request-cv-form .error-message {
+    color: #d32f2f;
+    margin-bottom: 10px;
+    text-align: center;
+}

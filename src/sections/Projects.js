@@ -46,7 +46,7 @@ const projects = [
         tags: ["VB.Net", "Enrollment", "Scheduling", "Excel", "Public School"],
     },
     {
-        title: "Homemark, Inc., Philippines (Apr 7, 2021 – Jun 24, 2022) [1 yr 2 mos]",
+        title: "Real Estate Client (Philippines) (Apr 7, 2021 – Jun 24, 2022) [1 yr 2 mos]",
         description: (
             <span>
                 <b>Developed Web Applications’ Highlights:</b><br />
@@ -82,7 +82,7 @@ const projects = [
         tags: ["ReactJS", "Responsive Design", "HR", "Warehouse", "Document Upload", "Excel Export"],
     },
     {
-        title: "Fujitsu Philippines - Manila Branch (June 27, 2022 – Present)",
+        title: "Enterprise Client (June 27, 2022 – Present)",
         description: "Enhancement for an existing web application using ReactJS and Node.js (like Zoom/Google Meet with audio, video, chat, etc.). Added generative AI, transcribe AI, cobrowse, document upload/download, session timer, and more. Also built internal monitoring apps using PowerApps and Spring Boot.",
         tags: ["ReactJS", "Node.js", "AWS Lambda", "Amazon Bedrock", "PowerApps", "Spring Boot"],
     },
@@ -122,7 +122,7 @@ const projects = [
                     <li>Ensured reliable state management for transactions</li>
                     <li>Collaborated on backend API integration</li>
                 </ul>
-                <div style={{ marginTop: 8, color: '#B0B8C1', fontSize: '0.97rem' }}>
+                <div style={{ marginTop: 8, color: 'var(--subtle-text, #B0B8C1)', fontSize: '0.97rem' }}>
                     <b>Tech Stack:</b> Flutter, Dart, Provider, HTTP Client, Payment APIs, Material Design (iOS & Android)
                 </div>
             </span>
@@ -135,11 +135,36 @@ const projects = [
 
 function Projects() {
     return (
-        <section style={{ padding: '2.5rem 0 1.5rem 0', background: '#111', color: '#fff' }}>
+        <section
+            style={{
+                padding: '2.5rem 0 1.5rem 0',
+                background: 'var(--main-bg)',
+                color: 'var(--main-text)',
+            }}
+        >
             <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 1.5rem' }}>
-                <h2 style={{ color: '#FFB86B', fontWeight: 700, fontSize: '2.1rem', marginBottom: '1.7rem', letterSpacing: '-1.2px', fontFamily: 'Inter, Arial, sans-serif' }}>Projects</h2>
+                <h2
+                    style={{
+                        color: 'var(--label-blue)',
+                        fontWeight: 700,
+                        fontSize: '1.5rem',
+                        marginBottom: '1.7rem',
+                        letterSpacing: '0.13em',
+                        fontFamily: 'Fira Mono, Inter, Arial, sans-serif',
+                        textTransform: 'uppercase',
+                    }}
+                >
+                    Projects
+                </h2>
                 {projects.map((project, idx) => (
-                    <div key={idx} style={{ marginBottom: '2.2rem', borderBottom: '1px solid #222', paddingBottom: '1.2rem' }}>
+                    <div
+                        key={idx}
+                        style={{
+                            marginBottom: '2.2rem',
+                            borderBottom: '1px solid #fff',
+                            paddingBottom: '1.2rem',
+                        }}
+                    >
                         <div
                             style={{
                                 display: 'flex',
@@ -161,7 +186,7 @@ function Projects() {
                         </div>
                         <div
                             style={{
-                                color: '#b0b8c1',
+                                color: '#b0b8c1', // Consider making this a CSS variable if used elsewhere
                                 fontSize: '0.93rem',
                                 margin: '0.12rem 0 0.7rem 0',
                                 fontFamily: 'Inter, Arial, sans-serif',
@@ -177,8 +202,8 @@ function Projects() {
                                 <span
                                     key={i}
                                     style={{
-                                        border: '1.2px solid #FFB86B',
-                                        color: '#FFB86B',
+                                        border: '1.2px solid #fff',
+                                        color: '#fff',
                                         borderRadius: '6px',
                                         padding: '0.13rem 0.65rem',
                                         fontSize: '0.85rem',

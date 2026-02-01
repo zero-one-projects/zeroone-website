@@ -33,16 +33,18 @@
     padding: 48px 0 32px 0;
     max-width: 900px;
     margin: 0 auto;
-    background: transparent;
+    background: var(--main-bg);
+    color: var(--main-text);
 }
 
 .team-title {
-    color: #FFB86B;
-    font-size: 1.7rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    letter-spacing: -1px;
-    font-family: 'Inter', Arial, sans-serif;
+    color: var(--label-blue);
+    font-size: 1.5rem;
+    font-family: 'Fira Mono', 'Inter', Arial, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    background: var(--main-bg);
 }
 
 
@@ -54,21 +56,24 @@
 }
 
 .team-card {
-    background: #181A20;
+    background: var(--main-bg);
     border-radius: 12px;
     padding: 1.3rem 1rem 1.1rem 1rem;
-    color: #F5F6FA;
-    width: 180px;
+    color: var(--main-text);
+    width: 220px;
+    min-height: 340px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+    justify-content: flex-start;
+    box-shadow: 0 2px 8px rgba(255, 184, 107, 0.10);
     transition: box-shadow 0.18s, transform 0.18s;
     margin-bottom: 0.5rem;
+    text-align: center;
 }
 
 .team-card:hover {
-    box-shadow: 0 6px 18px rgba(255, 184, 107, 0.13);
+    box-shadow: 0 6px 18px rgba(255, 184, 107, 0.18);
     transform: translateY(-4px) scale(1.03);
 }
 
@@ -77,37 +82,42 @@
     height: 76px;
     border-radius: 50%;
     object-fit: cover;
-    margin-bottom: 0.7rem;
-    border: 2.5px solid #FFB86B;
-    background: #23262F;
+    margin-bottom: 1.1rem;
+    border: 2.5px solid var(--accent);
+    background: var(--main-bg);
 }
 
 .team-name {
     font-size: 1.08rem;
-    font-weight: 600;
-    margin-bottom: 0.18rem;
-    color: #FFB86B;
+    color: var(--accent);
     text-align: center;
     letter-spacing: 0.01em;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    word-break: break-word;
 }
 
 .team-role {
-    font-size: 0.97rem;
-    color: #B0B8C1;
-    margin-bottom: 0.5rem;
+    color: var(--main-text);
+    margin-bottom: 1.1rem;
     text-align: center;
     letter-spacing: 0.01em;
+    font-size: 0.97rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .team-bio {
+    color: var(--main-text);
     font-size: 0.95rem;
-    color: #b0b8c1;
     margin-bottom: 0.7rem;
     text-align: center;
 }
 
 .team-expertise {
-    list-style: none;
+    color: var(--accent);
     padding: 0;
     margin: 0;
     display: flex;
@@ -117,12 +127,10 @@
 }
 
 .team-expertise li {
-    background: #181A20;
-    color: #FFB86B;
+    background: var(--main-bg);
+    color: var(--accent);
     border-radius: 6px;
     padding: 0.18rem 0.7rem;
     font-size: 0.85rem;
     font-family: 'Fira Mono', 'Inter', Arial, sans-serif;
-    font-weight: 500;
-    letter-spacing: 0.5px;
 }
