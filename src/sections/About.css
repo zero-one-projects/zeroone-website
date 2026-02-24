@@ -1,39 +1,57 @@
-@media (max-width: 700px) {
-    .about-section {
-        padding: 32px 0 24px 0;
-        max-width: 98vw;
-    }
-
-    .section-heading {
-        font-size: 1.1rem;
-    }
-
-    .about-desc {
-        font-size: 0.98rem;
-    }
-}
-
 .about-section {
-    padding: 60px 0 40px 0;
-    max-width: 700px;
-    margin: 0 auto;
-    text-align: left;
-    background: var(--main-bg);
-    color: var(--main-text);
+  padding: 18px 2rem 76px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  text-align: left;
+  color: var(--main-text);
 }
 
 .section-heading {
-    color: var(--label-blue);
-    font-size: 1.5rem;
-    font-family: 'Fira Mono', 'Inter', Arial, sans-serif;
-    font-weight: 700;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    margin-bottom: 1.2rem;
+  color: var(--label-blue);
+  font-size: 0.79rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin: 0 0 1.2rem;
 }
 
 .about-desc {
-    color: var(--main-text);
-    font-size: 1.1rem;
-    line-height: 1.7;
+  color: var(--muted-text);
+  font-size: clamp(1rem, 1.28vw, 1.12rem);
+  line-height: 1.88;
+  max-width: 58ch;
+  margin: 0;
+}
+
+.about-contact {
+  margin-top: 2.1rem;
+  font-size: 0.95rem;
+  color: var(--main-text);
+  letter-spacing: 0.01em;
+}
+
+.about-email {
+  color: var(--accent);
+  text-decoration: none;
+  margin-left: 0.45rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+.about-email:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .about-section {
+    padding: 6px 1rem 46px;
+    max-width: 100%;
+  }
+
+  .about-contact {
+    margin-top: 1.55rem;
+    font-size: 0.93rem;
+  }
 }

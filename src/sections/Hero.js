@@ -2,8 +2,6 @@ import React from "react";
 import { Typewriter } from 'react-simple-typewriter';
 import "./Hero.css";
 
-
-
 const Hero = () => (
     <section className="hero-section">
         <h1 className="hero-title">
@@ -18,11 +16,9 @@ const Hero = () => (
                 />
             </span>{' '}Digital Solutions
         </h1>
-        <h1 className="hero-title hero-title-thin" style={{ marginTop: '-0.7rem' }}>
-            From Idea to Deployment
-        </h1>
-        <p className="hero-desc" style={{ marginTop: '1.2rem' }}>
-            Zero One Systems Services designs and builds web, mobile, and AI-powered products that scale with your business.
+        <h2 className="hero-title-thin">From Idea to Deployment</h2>
+        <p className="hero-desc">
+            Zero One IT Solutions designs and builds web, mobile, and AI-powered products that scale with your business.
         </p>
     </section>
 );

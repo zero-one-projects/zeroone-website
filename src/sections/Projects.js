@@ -1,22 +1,24 @@
-
 import React from "react";
+import "./Projects.css";
+
+const splitListStyle = { display: 'flex', flexWrap: 'wrap', gap: '2.5rem', marginTop: 8, marginBottom: 8 };
+const splitColumnStyle = { flex: 1, minWidth: 220, margin: 0, paddingLeft: 18 };
 
 const projects = [
-    // Oldest to newest
     {
         title: "Freelance Full Stack Desktop & Web Developer (Jun 2014 – Feb 2020) [5 yrs 9 mos]",
         description: (
             <span>
-                <b>Developed System’s Highlights:</b>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2.5rem', marginTop: 8, marginBottom: 8 }}>
-                    <ul style={{ flex: 1, minWidth: 220, margin: 0, paddingLeft: 18 }}>
+                <b>Developed System's Highlights:</b>
+                <div style={splitListStyle}>
+                    <ul style={splitColumnStyle}>
                         <li>POS</li>
                         <li>E-commerce</li>
                         <li>Management Information System</li>
                         <li>School Mgmt. System</li>
                         <li>OPAC Library System</li>
                     </ul>
-                    <ul style={{ flex: 1, minWidth: 220, margin: 0, paddingLeft: 18 }}>
+                    <ul style={splitColumnStyle}>
                         <li>Android Applications</li>
                         <li>School Dean Automize Student Evaluation System</li>
                         <li>Inventory and Monitoring System and many more minor systems developed</li>
@@ -38,8 +40,7 @@ const projects = [
                     <li>Add Classroom Name and Building Name</li>
                     <li>Assign Classroom for Teacher and Students</li>
                     <li>Create Schedule per Teachers and Students</li>
-                    <li>Print Report
-                        via Excel</li>
+                    <li>Print Report via Excel</li>
                 </ul>
             </span>
         ),
@@ -49,21 +50,21 @@ const projects = [
         title: "Real Estate Client (Philippines) (Apr 7, 2021 – Jun 24, 2022) [1 yr 2 mos]",
         description: (
             <span>
-                <b>Developed Web Applications’ Highlights:</b><br />
+                <b>Developed Web Applications' Highlights:</b><br />
                 <i>Note: Systems below are all mobile responsive</i>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2.5rem', marginTop: 8, marginBottom: 8 }}>
-                    <ul style={{ flex: 1, minWidth: 220, margin: 0, paddingLeft: 18 }}>
-                        <li><b>Company Profiling Interface</b> – For marketing and for employee’s portal</li>
-                        <li><b>Loan Monitoring System</b> – Includes Uploading Documents</li>
+                <div style={splitListStyle}>
+                    <ul style={splitColumnStyle}>
+                        <li><b>Company Profiling Interface</b> - For marketing and for employee's portal</li>
+                        <li><b>Loan Monitoring System</b> - Includes Uploading Documents</li>
                         <li><b>Human Resource Management System</b>
                             <ul>
-                                <li>Accounts/employee’s Account Mgmt.</li>
+                                <li>Accounts/employee's Account Mgmt.</li>
                                 <li>Uploading and Downloading Loan Bulk of Data, etc.</li>
                             </ul>
                         </li>
                     </ul>
-                    <ul style={{ flex: 1, minWidth: 220, margin: 0, paddingLeft: 18 }}>
-                        <li><b>Chairman’s Monitoring System</b></li>
+                    <ul style={splitColumnStyle}>
+                        <li><b>Chairman's Monitoring System</b></li>
                         <li><b>Warehouse Systems</b>
                             <ul>
                                 <li>Creation of Authority to Transfer Module</li>
@@ -82,15 +83,15 @@ const projects = [
         tags: ["ReactJS", "Responsive Design", "HR", "Warehouse", "Document Upload", "Excel Export"],
     },
     {
-        title: "Enterprise Client (June 27, 2022 – Present)",
+        title: "Enterprise Client (June 27, 2022 - Present)",
         description: "Enhancement for an existing web application using ReactJS and Node.js (like Zoom/Google Meet with audio, video, chat, etc.). Added generative AI, transcribe AI, cobrowse, document upload/download, session timer, and more. Also built internal monitoring apps using PowerApps and Spring Boot.",
         tags: ["ReactJS", "Node.js", "AWS Lambda", "Amazon Bedrock", "PowerApps", "Spring Boot"],
     },
     {
-        title: "Full-Stack Developer, ZeroOne Systems and Services (2025)",
+        title: "Full-Stack Developer, Zero One IT Solutions (2025)",
         description: (
             <span>
-                Built a complete POS system from scratch that now powers multiple retail businesses. Each business gets their own separate space with their data completely isolated. The system runs smoothly with zero downtime and handles everything in real-time — from tracking inventory across different locations to processing sales instantly.
+                Built a complete POS system from scratch that now powers multiple retail businesses. Each business gets their own separate space with their data completely isolated. The system runs smoothly with zero downtime and handles everything in real-time - from tracking inventory across different locations to processing sales instantly.
             </span>
         ),
         tags: [
@@ -98,10 +99,10 @@ const projects = [
         ],
     },
     {
-        title: "Full-Stack Developer, ZeroOne Systems and Services (2026)",
+        title: "Full-Stack Developer, Zero One IT Solutions (2026)",
         description: (
             <span>
-                Launched the POS system for a local coffee shop and pastry business. Trained the staff on how to use it and now it runs their daily operations — taking orders, tracking ingredients (especially important for perishables like pastries), and giving them insights into their sales. It's been running reliably with minimal downtime, processing hundreds of transactions every day.
+                Launched the POS system for a local coffee shop and pastry business. Trained the staff on how to use it and now it runs their daily operations - taking orders, tracking ingredients (especially important for perishables like pastries), and giving them insights into their sales. It's been running reliably with minimal downtime, processing hundreds of transactions every day.
             </span>
         ),
         tags: [
@@ -122,103 +123,30 @@ const projects = [
                     <li>Ensured reliable state management for transactions</li>
                     <li>Collaborated on backend API integration</li>
                 </ul>
-                <div style={{ marginTop: 8, color: 'var(--subtle-text, #B0B8C1)', fontSize: '0.97rem' }}>
+                <div style={{ marginTop: 8, fontSize: '0.95rem' }}>
                     <b>Tech Stack:</b> Flutter, Dart, Provider, HTTP Client, Payment APIs, Material Design (iOS & Android)
                 </div>
             </span>
         ),
-        tags: [
-            "Flutter", "Dart", "Provider", "HTTP Client", "Payment APIs", "State Management", "Material Design", "iOS", "Android"
-        ],
+        tags: ["Flutter", "Dart", "Provider", "HTTP Client", "Payment APIs", "State Management", "Material Design", "iOS", "Android"],
     },
 ];
 
 function Projects() {
     return (
-        <section
-            style={{
-                padding: '2.5rem 0 1.5rem 0',
-                background: 'var(--main-bg)',
-                color: 'var(--main-text)',
-            }}
-        >
-            <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 1.5rem' }}>
-                <h2
-                    style={{
-                        color: 'var(--label-blue)',
-                        fontWeight: 700,
-                        fontSize: '1.5rem',
-                        marginBottom: '1.7rem',
-                        letterSpacing: '0.13em',
-                        fontFamily: 'Fira Mono, Inter, Arial, sans-serif',
-                        textTransform: 'uppercase',
-                    }}
-                >
-                    Projects
-                </h2>
+        <section className="projects-section">
+            <div className="projects-inner">
+                <h2 className="projects-title">Projects</h2>
                 {projects.map((project, idx) => (
-                    <div
-                        key={idx}
-                        style={{
-                            marginBottom: '2.2rem',
-                            borderBottom: '1px solid #fff',
-                            paddingBottom: '1.2rem',
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                marginBottom: '0.3rem',
-                            }}
-                        >
-                            <span
-                                style={{
-                                    fontWeight: 600,
-                                    fontSize: '1rem',
-                                    color: '#fff',
-                                    fontFamily: 'Inter, Arial, sans-serif',
-                                    letterSpacing: '-0.2px',
-                                }}
-                            >
-                                {project.title}
-                            </span>
-                        </div>
-                        <div
-                            style={{
-                                color: '#b0b8c1', // Consider making this a CSS variable if used elsewhere
-                                fontSize: '0.93rem',
-                                margin: '0.12rem 0 0.7rem 0',
-                                fontFamily: 'Inter, Arial, sans-serif',
-                                fontWeight: 400,
-                                lineHeight: 1.55,
-                                letterSpacing: '0.01em',
-                            }}
-                        >
-                            {project.description}
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    <article key={idx} className="project-entry">
+                        <h3 className="project-entry-title">{project.title}</h3>
+                        <div className="project-entry-desc">{project.description}</div>
+                        <div className="project-tags">
                             {project.tags.map((tag, i) => (
-                                <span
-                                    key={i}
-                                    style={{
-                                        border: '1.2px solid #fff',
-                                        color: '#fff',
-                                        borderRadius: '6px',
-                                        padding: '0.13rem 0.65rem',
-                                        fontSize: '0.85rem',
-                                        fontFamily: 'Fira Mono, Inter, Arial, sans-serif',
-                                        fontWeight: 500,
-                                        letterSpacing: '0.5px',
-                                        background: 'transparent',
-                                        marginBottom: '1px',
-                                    }}
-                                >
-                                    {tag}
-                                </span>
+                                <span key={i} className="project-tag">{tag}</span>
                             ))}
                         </div>
-                    </div>
+                    </article>
                 ))}
             </div>
         </section>
