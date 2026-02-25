@@ -88,14 +88,20 @@ const projects = [
         tags: ["ReactJS", "Node.js", "AWS Lambda", "Amazon Bedrock", "PowerApps", "Spring Boot"],
     },
     {
-        title: "Full-Stack Developer, Zero One IT Solutions (2025)",
+        title: "SOTI Bakery & Convenience POS Platform (2026)",
         description: (
             <span>
-                Built a complete POS system from scratch that now powers multiple retail businesses. Each business gets their own separate space with their data completely isolated. The system runs smoothly with zero downtime and handles everything in real-time - from tracking inventory across different locations to processing sales instantly.
+                Built and maintained a multi-tenant POS platform for SOTI Bakery and Convenience and other businesses.
+                <ul style={{ margin: '0.5rem 0', paddingLeft: 18 }}>
+                    <li>Applied strict tenant isolation using customer_id across auth, inventory, orders, and notifications</li>
+                    <li>Implemented role-based access for Super Admin, Admin, and POS users with branch-level controls</li>
+                    <li>Delivered real-time low-stock alerts and operations updates with tenant-specific Socket.IO rooms</li>
+                    <li>Developed modules for sales, branch inventory, raw materials, production/disposal logs, and analytics</li>
+                </ul>
             </span>
         ),
         tags: [
-            "React 19", "Redux", "Node.js", "Express.js", "MySQL", "Sequelize ORM", "Socket.io", "JWT", "Role-based Access Control", "Real-time Updates", "Multi-tenant Architecture", "REST API", "Production-ready", "Git"
+            "React 19", "Redux Toolkit", "Node.js", "Express 5", "MySQL", "Sequelize ORM", "Socket.IO", "JWT Authentication", "Role-Based Access Control", "Multi-Tenant Architecture", "Branch-Level Inventory + Sales Tracking", "Real-Time Notifications", "REST API", "Docker + Nginx", "Git"
         ],
     },
     {

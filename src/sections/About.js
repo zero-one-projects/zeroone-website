@@ -11,7 +11,7 @@ const About = () => (
         <div className="about-contact">
             Get in touch <span role="img" aria-label="point">👉</span>
             <a href="mailto:hello@zeroone.com" className="about-email">
-                muksanalriza@gmail.com
+                contact@zeroone-apps.com
             </a>
         </div>
     </section>

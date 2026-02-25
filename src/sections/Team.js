@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import RequestCVForm from '../components/RequestCVForm';
 import '../components/RequestCVModal.css';
 import './Team.css';
@@ -29,8 +29,29 @@ const teamMembers = [
 
 function Team() {
     const [showRequestCV, setShowRequestCV] = useState({ open: false, to: null });
+    const [isVisible, setIsVisible] = useState(false);
+    const sectionRef = useRef(null);
+
+    useEffect(() => {
+        const sectionEl = sectionRef.current;
+        if (!sectionEl) return undefined;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                    observer.unobserve(entry.target);
+                }
+            },
+            { threshold: 0.2, rootMargin: "0px 0px -10% 0px" }
+        );
+
+        observer.observe(sectionEl);
+        return () => observer.disconnect();
+    }, []);
+
     return (
-        <section className="team-section">
+        <section ref={sectionRef} className={`team-section ${isVisible ? "team-visible" : ""}`}>
             <h2 className="team-title">Our Team</h2>
             <div className="team-grid">
                 {teamMembers.map((member, idx) => (
