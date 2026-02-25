@@ -19,7 +19,7 @@ function App() {
       <Projects />
       <Team />
       <footer className="footer">
-        <p>© 2025 Zero One IT Solutions. All rights reserved.</p>
+        <p>© Zero One IT Solutions. All rights reserved.</p>
       </footer>
     </div>
   );

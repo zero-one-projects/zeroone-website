@@ -44,6 +44,10 @@
   animation: soft-fade 0.8s ease 0.36s forwards;
 }
 
+.hero-desc-secondary {
+  margin-top: 0.65rem;
+}
+
 @media (max-width: 700px) {
   .hero-section {
     padding: 96px 1rem 46px;

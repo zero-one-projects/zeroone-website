@@ -6,7 +6,7 @@ const splitColumnStyle = { flex: 1, minWidth: 220, margin: 0, paddingLeft: 18 };
 
 const projects = [
     {
-        title: "Freelance Full Stack Desktop & Web Developer (Jun 2014 – Feb 2020) [5 yrs 9 mos]",
+        title: "Full Stack Desktop & Web Developer",
         description: (
             <span>
                 <b>Developed System's Highlights:</b>
@@ -47,7 +47,7 @@ const projects = [
         tags: ["VB.Net", "Enrollment", "Scheduling", "Excel", "Public School"],
     },
     {
-        title: "Real Estate Client (Philippines) (Apr 7, 2021 – Jun 24, 2022) [1 yr 2 mos]",
+        title: "Real Estate Client (Philippines)",
         description: (
             <span>
                 <b>Developed Web Applications' Highlights:</b><br />
@@ -83,12 +83,12 @@ const projects = [
         tags: ["ReactJS", "Responsive Design", "HR", "Warehouse", "Document Upload", "Excel Export"],
     },
     {
-        title: "Enterprise Client (June 27, 2022 - Present)",
+        title: "Enterprise Client",
         description: "Enhancement for an existing web application using ReactJS and Node.js (like Zoom/Google Meet with audio, video, chat, etc.). Added generative AI, transcribe AI, cobrowse, document upload/download, session timer, and more. Also built internal monitoring apps using PowerApps and Spring Boot.",
         tags: ["ReactJS", "Node.js", "AWS Lambda", "Amazon Bedrock", "PowerApps", "Spring Boot"],
     },
     {
-        title: "SOTI Bakery & Convenience POS Platform (2026)",
+        title: "SOTI Bakery & Convenience POS Platform",
         description: (
             <span>
                 Built and maintained a multi-tenant POS platform for SOTI Bakery and Convenience and other businesses.
@@ -105,7 +105,7 @@ const projects = [
         ],
     },
     {
-        title: "Full-Stack Developer, Zero One IT Solutions (2026)",
+        title: "Full-Stack Developer, Zero One IT Solutions",
         description: (
             <span>
                 Launched the POS system for a local coffee shop and pastry business. Trained the staff on how to use it and now it runs their daily operations - taking orders, tracking ingredients (especially important for perishables like pastries), and giving them insights into their sales. It's been running reliably with minimal downtime, processing hundreds of transactions every day.
