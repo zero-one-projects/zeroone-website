@@ -2,14 +2,29 @@ import React from "react";
 import "./About.css";
 
 const About = () => (
-    <section className="about-section">
+    <section className="about-section" id="about">
         <h2 className="section-heading">About Us</h2>
         <p className="about-desc">
-            ZeroOne IT Solutions is a digital product development company specializing in web, mobile, and AI-powered solutions. We help businesses transform ideas into high-performance digital products that are reliable, scalable, and built for growth.
-            <br />
-            <br />
-            Our team combines strategic thinking, modern technologies, and user-focused design to deliver solutions that solve real business challenges. From concept to deployment, we ensure every product is engineered with precision, clarity, and long-term success in mind.
+            ZeroOne IT Solutions is a digital product development company focused on business-ready software. We combine strategic planning, modern engineering, and user-focused design to build products that are reliable, scalable, and built for long-term growth.
         </p>
+        <div className="about-capabilities">
+            <article className="about-capability">
+                <h3>Web Platforms</h3>
+                <p>Custom web systems, dashboards, and portals with maintainable architecture and fast delivery cycles.</p>
+            </article>
+            <article className="about-capability">
+                <h3>Mobile Products</h3>
+                <p>Cross-platform and native mobile apps optimized for performance, usability, and business workflows.</p>
+            </article>
+            <article className="about-capability">
+                <h3>AI Integrations</h3>
+                <p>Practical AI features, automation flows, and intelligent assistants that improve operations and decisions.</p>
+            </article>
+        </div>
+        <div className="about-process">
+            <h3>How We Work</h3>
+            <p>Discover - Build - Launch - Scale</p>
+        </div>
         <div className="about-contact">
             Let’s build something impactful together.
             <br />

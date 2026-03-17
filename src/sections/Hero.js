@@ -3,26 +3,33 @@ import { Typewriter } from "react-simple-typewriter";
 import "./Hero.css";
 
 const Hero = () => (
-    <section className="hero-section">
+    <section className="hero-section" id="top">
+        <p className="hero-eyebrow">Product Engineering Studio</p>
         <h1 className="hero-title">
             <span className="accent">
                 <Typewriter
-                    words={['ZeroOne']}
+                    words={["ZeroOne"]}
                     cursor
-                    cursorStyle='|'
+                    cursorStyle="|"
                     typeSpeed={120}
                     deleteSpeed={80}
                     delaySpeed={1200}
                 />
-            </span>{' '}IT Solutions
+            </span>{" "}
+            IT Solutions builds web, mobile, and AI products that scale with your business.
         </h1>
-        <h2 className="hero-title-thin">From Idea to Deployment</h2>
         <p className="hero-desc">
-            ZeroOne IT Solutions builds intelligent digital experiences that drive business growth.
+            We partner with founders and teams to move from idea to launch fast, with production-grade architecture, clear UX, and measurable business outcomes.
         </p>
-        <p className="hero-desc hero-desc-secondary">
-            From web and mobile applications to AI-powered platforms, we deliver reliable, scalable solutions engineered for long-term success.
-        </p>
+        <div className="hero-actions">
+            <a className="hero-btn hero-btn-primary" href="#projects">View Selected Work</a>
+            <a className="hero-btn hero-btn-secondary" href="mailto:contact@zeroone-apps.com">Start a Project</a>
+        </div>
+        <ul className="hero-metrics" aria-label="Company highlights">
+            <li><strong>Web, Mobile, AI</strong> under one product team</li>
+            <li><strong>Production-ready</strong> architecture and deployment</li>
+            <li><strong>Long-term support</strong> for growth and iteration</li>
+        </ul>
     </section>
 );
 

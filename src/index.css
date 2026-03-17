@@ -1,48 +1,12 @@
-:root {
-  --font-body: 'Inter', 'Segoe UI', sans-serif;
-  --font-display: 'Inter', 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', monospace;
-
-  --main-bg: #070f1b;
-  --main-text: #e8eef9;
-  --accent: #4f7cff;
-  --label-blue: #9ab4ff;
-  --surface-bg: #0f1a2b;
-  --surface-elevated: #18263d;
-  --border-color: rgba(151, 177, 225, 0.23);
-  --muted-text: #9fb2cf;
-  --shadow-soft: 0 12px 30px rgba(2, 8, 16, 0.36);
-  --hover-border: rgba(45, 91, 255, 0.38);
-  --hover-shadow: 0 16px 28px rgba(26, 52, 98, 0.12);
-
-  --content-max: 1080px;
-}
-
-[data-theme='light'] {
-  --main-bg: #f5f7fb;
-  --main-text: #0b1628;
-  --accent: #1f4fe0;
-  --label-blue: #2248bd;
-  --surface-bg: #ffffff;
-  --surface-elevated: #f7f9fe;
-  --border-color: rgba(17, 37, 67, 0.16);
-  --muted-text: #3f516c;
-  --shadow-soft: 0 8px 20px rgba(18, 38, 63, 0.06);
-  --hover-border: rgba(31, 79, 224, 0.32);
-  --hover-shadow: 0 10px 20px rgba(17, 40, 73, 0.08);
-}
-
-* {
-  box-sizing: border-box;
-}
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 html,
-body {
+body,
+#root {
   margin: 0;
-  padding: 0;
-  font-family: var(--font-body);
-  background: var(--main-bg);
-  color: var(--main-text);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Manrope', 'Avenir Next', 'Segoe UI', sans-serif;
 }
