@@ -92,7 +92,7 @@ export const companyProfile = {
         },
         {
           name: 'Al Khalid Muksan Palahuddin',
-          role: 'Computer Engineer',
+          role: 'Junior Software Engineer',
           image: alKhalidPalahuddinImage,
           cvLabel: 'Request CV',
           cvHref: 'mailto:contact@zeroone-apps.com?subject=Request%20CV%20-%20Al%20Khalid%20Muksan%20Palahuddin'

@@ -21,7 +21,7 @@ const teamMembers = [
     },
     {
         name: "Al Khalid Muksan Palahuddin",
-        role: "Computer Engineer",
+        role: "Junior Software Engineer",
         image: AlKhalidImg,
         email: 'palahuddinalkhalid@gmail.com',
     }
