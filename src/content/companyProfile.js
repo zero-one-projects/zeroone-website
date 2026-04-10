@@ -26,9 +26,14 @@ export const companyProfile = {
     }
   },
   stats: [
-    { label: 'Core Expertise', value: 'Web + Mobile + AI' },
-    { label: 'Delivery Approach', value: 'Idea to Deployment' },
-    { label: 'Engineering Focus', value: 'Reliable and Scalable' }
+    { label: 'Core Expertise', value: 'Web + Mobile + AI', icon: 'code' },
+    { label: 'Delivery Approach', value: 'Idea to Deployment', icon: 'rocket' },
+    { label: 'Engineering Focus', value: 'Reliable and Scalable', icon: 'shield' }
+  ],
+  projectCounters: [
+    { label: 'Ongoing Projects', value: '07', icon: 'pulse' },
+    { label: 'Completed Projects', value: '52', icon: 'check' },
+    { label: 'Referred Clients', value: '28', icon: 'users' }
   ],
   sections: [
     {
@@ -83,21 +88,21 @@ export const companyProfile = {
         'Meet the people currently leading ZeroOne IT Solutions across engineering, delivery, and digital product execution.',
       members: [
         {
-          name: 'Paul John D. Peligro',
+          name: 'PJ',
           role: 'Senior Application Systems Engineer / Full-Stack Consultant',
           image: paulJohnPeligroImage,
           cvLabel: 'Request CV',
           cvHref: 'mailto:contact@zeroone-apps.com?subject=Request%20CV%20-%20Paul%20John%20D.%20Peligro'
         },
         {
-          name: 'Alriza Muksan Palahuddin',
+          name: 'Riza',
           role: 'IT Support Engineer / Software Engineer',
           image: alrizaPalahuddinImage,
           cvLabel: 'Request CV',
           cvHref: 'mailto:contact@zeroone-apps.com?subject=Request%20CV%20-%20Alriza%20Muksan%20Palahuddin'
         },
         {
-          name: 'Al Khalid Muksan Palahuddin',
+          name: 'Khalid',
           role: 'Junior Software Engineer',
           image: alKhalidPalahuddinImage,
           cvLabel: 'Request CV',

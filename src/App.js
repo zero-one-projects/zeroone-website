@@ -67,6 +67,7 @@ function App() {
           brand={companyProfile.brand}
           hero={companyProfile.hero}
           stats={companyProfile.stats}
+          projectCounters={companyProfile.projectCounters}
           logo={logo}
         />
 
