@@ -23,6 +23,7 @@ const sectionRenderers = {
       id={section.id}
       title={section.title}
       intro={section.intro}
+      outro={section.outro}
       cards={section.cards}
       variant={section.variant}
     />

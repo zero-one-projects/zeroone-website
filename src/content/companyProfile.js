@@ -53,30 +53,65 @@ export const companyProfile = {
       variant: 'swipe',
       intro:
         'We build practical digital solutions for businesses, schools, retail operations, and enterprise teams, from internal systems to customer-facing platforms.',
+      outro: '...and other custom software solutions tailored to your business needs.',
       cards: [
         {
           title: 'Custom Web Application Development',
-          description: 'Responsive portals, dashboards, and business platforms built to scale.'
+          description: 'Responsive portals, dashboards, and scalable business platforms tailored to your needs.'
         },
         {
           title: 'Mobile App Development',
-          description: 'Mobile apps for operations, customer services, and digital products.'
+          description: 'Mobile applications for business operations, customer engagement, and digital products.'
         },
         {
           title: 'Desktop Application Development',
-          description: 'Desktop systems for schools, offices, and specialized workflows.'
+          description:
+            'We build desktop applications tailored for schools, offices, and specialized operational workflows.'
         },
         {
-          title: 'POS and Inventory Systems',
-          description: 'POS, inventory, branch operations, and sales reporting solutions.'
+          title: 'POS & Inventory Systems',
+          description:
+            '(Flexible plans: Subscription or One-Time Payment)\nIntegrated POS and inventory solutions designed to manage sales, branches, and business reporting efficiently.'
         },
         {
-          title: 'Management Information Systems',
-          description: 'MIS, HR, enrollment, warehouse, and internal monitoring systems.'
+          title: 'E-Commerce & Retail Solutions',
+          description:
+            'Integrated systems for online stores and physical retail operations, including sales, inventory, and order management.'
+        },
+        {
+          title: 'Booking & Reservation Systems',
+          description:
+            'Custom booking and reservation platforms for hotels, services, and appointment-based businesses.'
+        },
+        {
+          title: 'Hotel Management Systems',
+          description:
+            'End-to-end hotel management solutions covering reservations, front desk operations, billing, and reporting.'
+        },
+        {
+          title: 'Payroll Systems',
+          description:
+            'Automated payroll solutions for salary computation, deductions, payslips, and employee records.'
+        },
+        {
+          title: 'Management Information Systems (MIS)',
+          description:
+            'Integrated MIS solutions for HR, enrollment, warehouse operations, and internal monitoring.'
+        },
+        {
+          title: 'Custom ERP Systems',
+          description:
+            'Fully integrated ERP solutions designed to unify finance, operations, HR, inventory, and reporting in one system.'
+        },
+        {
+          title: 'Company Profile & Digital Presence Solutions',
+          description:
+            'Custom digital company profiles, web-based presentations, and business profile systems.'
         },
         {
           title: 'AI and Automation Solutions',
-          description: 'AI features, automation, transcription, and smart workflow enhancements.'
+          description:
+            'AI-powered features, automation, transcription, and intelligent workflow enhancements.'
         }
       ]
     },

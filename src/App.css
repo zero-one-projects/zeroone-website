@@ -194,6 +194,8 @@ h2 {
 .hero-copy {
   margin: 1rem 0 0;
   max-width: 62ch;
+  font-family: 'Century Gothic', 'AppleGothic', 'Avenir Next', 'Segoe UI', sans-serif;
+  font-weight: 400;
   color: var(--muted);
   line-height: 1.7;
 }
@@ -214,6 +216,8 @@ h2 {
 
 .text-section-copy {
   margin: 1rem 0 0;
+  font-family: 'Century Gothic', 'AppleGothic', 'Avenir Next', 'Segoe UI', sans-serif;
+  font-weight: 400;
   color: var(--muted);
   line-height: 1.7;
 }
@@ -383,6 +387,104 @@ h2 {
   scroll-snap-type: x proximity;
   scrollbar-width: thin;
   scrollbar-color: rgba(109, 141, 255, 0.45) transparent;
+}
+
+.services-cap-grid {
+  margin-top: 1.65rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.services-cap-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.05rem;
+  align-items: start;
+  min-height: 150px;
+  padding: 1.3rem 1.2rem;
+  background: rgba(12, 18, 38, 0.35);
+}
+
+.services-cap-card-centered {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+  min-height: 150px;
+}
+
+.services-cap-card-centered .services-cap-copy {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: center;
+}
+
+.services-cap-card:nth-child(odd) {
+  border-right: 0;
+}
+
+.services-cap-card:nth-last-child(n + 3) {
+  border-bottom: 0;
+}
+
+.services-cap-icon {
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid rgba(109, 141, 255, 0.8);
+  background: linear-gradient(145deg, rgba(93, 35, 219, 0.2), rgba(35, 145, 255, 0.18));
+  box-shadow: inset 0 0 0 1px rgba(188, 205, 255, 0.12);
+}
+
+.services-cap-icon svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  stroke: #d8e4ff;
+  fill: none;
+  stroke-width: 1.9;
+}
+
+.services-cap-card:nth-child(2n) .services-cap-icon {
+  border-color: rgba(111, 78, 255, 0.82);
+  background: linear-gradient(145deg, rgba(93, 35, 219, 0.24), rgba(70, 91, 232, 0.16));
+}
+
+.services-cap-card:nth-child(3n) .services-cap-icon {
+  border-color: rgba(62, 148, 255, 0.84);
+  background: linear-gradient(145deg, rgba(35, 145, 255, 0.24), rgba(40, 95, 224, 0.14));
+}
+
+.services-cap-card:nth-child(4n) .services-cap-icon {
+  border-color: rgba(116, 167, 255, 0.84);
+  background: linear-gradient(145deg, rgba(35, 145, 255, 0.2), rgba(93, 35, 219, 0.2));
+}
+
+.services-cap-copy h3 {
+  margin-bottom: 0.35rem;
+  font-family: 'Manrope', 'Avenir Next', 'Segoe UI', sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+}
+
+.services-cap-copy p {
+  margin: 0;
+  font-family: 'Manrope', 'Avenir Next', 'Segoe UI', sans-serif;
+  color: #b6c1e4;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.services-outro {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-family: 'Century Gothic', 'AppleGothic', 'Avenir Next', 'Segoe UI', sans-serif;
+  font-weight: 700;
+  color: #b6c1e4;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .swipe-grid::-webkit-scrollbar {
@@ -611,6 +713,28 @@ h2 {
   .hero-logo {
     width: min(100%, 250px);
     max-height: 250px;
+  }
+
+  .services-cap-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .services-cap-card:nth-child(odd),
+  .services-cap-card:nth-child(-n + 2) {
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .services-cap-card:not(:last-child) {
+    border-bottom: 0;
+  }
+
+  .services-cap-copy h3 {
+    font-size: 16px;
+  }
+
+  .services-cap-copy p {
+    font-size: 14px;
   }
 
   .project-counters-grid {
