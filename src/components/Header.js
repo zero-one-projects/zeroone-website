@@ -1,4 +1,4 @@
-function Header({ brand, navigation, contactHref, logo }) {
+function Header({ brand, navigation, contactHref }) {
   return (
     <header className="topbar">
       <div className="brand">

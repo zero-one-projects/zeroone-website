@@ -8,7 +8,10 @@ export const companyProfile = {
     name: 'ZeroOne IT Solutions'
   },
   hero: {
-    title: 'From Idea to Deployment',
+    title: {
+      prefix: 'From Idea to ',
+      highlight: 'Deployment'
+    },
     paragraphs: [
       'ZeroOne IT Solutions builds intelligent digital experiences that drive business growth.',
       'From web and mobile applications to AI-powered platforms, we deliver reliable, scalable solutions engineered for long-term success.'
@@ -30,6 +33,7 @@ export const companyProfile = {
   sections: [
     {
       id: 'about',
+      type: 'text',
       title: 'About Us',
       paragraphs: [
         'ZeroOne IT Solutions is a digital product development company specializing in web, mobile, and AI-powered solutions. We help businesses transform ideas into high-performance digital products that are reliable, scalable, and built for growth.',
@@ -39,6 +43,7 @@ export const companyProfile = {
     },
     {
       id: 'services',
+      type: 'cards',
       title: 'Services',
       variant: 'swipe',
       intro:
@@ -72,6 +77,7 @@ export const companyProfile = {
     },
     {
       id: 'team',
+      type: 'team',
       title: 'Team',
       intro:
         'Meet the people currently leading ZeroOne IT Solutions across engineering, delivery, and digital product execution.',

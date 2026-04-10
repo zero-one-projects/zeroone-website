@@ -136,6 +136,10 @@
   animation-delay: 120ms;
 }
 
+.hero-title-highlight {
+  color: var(--brand-blue);
+}
+
 .hero-copy-stack .hero-copy:nth-of-type(1) {
   animation-delay: 220ms;
 }
@@ -200,6 +204,16 @@ h2 {
 
 .section-copy {
   margin: 0.9rem 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.text-section-body {
+  max-width: 62ch;
+}
+
+.text-section-copy {
+  margin: 1rem 0 0;
   color: var(--muted);
   line-height: 1.7;
 }

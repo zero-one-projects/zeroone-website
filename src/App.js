@@ -8,6 +8,46 @@ import TextSection from './components/TextSection';
 import SectionHeading from './components/SectionHeading';
 import { companyProfile } from './content/companyProfile';
 
+const sectionRenderers = {
+  text: (section) => (
+    <TextSection
+      key={section.id}
+      id={section.id}
+      title={section.title}
+      paragraphs={section.paragraphs}
+    />
+  ),
+  cards: (section) => (
+    <CardSection
+      key={section.id}
+      id={section.id}
+      title={section.title}
+      intro={section.intro}
+      cards={section.cards}
+      variant={section.variant}
+    />
+  ),
+  team: (section) => (
+    <TeamSection
+      key={section.id}
+      id={section.id}
+      title={section.title}
+      intro={section.intro}
+      members={section.members}
+    />
+  )
+};
+
+function renderSection(section) {
+  const render = sectionRenderers[section.type];
+
+  if (!render) {
+    return null;
+  }
+
+  return render(section);
+}
+
 function App() {
   const navigation = companyProfile.sections.map(({ id, title }) => ({
     id,
@@ -20,7 +60,6 @@ function App() {
         brand={companyProfile.brand}
         navigation={navigation}
         contactHref={`#${companyProfile.contact.id}`}
-        logo={logo}
       />
 
       <main>
@@ -31,41 +70,7 @@ function App() {
           logo={logo}
         />
 
-        {companyProfile.sections.map((section) => {
-          if (section.members) {
-            return (
-              <TeamSection
-                key={section.id}
-                id={section.id}
-                title={section.title}
-                intro={section.intro}
-                members={section.members}
-              />
-            );
-          }
-
-          if (section.cards) {
-            return (
-              <CardSection
-                key={section.id}
-                id={section.id}
-                title={section.title}
-                intro={section.intro}
-                cards={section.cards}
-                variant={section.variant}
-              />
-            );
-          }
-
-          return (
-            <TextSection
-              key={section.id}
-              id={section.id}
-              title={section.title}
-              paragraphs={section.paragraphs}
-            />
-          );
-        })}
+        {companyProfile.sections.map(renderSection)}
 
         <section className="section cta reveal-section reveal-delay-4" id={companyProfile.contact.id}>
           <SectionHeading

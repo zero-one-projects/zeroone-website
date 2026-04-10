@@ -3,7 +3,13 @@ function HeroSection({ brand, hero, stats, logo }) {
     <section className="hero section reveal-section reveal-delay-1">
       <div className="hero-layout">
         <div className="hero-content hero-copy-stack">
-          <h1 className="hero-title">{hero.title}</h1>
+          <p className="eyebrow">
+            {brand.eyebrow}
+          </p>
+          <h1 className="hero-title">
+            {hero.title.prefix}
+            <span className="hero-title-highlight">{hero.title.highlight}</span>
+          </h1>
           {hero.paragraphs.map((paragraph) => (
             <p key={paragraph} className="hero-copy">
               {paragraph}
