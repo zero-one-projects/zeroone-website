@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.css": "/zeroone-website/static/css/main.0e9d0613.css",
+    "main.js": "/zeroone-website/static/js/main.4b969391.js",
+    "static/media/logo.png": "/zeroone-website/static/media/logo.e1d7e35828bd81f6d0cc.png",
+    "static/media/al-khalid-palahuddin.png": "/zeroone-website/static/media/al-khalid-palahuddin.e7da687aae650437aceb.png",
+    "static/media/test.png": "/zeroone-website/static/media/test.73bd41f604c33394ab25.png",
+    "static/media/paul-john-peligro.png": "/zeroone-website/static/media/paul-john-peligro.377d150deba607bbd2ef.png",
+    "static/media/alriza-palahuddin.png": "/zeroone-website/static/media/alriza-palahuddin.33f0f50b66ae7c61ab95.png",
+    "index.html": "/zeroone-website/index.html",
+    "main.0e9d0613.css.map": "/zeroone-website/static/css/main.0e9d0613.css.map",
+    "main.4b969391.js.map": "/zeroone-website/static/js/main.4b969391.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.0e9d0613.css",
+    "static/js/main.4b969391.js"
+  ]
+}
