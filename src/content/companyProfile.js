@@ -39,14 +39,14 @@ export const companyProfile = {
     {
       id: 'about',
       type: 'text',
-      title: 'About Us',
+      title: 'About Us.',
       paragraphs: [
         'ZeroOne IT Solutions is a digital product development company specializing in web, mobile, and AI-powered solutions. We help businesses transform ideas into high-performance digital products that are reliable, scalable, and built for growth.',
         'Our team combines strategic thinking, modern technologies, and user-focused design to deliver solutions that solve real business challenges. From concept to deployment, we ensure every product is engineered with precision, clarity, and long-term success in mind.',
         "Let's build something impactful together."
       ],
       highlightStatement: {
-        lead: 'Software solutions designed to simplify processes and drive results..',
+        lead: 'Software solutions designed to simplify processes and drive results.',
         lines: [
           [
             { text: 'We ', tone: 'base' },
