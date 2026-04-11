@@ -44,7 +44,24 @@ export const companyProfile = {
         'ZeroOne IT Solutions is a digital product development company specializing in web, mobile, and AI-powered solutions. We help businesses transform ideas into high-performance digital products that are reliable, scalable, and built for growth.',
         'Our team combines strategic thinking, modern technologies, and user-focused design to deliver solutions that solve real business challenges. From concept to deployment, we ensure every product is engineered with precision, clarity, and long-term success in mind.',
         "Let's build something impactful together."
-      ]
+      ],
+      highlightStatement: {
+        lead: 'Software solutions designed to simplify processes and drive results.',
+        lines: [
+          [
+            { text: 'We ', tone: 'base' },
+            { text: 'design', tone: 'violet' },
+            { text: ' and ', tone: 'base' },
+            { text: 'build', tone: 'blue' }
+          ],
+          [{ text: 'software solutions that', tone: 'base' }],
+          [
+            { text: 'simplify', tone: 'blue' },
+            { text: ' processes and', tone: 'base' }
+          ],
+          [{ text: 'drive results.', tone: 'violet' }]
+        ]
+      }
     },
     {
       id: 'vision',
@@ -52,14 +69,6 @@ export const companyProfile = {
       title: 'Vision',
       paragraphs: [
         'To be a trusted technology partner that delivers practical, innovative, and scalable digital solutions, helping organizations thrive in an increasingly digital world.'
-      ]
-    },
-    {
-      id: 'mission',
-      type: 'text',
-      title: 'Mission',
-      paragraphs: [
-        'Our mission is to design and build reliable software solutions that solve real business challenges. With over 13 years of experience, ZeroOne IT Solutions works closely with clients to deliver custom web, mobile, and enterprise systems that improve efficiency, add value, and support long‑term growth.'
       ]
     },
     {

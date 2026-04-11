@@ -62,7 +62,11 @@ function CardSection({ id, title, intro, outro, cards, variant }) {
           );
         })}
       </div>
-      {outro ? <p className="services-outro">{outro}</p> : null}
+      {outro ? (
+        <p className="services-outro">
+          <span>{outro}</span>
+        </p>
+      ) : null}
     </section>
   );
 }

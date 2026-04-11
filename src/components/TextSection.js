@@ -1,6 +1,7 @@
 import SectionHeading from './SectionHeading';
+import ImpactStatement from './ImpactStatement';
 
-function TextSection({ id, title, paragraphs, noWrapper = false }) {
+function TextSection({ id, title, paragraphs, highlightStatement, noWrapper = false }) {
   const content = (
     <>
       <SectionHeading title={title} />
@@ -11,6 +12,7 @@ function TextSection({ id, title, paragraphs, noWrapper = false }) {
           </p>
         ))}
       </div>
+      {highlightStatement ? <ImpactStatement statement={highlightStatement} /> : null}
     </>
   );
 

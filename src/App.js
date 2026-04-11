@@ -5,6 +5,7 @@ import HeroSection from './components/HeroSection';
 import CardSection from './components/CardSection';
 import TeamSection from './components/TeamSection';
 import TextSection from './components/TextSection';
+import ImpactStatement from './components/ImpactStatement';
 import SectionHeading from './components/SectionHeading';
 import { companyProfile } from './content/companyProfile';
 
@@ -15,6 +16,7 @@ const sectionRenderers = {
       id={section.id}
       title={section.title}
       paragraphs={section.paragraphs}
+      highlightStatement={section.highlightStatement}
     />
   ),
   cards: (section) => (
@@ -50,12 +52,18 @@ function renderSection(section) {
 }
 
 function App() {
-  const navigation = companyProfile.sections
+  const baseNavigation = companyProfile.sections
     .filter(section => section.id !== 'vision' && section.id !== 'mission')
     .map(({ id, title }) => ({
       id,
       label: title
     }));
+  const aboutIndex = baseNavigation.findIndex((item) => item.id === 'about');
+  const navigation = [...baseNavigation];
+  navigation.splice(aboutIndex >= 0 ? aboutIndex + 1 : navigation.length, 0, {
+    id: 'policy',
+    label: 'Policy'
+  });
 
   const renderSections = () => {
     const sections = [];
@@ -63,33 +71,51 @@ function App() {
     while (i < companyProfile.sections.length) {
       const section = companyProfile.sections[i];
       if (section.id === 'about') {
-        // Render about, vision, and mission in a grid layout
+        // Render about with optional vision/mission in a side column
         const visionSection = companyProfile.sections[i + 1];
         const missionSection = companyProfile.sections[i + 2];
+        const hasVision = visionSection && visionSection.id === 'vision';
+        const hasMission = missionSection && missionSection.id === 'mission';
         sections.push(
           <section key="about-vision-mission" className="section reveal-section reveal-delay-2" id="about">
             <div className="about-vision-mission-grid">
               <div className="about-column">
-                {renderSection(section)}
+                <TextSection
+                  id={section.id}
+                  title={section.title}
+                  paragraphs={section.paragraphs}
+                  noWrapper={true}
+                />
               </div>
               <div className="vision-mission-column">
-                <TextSection
-                  id={visionSection.id}
-                  title={visionSection.title}
-                  paragraphs={visionSection.paragraphs}
-                  noWrapper={true}
-                />
-                <TextSection
-                  id={missionSection.id}
-                  title={missionSection.title}
-                  paragraphs={missionSection.paragraphs}
-                  noWrapper={true}
-                />
+                {hasVision ? (
+                  <TextSection
+                    id={visionSection.id}
+                    title={visionSection.title}
+                    paragraphs={visionSection.paragraphs}
+                    noWrapper={true}
+                  />
+                ) : null}
+                {hasMission ? (
+                  <TextSection
+                    id={missionSection.id}
+                    title={missionSection.title}
+                    paragraphs={missionSection.paragraphs}
+                    noWrapper={true}
+                  />
+                ) : null}
               </div>
             </div>
+            {section.highlightStatement ? (
+              <ImpactStatement
+                id="policy"
+                statement={section.highlightStatement}
+                className="about-impact-statement"
+              />
+            ) : null}
           </section>
         );
-        i += 3; // Skip vision and mission since we rendered them
+        i += 1 + (hasVision ? 1 : 0) + (hasMission ? 1 : 0);
       } else if (section.id === 'vision' || section.id === 'mission') {
         // Skip vision and mission since they're already rendered with about
         i++;
