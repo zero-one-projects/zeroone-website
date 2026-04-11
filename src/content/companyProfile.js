@@ -46,7 +46,7 @@ export const companyProfile = {
         "Let's build something impactful together."
       ],
       highlightStatement: {
-        lead: 'Software solutions designed to simplify processes and drive results.',
+        lead: 'Software solutions designed to simplify processes and drive results..',
         lines: [
           [
             { text: 'We ', tone: 'base' },
