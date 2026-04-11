@@ -12,10 +12,7 @@ function ImpactStatement({ id, statement, className = '' }) {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
+        setIsVisible(entries.some((entry) => entry.isIntersecting));
       },
       {
         threshold: 0.32,

@@ -72,6 +72,14 @@ export const companyProfile = {
       ]
     },
     {
+      id: 'mission',
+      type: 'text',
+      title: 'Mission',
+      paragraphs: [
+        'Our mission is to design and build reliable software solutions that solve real business challenges. With over 13 years of experience, ZeroOne IT Solutions works closely with clients to deliver custom web, mobile, and enterprise systems that improve efficiency, add value, and support long-term growth.'
+      ]
+    },
+    {
       id: 'services',
       type: 'cards',
       title: 'Services',

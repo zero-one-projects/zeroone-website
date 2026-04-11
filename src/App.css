@@ -154,7 +154,7 @@ html {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding-top: clamp(2.8rem, 8vw, 6rem);
+  padding-top: 0;
 }
 
 .hero {
@@ -205,8 +205,8 @@ html {
 }
 
 .hero-logo {
-  width: min(100%, 400px);
-  max-height: 400px;
+  width: min(100%, 460px);
+  max-height: 460px;
   object-fit: contain;
   transform-origin: center;
   animation: logoFloat 7s ease-in-out 1.2s infinite;
@@ -278,7 +278,13 @@ h2 {
 }
 
 .about-impact-statement {
-  margin-top: clamp(1.2rem, 3vw, 2rem);
+  margin-top: clamp(2.4rem, 4.8vw, 3.8rem);
+  padding: clamp(0.9rem, 2vw, 1.2rem);
+  border-radius: 16px;
+  background:
+    linear-gradient(rgba(18, 30, 72, 0.5), rgba(18, 30, 72, 0.5)),
+    url('./assets/icons/test.png') center / cover no-repeat;
+  backdrop-filter: blur(3px);
 }
 
 .impact-lines {
@@ -333,8 +339,8 @@ h2 {
 }
 
 .impact-statement.is-visible .impact-line {
-  animation: slideFromLeft 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: calc(var(--line-index, 0) * 140ms);
+  animation: slideFromLeft 580ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--line-index, 0) * 100ms);
 }
 
 .hero-actions {
@@ -858,8 +864,8 @@ h2 {
   }
 
   .hero-logo {
-    width: min(100%, 250px);
-    max-height: 250px;
+    width: min(100%, 290px);
+    max-height: 290px;
   }
 
   .stats-grid,
@@ -959,7 +965,8 @@ h2 {
   }
 
   .about-impact-statement {
-    margin-top: 0.9rem;
+    margin-top: 1.9rem;
+    padding: 0.85rem;
   }
 
   .impact-line {
