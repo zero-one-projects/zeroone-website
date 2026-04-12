@@ -14,11 +14,6 @@ function TeamSection({ id, title, intro, members }) {
             <img className="team-avatar" src={member.image} alt={member.name} />
             <h3>{member.name}</h3>
             <p className="team-role">{member.role}</p>
-            {member.cvHref ? (
-              <a className="team-link" href={member.cvHref}>
-                {member.cvLabel}
-              </a>
-            ) : null}
           </article>
         ))}
       </div>

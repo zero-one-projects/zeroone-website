@@ -1,6 +1,8 @@
-import alKhalidPalahuddinImage from '../assets/team/al-khalid-palahuddin.png';
-import alrizaPalahuddinImage from '../assets/team/alriza-palahuddin.png';
-import paulJohnPeligroImage from '../assets/team/paul-john-peligro.png';
+import alKhalidPalahuddinImage from '../assets/team/Khalid.jpg';
+import allenaImage from '../assets/team/allen.jpg';
+import alrizaPalahuddinImage from '../assets/team/riza.jpeg';
+import ridzImage from '../assets/team/payang.jpg';
+import paulJohnPeligroImage from '../assets/team/pj.png';
 
 export const companyProfile = {
   brand: {
@@ -33,13 +35,14 @@ export const companyProfile = {
   projectCounters: [
     { label: 'Ongoing Projects', value: '07', icon: 'pulse' },
     { label: 'Completed Projects', value: '52', icon: 'check' },
-    { label: 'Referred Clients', value: '28', icon: 'users' }
+    { label: 'Referred Clients', value: '28', icon: 'users' },
+    { label: 'Years of Expertise', value: '13', icon: 'award' }
   ],
   sections: [
     {
       id: 'about',
       type: 'text',
-      title: 'About Us.',
+      title: 'About Us',
       paragraphs: [
         'ZeroOne IT Solutions is a digital product development company specializing in web, mobile, and AI-powered solutions. We help businesses transform ideas into high-performance digital products that are reliable, scalable, and built for growth.',
         'Our team combines strategic thinking, modern technologies, and user-focused design to deliver solutions that solve real business challenges. From concept to deployment, we ensure every product is engineered with precision, clarity, and long-term success in mind.',
@@ -158,23 +161,27 @@ export const companyProfile = {
         {
           name: 'PJ',
           role: 'Senior Application Systems Engineer / Full-Stack Consultant',
-          image: paulJohnPeligroImage,
-          cvLabel: 'Request CV',
-          cvHref: 'mailto:contact@zeroone-apps.com?subject=Request%20CV%20-%20Paul%20John%20D.%20Peligro'
+          image: paulJohnPeligroImage
         },
         {
           name: 'Riza',
           role: 'IT Support Engineer / Software Engineer',
-          image: alrizaPalahuddinImage,
-          cvLabel: 'Request CV',
-          cvHref: 'mailto:contact@zeroone-apps.com?subject=Request%20CV%20-%20Alriza%20Muksan%20Palahuddin'
+          image: alrizaPalahuddinImage
         },
         {
           name: 'Khalid',
-          role: 'Junior Software Engineer',
-          image: alKhalidPalahuddinImage,
-          cvLabel: 'Request CV',
-          cvHref: 'mailto:contact@zeroone-apps.com?subject=Request%20CV%20-%20Al%20Khalid%20Muksan%20Palahuddin'
+          role: 'Mid Software Engineer',
+          image: alKhalidPalahuddinImage
+        },
+        {
+          name: 'Fern',
+          role: 'Office Admin',
+          image: allenaImage
+        },
+        {
+          name: 'Ridz',
+          role: 'Product Marketing',
+          image: ridzImage
         }
       ]
     }

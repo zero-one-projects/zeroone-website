@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import './App.css';
 import logo from './assets/company/logo.png';
 import Header from './components/Header';
@@ -52,6 +53,25 @@ function renderSection(section) {
 }
 
 function App() {
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowScrollTop(window.scrollY > 260);
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const baseNavigation = companyProfile.sections
     .filter(section => section.id !== 'vision' && section.id !== 'mission')
     .map(({ id, title }) => ({
@@ -156,6 +176,17 @@ function App() {
           </a>
         </section>
       </main>
+
+      <button
+        type="button"
+        className={`scroll-top-btn ${showScrollTop ? 'is-visible' : ''}`}
+        onClick={scrollToTop}
+        aria-label="Back to top"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 5l-7 7 1.4 1.4 4.6-4.6V19h2V8.8l4.6 4.6L19 12z" />
+        </svg>
+      </button>
     </div>
   );
 }

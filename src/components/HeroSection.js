@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+
 function HeroIcon({ name }) {
   if (name === 'code') {
     return (
@@ -47,6 +49,14 @@ function HeroIcon({ name }) {
     );
   }
 
+  if (name === 'award') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 14a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-3 0-1 7 4-2 4 2-1-7" />
+      </svg>
+    );
+  }
+
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 5v14M5 12h14" />
@@ -54,7 +64,84 @@ function HeroIcon({ name }) {
   );
 }
 
+function AnimatedCounter({ value, shouldAnimate }) {
+  const target = useMemo(() => Number.parseInt(value, 10), [value]);
+  const width = `${value}`.length;
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (!Number.isFinite(target)) {
+      return undefined;
+    }
+
+    if (!shouldAnimate) {
+      setDisplayValue(0);
+      return undefined;
+    }
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      setDisplayValue(target);
+      return undefined;
+    }
+
+    let animationFrame = 0;
+    const duration = 1050;
+    const cycles = 2;
+    const startTime = performance.now();
+
+    const tick = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const cycleProgress = Math.min((elapsed % duration) / duration, 1);
+      const progress = Math.min(elapsed / (duration * cycles), 1);
+      const activeProgress = progress === 1 ? 1 : cycleProgress;
+      const easedProgress = 1 - Math.pow(1 - activeProgress, 3);
+
+      setDisplayValue(Math.round(target * easedProgress));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(tick);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [shouldAnimate, target]);
+
+  if (!Number.isFinite(target)) {
+    return `${value}+`;
+  }
+
+  return `${String(displayValue).padStart(width, '0')}+`;
+}
+
 function HeroSection({ brand, hero, stats, projectCounters = [], logo }) {
+  const [countersVisible, setCountersVisible] = useState(false);
+  const countersRef = useRef(null);
+
+  useEffect(() => {
+    const node = countersRef.current;
+    if (!node || !projectCounters.length) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setCountersVisible(entries.some((entry) => entry.isIntersecting));
+      },
+      {
+        threshold: 0.32,
+        rootMargin: '0px 0px -10% 0px'
+      }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [projectCounters.length]);
+
   return (
     <section className="hero section reveal-section reveal-delay-1">
       <div className="hero-layout">
@@ -104,14 +191,19 @@ function HeroSection({ brand, hero, stats, projectCounters = [], logo }) {
       </div>
 
       {projectCounters.length ? (
-        <div className="project-counters-grid">
+        <div
+          ref={countersRef}
+          className={`project-counters-grid ${countersVisible ? 'is-visible' : ''}`}
+        >
           {projectCounters.map((item, index) => (
             <article
               key={item.label}
-              className="counter-card reveal-card"
-              style={{ '--stagger-index': index + stats.length }}
+              className="counter-card"
+              style={{ '--stagger-index': index }}
             >
-              <strong>{item.value}</strong>
+              <strong>
+                <AnimatedCounter value={item.value} shouldAnimate={countersVisible} />
+              </strong>
               <span>{item.label}</span>
               <span className="card-icon counter-card-icon" aria-hidden="true">
                 <HeroIcon name={item.icon} />
