@@ -63,7 +63,7 @@ function HeroSection({ brand, hero, stats, projectCounters = [], logo }) {
             {brand.eyebrow}
           </p>
           <h1 className="hero-title">
-            {hero.title.prefix}
+            <span className="hero-title-prefix">{hero.title.prefix}</span>
             <span className="hero-title-highlight">{hero.title.highlight}</span>
           </h1>
           {hero.paragraphs.map((paragraph) => (

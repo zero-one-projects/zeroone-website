@@ -181,8 +181,26 @@ html {
   animation-delay: 120ms;
 }
 
+.hero-title-prefix,
+.hero-title-highlight {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.35em);
+  animation: heroTitleWord 780ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.hero-title-prefix {
+  animation-delay: 260ms;
+}
+
 .hero-title-highlight {
   color: #ffffff;
+  animation-delay: 390ms;
+  animation-name: heroTitleWord, heroTitleGlow;
+  animation-duration: 780ms, 3.2s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1), ease-in-out;
+  animation-fill-mode: forwards, both;
+  animation-iteration-count: 1, infinite;
 }
 
 .hero-copy-stack .hero-copy:nth-of-type(1) {
@@ -777,6 +795,33 @@ h2 {
   }
 }
 
+@keyframes heroTitleWord {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+    filter: blur(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes heroTitleGlow {
+  0%,
+  100% {
+    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+
+  50% {
+    text-shadow:
+      0 0 16px rgba(255, 255, 255, 0.38),
+      0 0 30px rgba(35, 145, 255, 0.28);
+  }
+}
+
 @keyframes slideFromLeft {
   0% {
     opacity: 0;
@@ -1000,5 +1045,13 @@ h2 {
     opacity: 1;
     transform: none;
     animation: none !important;
+  }
+
+  .hero-title-prefix,
+  .hero-title-highlight {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    text-shadow: none;
   }
 }
