@@ -182,7 +182,7 @@ html {
 }
 
 .hero-title-highlight {
-  color: var(--brand-blue);
+  color: #ffffff;
 }
 
 .hero-copy-stack .hero-copy:nth-of-type(1) {
