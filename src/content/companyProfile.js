@@ -160,21 +160,21 @@ export const companyProfile = {
       members: [
         {
           name: 'PJ',
-          role: 'Senior Application Systems Engineer / Full-Stack Consultant',
+          role: 'Senior Lead Software Developer & IT Consultant',
           image: paulJohnPeligroImage
         },
         {
           name: 'Riza',
-          role: 'IT Support Engineer / Software Engineer',
+          role: 'Desktop Engineer & Software Developer',
           image: alrizaPalahuddinImage
         },
         {
           name: 'Khalid',
-          role: 'Mid Software Engineer',
+          role: 'Desktop Engineer & Software Developer',
           image: alKhalidPalahuddinImage
         },
         {
-          name: 'Fern',
+          name: 'Allen',
           role: 'Office Admin',
           image: allenaImage
         },
