@@ -15,7 +15,7 @@ function Header({ brand, navigation, contactHref }) {
         ))}
       </nav>
 
-      <a className="btn btn-outline" href={contactHref}>
+      <a className="btn btn-outline contact-btn" href={contactHref}>
         Contact Us
       </a>
     </header>

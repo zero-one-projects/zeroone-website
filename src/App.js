@@ -7,6 +7,7 @@ import CardSection from './components/CardSection';
 import TeamSection from './components/TeamSection';
 import TextSection from './components/TextSection';
 import ImpactStatement from './components/ImpactStatement';
+import ProcessCycle from './components/ProcessCycle';
 import SectionHeading from './components/SectionHeading';
 import { companyProfile } from './content/companyProfile';
 
@@ -133,6 +134,7 @@ function App() {
                 className="about-impact-statement"
               />
             ) : null}
+            <ProcessCycle />
           </section>
         );
         i += 1 + (hasVision ? 1 : 0) + (hasMission ? 1 : 0);

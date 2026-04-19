@@ -367,6 +367,201 @@ h2 {
   animation-delay: calc(var(--line-index, 0) * 100ms);
 }
 
+.process-flow {
+  position: relative;
+  margin-top: clamp(2.4rem, 5vw, 4rem);
+  padding: clamp(1.7rem, 4vw, 2.8rem) clamp(0.8rem, 2vw, 1.2rem);
+  overflow: hidden;
+  background: transparent;
+}
+
+.process-flow::before {
+  content: none;
+}
+
+.process-flow-heading {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  color: #ecf1ff;
+  font-family: 'Century Gothic', 'AppleGothic', 'Avenir Next', 'Segoe UI', sans-serif;
+  text-align: center;
+  text-transform: none;
+}
+
+.process-flow-heading span {
+  font-size: clamp(1.45rem, 2.8vw, 2.2rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.process-flow-heading strong {
+  font-size: clamp(1.55rem, 3.2vw, 2.45rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.process-flow-track {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  align-items: center;
+  min-height: 285px;
+  margin-top: clamp(1.7rem, 4vw, 2.5rem);
+}
+
+.process-flow-track::before {
+  content: '';
+  position: absolute;
+  left: 4.8%;
+  right: 4.8%;
+  top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(93, 35, 219, 0.58), rgba(35, 145, 255, 0.58));
+  transform: translateY(-50%);
+}
+
+.process-flow-track::after {
+  content: '';
+  position: absolute;
+  left: 4.8%;
+  right: 4.8%;
+  top: 50%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(118, 151, 255, 0.18), #7ca3ff, rgba(35, 145, 255, 0.18), transparent);
+  filter: blur(1px);
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left center;
+  animation: processLightSweep 4.8s ease-in-out infinite;
+}
+
+.process-flow-step {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(72px, 1fr) auto minmax(72px, 1fr);
+  justify-items: center;
+  align-items: center;
+  text-align: center;
+}
+
+.process-flow-title {
+  position: relative;
+  grid-row: 3;
+  max-width: 17ch;
+  margin: 1.1rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(109, 141, 255, 0.44);
+  border-radius: 8px;
+  color: #dce5ff;
+  background: rgba(10, 17, 43, 0.82);
+  box-shadow: 0 12px 24px rgba(7, 15, 43, 0.22);
+  font-family: 'Century Gothic', 'AppleGothic', 'Avenir Next', 'Segoe UI', sans-serif;
+  font-size: clamp(0.86rem, 1.16vw, 1.05rem);
+  font-weight: 400;
+  line-height: 1.22;
+}
+
+.process-flow-title::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -0.42rem;
+  width: 0.72rem;
+  height: 0.72rem;
+  border-top: 1px solid rgba(109, 141, 255, 0.44);
+  border-left: 1px solid rgba(109, 141, 255, 0.44);
+  background: rgba(10, 17, 43, 0.82);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.process-flow-step:nth-child(even) .process-flow-title {
+  grid-row: 1;
+  align-self: end;
+  margin: 0 0 1.1rem;
+}
+
+.process-flow-step:nth-child(even) .process-flow-title::after {
+  top: auto;
+  bottom: -0.42rem;
+  border: 0;
+  border-right: 1px solid rgba(109, 141, 255, 0.44);
+  border-bottom: 1px solid rgba(109, 141, 255, 0.44);
+}
+
+.process-node {
+  position: relative;
+  grid-row: 2;
+  width: clamp(4.7rem, 7.4vw, 6.25rem);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(109, 141, 255, 0.48);
+  border-radius: 50%;
+  background: rgba(10, 17, 43, 0.74);
+  box-shadow:
+    inset 0 0 0 1px rgba(236, 241, 255, 0.08),
+    0 12px 26px rgba(7, 15, 43, 0.28);
+  animation: processNodeGlow 4.8s ease-in-out infinite;
+  animation-delay: calc(var(--stagger-index, 0) * 520ms);
+}
+
+.process-node::before,
+.process-node::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #6d8dff;
+  box-shadow: 0 0 14px rgba(109, 141, 255, 0.55);
+  transform: translateY(-50%);
+}
+
+.process-node::before {
+  left: -0.33rem;
+}
+
+.process-node::after {
+  right: -0.33rem;
+}
+
+.process-flow-step:first-child .process-node::before,
+.process-flow-step:last-child .process-node::after {
+  display: none;
+}
+
+.process-icon {
+  width: 72%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(201, 214, 255, 0.86);
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(14, 22, 52, 0.98), rgba(7, 11, 28, 0.98));
+  box-shadow:
+    0 12px 26px rgba(7, 15, 43, 0.34),
+    inset 0 0 22px rgba(35, 145, 255, 0.12);
+}
+
+.process-icon svg {
+  width: 52%;
+  height: 52%;
+  fill: none;
+  stroke: #dbe5ff;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .hero-actions {
   margin-top: 1.5rem;
   display: flex;
@@ -402,6 +597,25 @@ h2 {
   color: #d4ddff;
   border: 1px solid var(--line);
   background: rgba(7, 11, 28, 0.7);
+}
+
+.contact-btn {
+  color: #ffffff;
+  border-color: rgba(198, 218, 255, 0.75);
+  background:
+    linear-gradient(135deg, rgba(154, 238, 255, 0.55) 0%, rgba(73, 50, 190, 0.92) 42%, rgba(123, 52, 214, 0.9) 72%, rgba(255, 190, 137, 0.82) 100%);
+  box-shadow:
+    0 0 0 1px rgba(198, 218, 255, 0.18),
+    0 10px 26px rgba(93, 35, 219, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+
+.contact-btn:hover {
+  border-color: rgba(220, 235, 255, 0.95);
+  box-shadow:
+    0 0 18px rgba(154, 238, 255, 0.28),
+    0 14px 30px rgba(93, 35, 219, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .stats-grid {
@@ -1037,6 +1251,73 @@ h2 {
   }
 }
 
+@keyframes processLightSweep {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scaleX(0);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  72% {
+    opacity: 1;
+    transform: translateY(-50%) scaleX(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) scaleX(1);
+  }
+}
+
+@keyframes processNodeGlow {
+  0%,
+  100% {
+    border-color: rgba(109, 141, 255, 0.48);
+    box-shadow:
+      inset 0 0 0 1px rgba(236, 241, 255, 0.08),
+      0 12px 26px rgba(7, 15, 43, 0.28);
+  }
+
+  26% {
+    border-color: rgba(124, 163, 255, 0.9);
+    box-shadow:
+      inset 0 0 0 1px rgba(236, 241, 255, 0.18),
+      0 0 18px rgba(109, 141, 255, 0.5),
+      0 12px 26px rgba(7, 15, 43, 0.28);
+  }
+
+  42% {
+    border-color: rgba(109, 141, 255, 0.48);
+    box-shadow:
+      inset 0 0 0 1px rgba(236, 241, 255, 0.08),
+      0 12px 26px rgba(7, 15, 43, 0.28);
+  }
+}
+
+@keyframes processLightSweepVertical {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  72% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+}
+
 @keyframes driftOrb {
   0%,
   100% {
@@ -1221,6 +1502,84 @@ h2 {
 
   .impact-line {
     font-size: clamp(1.4rem, 8.4vw, 2rem);
+  }
+
+  .process-flow {
+    padding: 1.4rem 1rem;
+  }
+
+  .process-flow-track {
+    grid-template-columns: 1fr;
+    gap: 0.95rem;
+    min-height: 0;
+    margin-top: 1.4rem;
+  }
+
+  .process-flow-track::before {
+    left: 2.35rem;
+    right: auto;
+    top: 0.75rem;
+    bottom: 0.75rem;
+    width: 2px;
+    height: auto;
+    transform: none;
+  }
+
+  .process-flow-track::after {
+    left: 2.35rem;
+    right: auto;
+    top: 0.75rem;
+    bottom: 0.75rem;
+    width: 4px;
+    height: auto;
+    background: linear-gradient(180deg, transparent, rgba(118, 151, 255, 0.18), #7ca3ff, rgba(35, 145, 255, 0.18), transparent);
+    transform: scaleY(0);
+    transform-origin: top center;
+    animation-name: processLightSweepVertical;
+  }
+
+  .process-flow-step {
+    grid-template-columns: 4.7rem minmax(0, 1fr);
+    grid-template-rows: auto;
+    justify-items: start;
+    column-gap: 1rem;
+    text-align: left;
+  }
+
+  .process-flow-title,
+  .process-flow-step:nth-child(even) .process-flow-title {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 1rem;
+  }
+
+  .process-flow-title::after,
+  .process-flow-step:nth-child(even) .process-flow-title::after {
+    content: none;
+  }
+
+  .process-node {
+    grid-column: 1;
+    grid-row: 1;
+    width: 4.7rem;
+  }
+
+  .process-node::before,
+  .process-node::after {
+    display: none;
+  }
+
+  .process-flow-heading {
+    justify-items: start;
+    text-align: left;
   }
 }
 
