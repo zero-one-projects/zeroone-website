@@ -229,11 +229,12 @@ html {
 }
 
 .hero-logo {
-  width: min(100%, 460px);
-  max-height: 460px;
+  width: min(70vw, 560px);
+  max-width: none;
+  max-height: 560px;
   object-fit: contain;
   transform-origin: center;
-  animation: logoFloat 7s ease-in-out 1.2s infinite;
+  animation: logoFloat 5.5s ease-in-out 1.2s infinite;
 }
 
 .eyebrow {
@@ -599,25 +600,6 @@ h2 {
   background: rgba(7, 11, 28, 0.7);
 }
 
-.contact-btn {
-  color: #ffffff;
-  border-color: rgba(198, 218, 255, 0.75);
-  background:
-    linear-gradient(135deg, rgba(154, 238, 255, 0.55) 0%, rgba(73, 50, 190, 0.92) 42%, rgba(123, 52, 214, 0.9) 72%, rgba(255, 190, 137, 0.82) 100%);
-  box-shadow:
-    0 0 0 1px rgba(198, 218, 255, 0.18),
-    0 10px 26px rgba(93, 35, 219, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.38);
-}
-
-.contact-btn:hover {
-  border-color: rgba(220, 235, 255, 0.95);
-  box-shadow:
-    0 0 18px rgba(154, 238, 255, 0.28),
-    0 14px 30px rgba(93, 35, 219, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-
 .stats-grid {
   margin-top: 2rem;
   display: grid;
@@ -906,17 +888,6 @@ h2 {
 
 .team-title {
   text-align: center;
-  font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif;
-  font-size: clamp(2rem, 5.2vw, 3.2rem);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  background-image: linear-gradient(90deg, #8f58ff, #6a8cff);
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  text-shadow: none;
 }
 
 .team-showcase {
@@ -1108,6 +1079,22 @@ h2 {
   text-align: center;
 }
 
+.contact-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: #d4ddff;
+  background: rgba(7, 11, 28, 0.7);
+  font-size: 1.35rem;
+  line-height: 1;
+  animation: contactArrowMove 1.4s ease-in-out infinite;
+}
+
 .cta .section-heading {
   margin: 0 auto;
 }
@@ -1152,6 +1139,17 @@ h2 {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes contactArrowMove {
+  0%,
+  100% {
+    transform: translateY(-4px);
+  }
+
+  50% {
+    transform: translateY(5px);
   }
 }
 
@@ -1364,8 +1362,9 @@ h2 {
   }
 
   .hero-logo {
-    width: min(100%, 290px);
-    max-height: 290px;
+    width: min(100%, 350px);
+    max-width: 100%;
+    max-height: 350px;
   }
 
   .stats-grid,

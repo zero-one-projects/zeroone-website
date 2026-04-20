@@ -169,11 +169,14 @@ function App() {
         {renderSections()}
 
         <section className="section cta reveal-section reveal-delay-4" id={companyProfile.contact.id}>
+          <span className="contact-arrow" aria-hidden="true">
+            ↓
+          </span>
           <SectionHeading
             title={companyProfile.contact.title}
             intro={companyProfile.contact.description}
           />
-          <a className="btn btn-solid" href={`mailto:${companyProfile.contact.email}`}>
+          <a className="btn btn-outline" href={`mailto:${companyProfile.contact.email}`}>
             {companyProfile.contact.email}
           </a>
         </section>
