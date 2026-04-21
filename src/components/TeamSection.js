@@ -1,3 +1,5 @@
+import teamMarkerIcon from '../assets/icons/s.png';
+
 function TeamSection({ id, members }) {
   const teamOrder = ['Allen', 'Riza', 'PJ', 'Khalid', 'Ridz'];
   const orderedMembers = [...members].sort((a, b) => {
@@ -20,7 +22,7 @@ function TeamSection({ id, members }) {
             <div className="team-avatar-frame">
               <img className="team-avatar" src={member.image} alt={member.name} />
             </div>
-            <span className="team-dot" aria-hidden="true" />
+            <img className="team-dot" src={teamMarkerIcon} alt="" aria-hidden="true" />
             <h3>{member.name}</h3>
             <p className="team-role">{member.role}</p>
           </article>

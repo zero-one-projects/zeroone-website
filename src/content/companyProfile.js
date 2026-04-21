@@ -6,8 +6,8 @@ import paulJohnPeligroImage from '../assets/team/pj.png';
 
 export const companyProfile = {
   brand: {
-    eyebrow: 'ZeroOne | IT Solutions',
-    name: 'ZeroOne IT Solutions'
+    eyebrow: 'ZeroOne | Information Technology Inc.',
+    name: 'ZeroOne IT Inc.'
   },
   hero: {
     title: {
@@ -15,7 +15,7 @@ export const companyProfile = {
       highlight: 'Deployment'
     },
     paragraphs: [
-      'ZeroOne IT Solutions builds intelligent digital experiences that drive business growth.',
+      'ZeroOne IT Inc. builds intelligent digital experiences that drive business growth.',
       'From web and mobile applications to AI-powered platforms, we deliver reliable, scalable solutions engineered for long-term success.'
     ],
     primaryAction: {
@@ -33,9 +33,9 @@ export const companyProfile = {
     { label: 'Engineering Focus', value: 'Reliable and Scalable', icon: 'shield' }
   ],
   projectCounters: [
-    { label: 'Ongoing Projects', value: '07', icon: 'pulse' },
+    { label: 'Ongoing Projects', value: '08', icon: 'pulse' },
     { label: 'Completed Projects', value: '52', icon: 'check' },
-    { label: 'Referred Clients', value: '28', icon: 'users' },
+    { label: 'Referred Clients', value: '29', icon: 'users' },
     { label: 'Years of Expertise', value: '13', icon: 'award' }
   ],
   sections: [
@@ -44,7 +44,7 @@ export const companyProfile = {
       type: 'text',
       title: 'About Us',
       paragraphs: [
-        'ZeroOne IT Solutions is a digital product development company specializing in web, mobile, and AI-powered solutions. We help businesses transform ideas into high-performance digital products that are reliable, scalable, and built for growth.',
+        'ZeroOne IT Inc. is a digital product development company specializing in web, mobile, and AI-powered solutions. We help businesses transform ideas into high-performance digital products that are reliable, scalable, and built for growth.',
         'Our team combines strategic thinking, modern technologies, and user-focused design to deliver solutions that solve real business challenges. From concept to deployment, we ensure every product is engineered with precision, clarity, and long-term success in mind.',
         "Let's build something impactful together."
       ],
@@ -79,7 +79,7 @@ export const companyProfile = {
       type: 'text',
       title: 'Mission',
       paragraphs: [
-        'Our mission is to design and build reliable software solutions that solve real business challenges. With over 13 years of experience, ZeroOne IT Solutions works closely with clients to deliver custom web, mobile, and enterprise systems that improve efficiency, add value, and support long-term growth.'
+        'Our mission is to design and build reliable software solutions that solve real business challenges. With over 13 years of experience, ZeroOne IT Inc. works closely with clients to deliver custom web, mobile, and enterprise systems that improve efficiency, add value, and support long-term growth.'
       ]
     },
     {
@@ -156,7 +156,7 @@ export const companyProfile = {
       type: 'team',
       title: 'Team',
       intro:
-        'Meet the people currently leading ZeroOne IT Solutions across engineering, delivery, and digital product execution.',
+        'Meet the people currently leading ZeroOne IT Inc. across engineering, delivery, and digital product execution.',
       members: [
         {
           name: 'PJ',

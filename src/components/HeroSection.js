@@ -121,6 +121,7 @@ function AnimatedCounter({ value, shouldAnimate }) {
 function HeroSection({ brand, hero, stats, projectCounters = [], logo }) {
   const [countersVisible, setCountersVisible] = useState(false);
   const countersRef = useRef(null);
+  const eyebrowParts = brand.eyebrow.split('|').map((part) => part.trim());
 
   useEffect(() => {
     const node = countersRef.current;
@@ -147,7 +148,9 @@ function HeroSection({ brand, hero, stats, projectCounters = [], logo }) {
       <div className="hero-layout">
         <div className="hero-content hero-copy-stack">
           <p className="eyebrow">
-            {brand.eyebrow}
+            <span>{eyebrowParts[0]}</span>
+            <span className="eyebrow-separator" aria-hidden="true" />
+            <span>{eyebrowParts[1]}</span>
           </p>
           <h1 className="hero-title">
             <span className="hero-title-prefix">{hero.title.prefix}</span>

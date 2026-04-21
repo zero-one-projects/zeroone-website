@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import logo from './assets/company/logo.png';
+import logo from './assets/company/canva.png';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import CardSection from './components/CardSection';
@@ -79,12 +79,7 @@ function App() {
       id,
       label: title
     }));
-  const aboutIndex = baseNavigation.findIndex((item) => item.id === 'about');
   const navigation = [...baseNavigation];
-  navigation.splice(aboutIndex >= 0 ? aboutIndex + 1 : navigation.length, 0, {
-    id: 'policy',
-    label: 'Policy'
-  });
 
   const renderSections = () => {
     const sections = [];
@@ -129,7 +124,6 @@ function App() {
             </div>
             {section.highlightStatement ? (
               <ImpactStatement
-                id="policy"
                 statement={section.highlightStatement}
                 className="about-impact-statement"
               />
