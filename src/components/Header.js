@@ -9,7 +9,7 @@ function Header({ brand, navigation, contactHref }) {
 
       <nav className="nav" aria-label="Primary">
         {navigation.map((item) => (
-          <a key={item.id} className="nav-link" href={`#${item.id}`}>
+          <a key={item.id} className="nav-link" href={item.href ?? `#${item.id}`}>
             {item.label}
           </a>
         ))}

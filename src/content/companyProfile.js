@@ -1,7 +1,5 @@
 import alKhalidPalahuddinImage from '../assets/team/Khalid.jpg';
-import allenaImage from '../assets/team/allen.jpg';
 import alrizaPalahuddinImage from '../assets/team/riza.jpeg';
-import ridzImage from '../assets/team/payang.jpg';
 import paulJohnPeligroImage from '../assets/team/pj.png';
 
 export const companyProfile = {
@@ -24,7 +22,7 @@ export const companyProfile = {
     },
     secondaryAction: {
       label: 'Learn More',
-      href: '#about'
+      href: '#about-us'
     }
   },
   stats: [
@@ -49,7 +47,7 @@ export const companyProfile = {
         "Let's build something impactful together."
       ],
       highlightStatement: {
-        lead: 'Software solutions designed to simplify processes and drive results.',
+        lead: 'Struggling with outdated systems and manual processes?',
         lines: [
           [
             { text: 'We ', tone: 'base' },
@@ -63,13 +61,59 @@ export const companyProfile = {
             { text: ' processes and', tone: 'base' }
           ],
           [{ text: 'drive results.', tone: 'violet' }]
-        ]
+        ],
+        problemSection: {
+          eyebrow: 'Common Challenges',
+          title: 'Operational bottlenecks should not hold your business back.',
+          intro:
+            'Many growing businesses lose time, visibility, and momentum because critical workflows still depend on disconnected tools and manual work.',
+          items: [
+            'Manual tracking of sales, inventory, and daily operations',
+            'Slow, error-prone processes that create unnecessary delays',
+            'Limited real-time reporting and decision-making visibility',
+            'Disconnected systems across branches, teams, or departments',
+            'Operational setups that become harder to scale over time',
+            'Too little automation to support consistent growth'
+          ],
+          emotionalLine:
+            "If these challenges sound familiar, you're not alone. They affect productivity, customer experience, and long-term growth.",
+          transition:
+            'We help businesses move from manual operations to streamlined, scalable digital systems built for clarity, efficiency, and growth.',
+          solutionSection: {
+            eyebrow: 'How We Work',
+            title: 'A practical process built around your business.',
+            intro:
+              'We do not force businesses into generic tools. We study how your operations work, identify what slows them down, and build solutions that fit your real workflow.',
+            steps: [
+              {
+                title: 'Discover',
+                description:
+                  'We learn about your current process, bottlenecks, goals, and the day-to-day challenges your team faces.'
+              },
+              {
+                title: 'Plan',
+                description:
+                  'We define the right solution, map the workflow, and recommend features that bring the most value first.'
+              },
+              {
+                title: 'Build',
+                description:
+                  'We design and develop a reliable system tailored to your operations, whether for web, mobile, desktop, or internal business use.'
+              },
+              {
+                title: 'Improve',
+                description:
+                  'We refine, support, and scale the solution so it continues to perform as your business grows.'
+              }
+            ]
+          }
+        }
       }
     },
     {
       id: 'vision',
       type: 'text',
-      title: 'Vision',
+      title: 'The Future We’re Creating',
       paragraphs: [
         'To be a trusted technology partner that delivers practical, innovative, and scalable digital solutions, helping organizations thrive in an increasingly digital world.'
       ]
@@ -77,7 +121,7 @@ export const companyProfile = {
     {
       id: 'mission',
       type: 'text',
-      title: 'Mission',
+      title: 'Our Approach',
       paragraphs: [
         'Our mission is to design and build reliable software solutions that solve real business challenges. With over 13 years of experience, ZeroOne IT Inc. works closely with clients to deliver custom web, mobile, and enterprise systems that improve efficiency, add value, and support long-term growth.'
       ]
@@ -160,28 +204,18 @@ export const companyProfile = {
       members: [
         {
           name: 'PJ',
-          role: 'Senior Lead Software Developer & IT Consultant',
+          role: 'Chief Executive Officer (CEO)\nSenior Lead Software Developer & IT Consultant',
           image: paulJohnPeligroImage
         },
         {
           name: 'Riza',
-          role: 'Desktop Engineer & Software Developer',
+          role: 'Account Manager\nDesktop Engineer & Software Developer',
           image: alrizaPalahuddinImage
         },
         {
-          name: 'Khalid',
-          role: 'Desktop Engineer & Software Developer',
+          name: 'AL',
+          role: 'Business Development Officer (BDO)\nMid-Level Software Developer',
           image: alKhalidPalahuddinImage
-        },
-        {
-          name: 'Allen',
-          role: 'Office Admin',
-          image: allenaImage
-        },
-        {
-          name: 'Ridz',
-          role: 'Product Marketing',
-          image: ridzImage
         }
       ]
     }

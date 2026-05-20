@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import logo from './assets/company/canva.png';
+import secLogo from './assets/company/sec.jpg';
+import birLogo from './assets/company/BIR.png';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import CardSection from './components/CardSection';
 import TeamSection from './components/TeamSection';
 import TextSection from './components/TextSection';
 import ImpactStatement from './components/ImpactStatement';
-import ProcessCycle from './components/ProcessCycle';
-import SectionHeading from './components/SectionHeading';
 import { companyProfile } from './content/companyProfile';
 
 const sectionRenderers = {
@@ -55,6 +55,47 @@ function renderSection(section) {
 
 function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [solutionCardsVisible, setSolutionCardsVisible] = useState(false);
+  const solutionProcessRef = useRef(null);
+  const solutionCardsInViewRef = useRef(false);
+  const footerLinks = [
+    { label: 'Services', href: '#services' },
+    { label: 'Solutions', href: '#services' },
+    { label: 'About', href: '#about-us' },
+    { label: 'Contact', href: `mailto:${companyProfile.contact.email}` }
+  ];
+  const socialLinks = [
+    { label: 'Facebook', href: 'https://www.facebook.com/zeroone.it.inc' },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/company/112718341/admin/dashboard/' },
+    { label: 'Instagram', href: 'https://www.instagram.com/zerooneit.inc/' }
+  ];
+
+  useEffect(() => {
+    const scrollToHashTarget = () => {
+      const { hash } = window.location;
+
+      if (!hash) {
+        return;
+      }
+
+      const target = document.querySelector(hash);
+
+      if (!target) {
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    };
+
+    scrollToHashTarget();
+    window.addEventListener('hashchange', scrollToHashTarget);
+
+    return () => {
+      window.removeEventListener('hashchange', scrollToHashTarget);
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -69,6 +110,40 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const node = solutionProcessRef.current;
+
+    if (!node) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isIntersecting = entries.some((entry) => entry.isIntersecting);
+
+        if (isIntersecting && !solutionCardsInViewRef.current) {
+          solutionCardsInViewRef.current = true;
+          setSolutionCardsVisible(true);
+        }
+
+        if (!isIntersecting && solutionCardsInViewRef.current) {
+          solutionCardsInViewRef.current = false;
+          setSolutionCardsVisible(false);
+        }
+      },
+      {
+        threshold: 0.22,
+        rootMargin: '0px 0px -10% 0px'
+      }
+    );
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -77,9 +152,10 @@ function App() {
     .filter(section => section.id !== 'vision' && section.id !== 'mission')
     .map(({ id, title }) => ({
       id,
-      label: title
+      label: title,
+      href: id === 'about' ? '#about-us' : `#${id}`
     }));
-  const navigation = [...baseNavigation];
+  const navigation = baseNavigation;
 
   const renderSections = () => {
     const sections = [];
@@ -93,7 +169,12 @@ function App() {
         const hasVision = visionSection && visionSection.id === 'vision';
         const hasMission = missionSection && missionSection.id === 'mission';
         sections.push(
-          <section key="about-vision-mission" className="section reveal-section reveal-delay-2" id="about">
+          <section
+            key="about-vision-mission"
+            className="section reveal-section reveal-delay-2"
+            id="about-us"
+          >
+            <div id="about" aria-hidden="true" />
             <div className="about-vision-mission-grid">
               <div className="about-column">
                 <TextSection
@@ -123,12 +204,81 @@ function App() {
               </div>
             </div>
             {section.highlightStatement ? (
-              <ImpactStatement
-                statement={section.highlightStatement}
-                className="about-impact-statement"
-              />
+              <>
+                <ImpactStatement
+                  statement={section.highlightStatement}
+                  className="about-impact-statement"
+                />
+                {section.highlightStatement.problemSection ? (
+                  <section className="problem-solution-block">
+                    <div className="problem-solution-header">
+                      <p className="problem-eyebrow">
+                        {section.highlightStatement.problemSection.eyebrow}
+                      </p>
+                      <h3 className="problem-title">
+                        {section.highlightStatement.problemSection.title}
+                      </h3>
+                      <p className="problem-intro">
+                        {section.highlightStatement.problemSection.intro}
+                      </p>
+                    </div>
+
+                    <div className="problem-list" role="list">
+                      {section.highlightStatement.problemSection.items.map((item) => (
+                        <article key={item} className="problem-card" role="listitem">
+                          <span className="problem-icon" aria-hidden="true">
+                            ×
+                          </span>
+                          <p>{item}</p>
+                        </article>
+                      ))}
+                    </div>
+
+                    <p className="problem-emotional-line">
+                      {section.highlightStatement.problemSection.emotionalLine}
+                    </p>
+
+                    <div className="problem-transition">
+                      <span className="problem-transition-icon" aria-hidden="true">
+                        →
+                      </span>
+                      <p>{section.highlightStatement.problemSection.transition}</p>
+                    </div>
+
+                    {section.highlightStatement.problemSection.solutionSection ? (
+                      <section className="solution-process-block" ref={solutionProcessRef}>
+                        <div className="solution-process-header">
+                          <p className="solution-process-eyebrow">
+                            {section.highlightStatement.problemSection.solutionSection.eyebrow}
+                          </p>
+                          <h3 className="solution-process-title">
+                            {section.highlightStatement.problemSection.solutionSection.title}
+                          </h3>
+                          <p className="solution-process-intro">
+                            {section.highlightStatement.problemSection.solutionSection.intro}
+                          </p>
+                        </div>
+
+                        <div className="solution-process-grid" role="list">
+                          {section.highlightStatement.problemSection.solutionSection.steps.map((step, index) => (
+                            <article
+                              key={step.title}
+                              className={`solution-step-card reveal-flip-card ${solutionCardsVisible ? 'is-visible' : ''}`}
+                              role="listitem"
+                              style={{ '--stagger-index': index }}
+                            >
+                              <span className="solution-step-number">0{index + 1}</span>
+                              <h4>{step.title}</h4>
+                              <p>{step.description}</p>
+                            </article>
+                          ))}
+                        </div>
+                      </section>
+                    ) : null}
+                  </section>
+                ) : null}
+              </>
             ) : null}
-            <ProcessCycle />
           </section>
         );
         i += 1 + (hasVision ? 1 : 0) + (hasMission ? 1 : 0);
@@ -162,18 +312,77 @@ function App() {
 
         {renderSections()}
 
-        <section className="section cta reveal-section reveal-delay-4" id={companyProfile.contact.id}>
-          <span className="contact-arrow" aria-hidden="true">
-            ↓
-          </span>
-          <SectionHeading
-            title={companyProfile.contact.title}
-            intro={companyProfile.contact.description}
-          />
-          <a className="btn btn-outline" href={`mailto:${companyProfile.contact.email}`}>
-            {companyProfile.contact.email}
-          </a>
-        </section>
+        <footer
+          className="section site-footer reveal-section reveal-delay-4"
+          id={companyProfile.contact.id}
+        >
+          <div className="footer-grid">
+            <div className="footer-intro">
+              <p className="footer-kicker">{companyProfile.brand.name}</p>
+              <h2 className="footer-title">Build software that fits the way your business works.</h2>
+              <p className="footer-copy">
+                We create modern websites, internal systems, and custom digital tools for teams
+                that need reliable technology built around real operations.
+              </p>
+              <div className="footer-trustmarks" aria-label="Registration badges">
+                <span className="footer-trustmark">
+                  <img className="footer-trustmark-logo" src={secLogo} alt="SEC logo" />
+                  SEC Registered
+                </span>
+                <span className="footer-trustmark">
+                  <img className="footer-trustmark-logo" src={birLogo} alt="BIR logo" />
+                  BIR Registered
+                </span>
+              </div>
+            </div>
+
+            <div className="footer-panel">
+              <div className="footer-panel-section">
+                <p className="footer-label">Email</p>
+                <a className="footer-value" href={`mailto:${companyProfile.contact.email}`}>
+                  {companyProfile.contact.email}
+                </a>
+              </div>
+              <div className="footer-panel-section">
+                <p className="footer-label">Phone</p>
+                <a className="footer-value" href="tel:+639190797137">
+                  +63 919 079 7137
+                </a>
+              </div>
+              <div className="footer-panel-section">
+                <p className="footer-label">Based In</p>
+                <p className="footer-value">Philippines</p>
+              </div>
+              <div className="footer-panel-section">
+                <p className="footer-label">What We Build</p>
+                <p className="footer-value">
+                  Custom software, SaaS platforms, websites, and workflow systems
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="footer-bottom">
+            <nav className="footer-nav" aria-label="Footer">
+              {footerLinks.map((item) => (
+                <a key={item.label} href={item.href}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+            <nav className="footer-social-nav" aria-label="Social links">
+              {socialLinks.map((item) => (
+                <a key={item.label} href={item.href} target="_blank" rel="noreferrer">
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+            <p className="footer-copyright">© 2026 ZeroOne IT Inc. All rights reserved.</p>
+            <a className="footer-cta" href={`mailto:${companyProfile.contact.email}`}>
+              Start a Project
+            </a>
+          </div>
+        </footer>
       </main>
 
       <button
