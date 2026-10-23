@@ -133,7 +133,7 @@ export const companyProfile = {
       title: 'Capabilities',
       variant: 'swipe',
       intro:
-        'We build practical digital solutions for businesses, schools, retail operations, and enterprise teams, from internal systems to customer-facing platforms.',
+        'We build practical digital solutions that simplify operations and support business growth.',
       outro: '...and other custom software solutions tailored to your business needs.',
       cards: [
         {

@@ -727,7 +727,8 @@ export default function App() {
             <div className="landing-contact-form-column">
               <div className="landing-contact-form-copy">
                 <p className="landing-contact-form-heading">
-                  Build software that fits the way your business works.
+                  <span>Build software that fits</span>{' '}
+                  <span>the way your business works.</span>
                 </p>
               </div>
 
