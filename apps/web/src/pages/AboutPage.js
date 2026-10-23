@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import logo from '../assets/company/canva.png';
 import secLogo from '../assets/company/sec.jpg';
 import birLogo from '../assets/company/BIR.png';
 import ChatWidget from '../components/ChatWidget';
@@ -12,6 +11,7 @@ import TextSection from '../components/TextSection';
 import ImpactStatement from '../components/ImpactStatement';
 import { companyProfile } from '../content/companyProfile';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
+import useScrollReveal from '../hooks/useScrollReveal';
 
 const aboutRoute = '/about-us';
 const companyProfileHomeUrl = '/';
@@ -154,7 +154,10 @@ function mergeSection(defaultSection, overrideContent) {
   };
 
   if (Array.isArray(overrideContent.cards)) {
-    nextSection.cards = overrideContent.cards;
+    nextSection.cards = overrideContent.cards.map((card) => ({
+      ...defaultSection.cards?.find((defaultCard) => defaultCard.title === card.title),
+      ...card
+    }));
   }
 
   if (Array.isArray(overrideContent.members)) {
@@ -183,11 +186,18 @@ function mergeAboutContent(profile, overrides) {
 
 function App() {
   const [aboutContentOverrides, setAboutContentOverrides] = useState([]);
+  const aboutSectionRef = useRef(null);
+  useScrollReveal(aboutSectionRef, aboutContentOverrides);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [solutionCardsVisible, setSolutionCardsVisible] = useState(false);
   const solutionProcessRef = useRef(null);
   const solutionCardsInViewRef = useRef(false);
-  const pageProfile = mergeAboutContent(companyProfile, aboutContentOverrides);
+  const mergedProfile = mergeAboutContent(companyProfile, aboutContentOverrides);
+  const pageProfile = {
+    ...mergedProfile,
+    // Keep these sections saved while hiding them from the public page.
+    sections: mergedProfile.sections.filter((section) => !['business-partner', 'team', 'vision', 'mission'].includes(section.id))
+  };
   const footerCapabilities = [
     { label: 'Custom Software', href: companyProfileServicesUrl },
     { label: 'AI Automation', href: companyProfileServicesUrl },
@@ -198,7 +208,7 @@ function App() {
   const footerLinks = [
     { label: 'Home', href: companyProfileHomeUrl },
     { label: 'About', href: aboutRoute },
-    { label: 'Services', href: companyProfileServicesUrl },
+    { label: 'Capabilities', href: companyProfileServicesUrl },
     { label: 'Contact', href: `${aboutRoute}#${pageProfile.contact.id}` },
     { label: 'Facebook', href: 'https://www.facebook.com/zeroone.it.inc' }
   ];
@@ -346,24 +356,27 @@ function App() {
             key="about-vision-mission"
             className="section reveal-section reveal-delay-2"
             id="about-us"
+            ref={aboutSectionRef}
           >
             <div id="about" aria-hidden="true" />
-            <div className="about-vision-mission-grid">
+            <div className={`about-vision-mission-grid${hasVision || hasMission ? '' : ' about-overview-only'}`}>
               <div className="about-column">
                 <TextSection
                   id={section.id}
-                  title={section.title}
+                  title="Who We Are"
                   paragraphs={section.paragraphs}
                   noWrapper={true}
+                  scrollReveal
                 />
               </div>
-              <div className="vision-mission-column">
+              {hasVision || hasMission ? <div className="vision-mission-column">
                 {hasVision ? (
                   <TextSection
                     id={visionSection.id}
                     title={visionSection.title}
                     paragraphs={visionSection.paragraphs}
                     noWrapper={true}
+                    scrollReveal
                   />
                 ) : null}
                 {hasMission ? (
@@ -372,82 +385,46 @@ function App() {
                     title={missionSection.title}
                     paragraphs={missionSection.paragraphs}
                     noWrapper={true}
+                    scrollReveal
                   />
                 ) : null}
-              </div>
+              </div> : null}
             </div>
             {section.highlightStatement ? (
               <>
                 <ImpactStatement
                   statement={section.highlightStatement}
                   className="about-impact-statement"
+                  scrollReveal
                 />
-                {section.highlightStatement.problemSection ? (
-                  <section className="problem-solution-block">
-                    <div className="problem-solution-header">
-                      <p className="problem-eyebrow">
-                        {section.highlightStatement.problemSection.eyebrow}
+                {section.highlightStatement.problemSection?.solutionSection ? (
+                  <section className="solution-process-block" ref={solutionProcessRef}>
+                    <div className="solution-process-header">
+                      <p className="solution-process-eyebrow">
+                        {section.highlightStatement.problemSection.solutionSection.eyebrow}
                       </p>
-                      <h3 className="problem-title">
-                        {section.highlightStatement.problemSection.title}
+                      <h3 className="solution-process-title">
+                        {section.highlightStatement.problemSection.solutionSection.title}
                       </h3>
-                      <p className="problem-intro">
-                        {section.highlightStatement.problemSection.intro}
+                      <p className="solution-process-intro">
+                        {section.highlightStatement.problemSection.solutionSection.intro}
                       </p>
                     </div>
 
-                    <div className="problem-list" role="list">
-                      {section.highlightStatement.problemSection.items.map((item) => (
-                        <article key={item} className="problem-card" role="listitem">
-                          <span className="problem-icon" aria-hidden="true">
-                            ×
-                          </span>
-                          <p>{item}</p>
+                    <div className="solution-process-grid" role="list">
+                      {section.highlightStatement.problemSection.solutionSection.steps.map((step, index) => (
+                        <article
+                          key={step.title}
+                          className={`solution-step-card reveal-flip-card ${solutionCardsVisible ? 'is-visible' : ''}`}
+                          role="listitem"
+                          style={{ '--stagger-index': index }}
+                        >
+                          <span className="solution-step-number">0{index + 1}</span>
+                          <h4>{step.title}</h4>
+                          <p>{step.description}</p>
                         </article>
                       ))}
                     </div>
-
-                    <p className="problem-emotional-line">
-                      {section.highlightStatement.problemSection.emotionalLine}
-                    </p>
-
-                    <div className="problem-transition">
-                      <span className="problem-transition-icon" aria-hidden="true">
-                        →
-                      </span>
-                      <p>{section.highlightStatement.problemSection.transition}</p>
-                    </div>
-
-                    {section.highlightStatement.problemSection.solutionSection ? (
-                      <section className="solution-process-block" ref={solutionProcessRef}>
-                        <div className="solution-process-header">
-                          <p className="solution-process-eyebrow">
-                            {section.highlightStatement.problemSection.solutionSection.eyebrow}
-                          </p>
-                          <h3 className="solution-process-title">
-                            {section.highlightStatement.problemSection.solutionSection.title}
-                          </h3>
-                          <p className="solution-process-intro">
-                            {section.highlightStatement.problemSection.solutionSection.intro}
-                          </p>
-                        </div>
-
-                        <div className="solution-process-grid" role="list">
-                          {section.highlightStatement.problemSection.solutionSection.steps.map((step, index) => (
-                            <article
-                              key={step.title}
-                              className={`solution-step-card reveal-flip-card ${solutionCardsVisible ? 'is-visible' : ''}`}
-                              role="listitem"
-                              style={{ '--stagger-index': index }}
-                            >
-                              <span className="solution-step-number">0{index + 1}</span>
-                              <h4>{step.title}</h4>
-                              <p>{step.description}</p>
-                            </article>
-                          ))}
-                        </div>
-                      </section>
-                    ) : null}
                   </section>
                 ) : null}
               </>
@@ -467,7 +444,7 @@ function App() {
   };
 
   return (
-    <div className="site">
+    <div className="site about-page">
       <Seo
         title={aboutTitle}
         description={aboutDescription}
@@ -486,7 +463,6 @@ function App() {
           hero={pageProfile.hero}
           stats={pageProfile.stats}
           projectCounters={pageProfile.projectCounters}
-          logo={logo}
         />
 
         {renderSections()}
@@ -496,7 +472,7 @@ function App() {
             <div className="landing-footer-main">
               <div className="landing-footer-brand">
                 <a className="landing-footer-wordmark" href={companyProfileHomeUrl} aria-label="ZeroOne home">
-                  <span className="landing-footer-wordmark-primary">Zero One IT Inc.</span>
+                  <span className="landing-footer-wordmark-primary">Zero<span className="brand-one">One</span> IT <span className="brand-one">Inc.</span></span>
                 </a>
                 <p className="landing-footer-description">
                   Scaling operations requires software that works for operators. ZeroOne

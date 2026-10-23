@@ -1,0 +1,104 @@
+/* ZeroOne project showcase: editorial details and an interactive product gallery. */
+.landing-page-shell { overflow: clip; }
+.landing-featured-projects-shell { isolation: isolate; padding-block: 88px; border-color: #ffffff1a; }
+.landing-featured-projects-shell::before {
+  content: ''; position: absolute; inset: 0 auto 0 50%; width: 100vw;
+  transform: translateX(-50%); z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse 85vw 800px at 65% 30%, #ffffff08, transparent 70%), #1b1b1e;
+  mask-image: linear-gradient(180deg, transparent, #000 160px, #000 calc(100% - 160px), transparent);
+}
+.landing-featured-projects-header { justify-content: space-between; align-items: flex-end; text-align: left; gap: 40px; margin-bottom: 48px; }
+.landing-featured-projects-header .landing-footer-kicker { font-weight: 700; }
+.landing-featured-projects-header > div:first-child { flex: 1 1 0; width: 100%; min-width: 0; max-width: none; container-type: inline-size; }
+.landing-featured-projects-header .landing-featured-projects-title { max-width: none; font-size: min(2.5rem, 5.5cqw); white-space: nowrap; }
+.landing-featured-projects-title, .landing-featured-projects-lead { margin-inline: 0; }
+.landing-featured-projects-actions { display: flex; }
+.landing-featured-projects-contact { border-color: #555; }
+.landing-projects-scroll-hint { display: flex; justify-content: space-between; margin: 0 0 24px; color: #aaa; font-size: 0.875rem; }
+.landing-project-stack { display: grid; gap: 48px; }
+.landing-project-stack-slide { position: relative; min-width: 0; scroll-margin-top: 112px; }
+/* Centered introduction and layered browser previews keep the original showcase feel. */
+.landing-project-stack .landing-featured-project-card {
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: stretch; gap: 32px; padding: 40px 36px 28px;
+  border: 0; border-radius: 12px; overflow: hidden; transform-origin: center top;
+  background: radial-gradient(ellipse at 48% 0%, #45454a 0%, transparent 64%), linear-gradient(145deg, #27272b, #121214 80%);
+  box-shadow: 0 20px 56px #00000055;
+}
+.landing-project-info { min-width: 0; text-align: center; }
+.landing-project-meta { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.landing-project-info .landing-project-category { margin: 0; color: #bdbdc7; font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.landing-project-stack .landing-featured-project-status {
+  position: static; min-height: 24px; padding: 2px 8px; background: #ffffff06;
+  color: #e3e3ea; border: 0; font-size: 0.625rem; font-weight: 400; letter-spacing: 0.08em;
+}
+/* Use one typography rule for project titles and the referenced service headings. */
+.about-page #services .services-cap-title,
+.landing-project-stack .landing-featured-project-name {
+  font-family: var(--font-site, Arial, Helvetica, sans-serif);
+  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.landing-project-stack .landing-featured-project-name { margin: 0; color: #f5f5f5; text-align: center; }
+.landing-project-stack .landing-featured-project-description { display: block; margin: 20px auto 0; max-width: 66ch; color: #c3c3cd; font-size: 1rem; line-height: 1.65; overflow: visible; }
+.landing-project-stack .landing-featured-project-tags { gap: 8px; }
+.landing-project-stack .landing-featured-project-tags span { padding: 0 10px; background: #ffffff04; color: #bdbdc7; border-color: #ffffff18; font-size: 0.6875rem; }
+.landing-project-stack .landing-featured-project-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 0; padding: 0; border: 0; }
+.landing-project-stack .landing-featured-project-link { color: #eeeef5; font-weight: 400; font-size: 0.875rem; gap: 12px; }
+.landing-project-stack .landing-featured-project-link:hover { color: #b7bfff; }
+.landing-project-stack .landing-featured-project-link.landing-is-pending { color: #b0b0bc; }
+.landing-project-gallery { position: relative; min-width: 0; width: 90%; justify-self: center; align-self: center; height: clamp(250px, 33vw, 460px); }
+.landing-browser-preview { position: absolute; overflow: hidden; display: flex; flex-direction: column; border: 1px solid #ffffff18; border-radius: 7px; background: #161619; box-shadow: 0 18px 42px #0006; }
+.landing-browser-preview--main { width: 70%; height: 100%; left: 15%; top: 0; z-index: 2; }
+.landing-browser-preview--left, .landing-browser-preview--right { width: 45%; height: 76%; opacity: 0.64; }
+.landing-browser-preview--left { left: 0; top: 15%; }
+.landing-browser-preview--right { right: 0; top: 9%; }
+.landing-browser-toolbar { display: flex; align-items: center; justify-content: space-between; height: 28px; flex-shrink: 0; gap: 12px; padding: 0 12px; background: #303035; border-bottom: 1px solid #ffffff0d; }
+.landing-browser-lights { display: flex; gap: 4px; }
+.landing-browser-lights i { width: 5px; height: 5px; border-radius: 50%; background: #aaaab4; }
+.landing-browser-lights i:nth-child(2) { opacity: 0.65; }
+.landing-browser-lights i:nth-child(3) { opacity: 0.4; }
+.landing-browser-address { min-width: 0; max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.625rem; color: #bdbdc7; }
+.landing-browser-expand { font-size: 0.75rem; color: #aaaab5; }
+.landing-browser-viewport { flex: 1; background: #151518; min-height: 0; }
+.landing-browser-viewport img { display: block; width: 100%; height: 100%; object-fit: contain; }
+@media (prefers-reduced-motion: no-preference) {
+  .landing-project-stack-slide { position: sticky; top: var(--stack-top, 112px); }
+  .landing-project-stack .landing-featured-project-card { transform: scale(var(--stack-scale, 1)); filter: brightness(var(--stack-brightness, 1)); will-change: transform, filter; }
+}
+@media (min-width: 901px) and (min-height: 800px) and (prefers-reduced-motion: no-preference) {
+  .landing-project-stack { gap: 64px; }
+  .landing-project-stack .landing-featured-project-card { height: min(840px, calc(100svh - 160px)); }
+  .landing-project-gallery { height: 90%; max-height: 460px; min-height: 0; }
+}
+@media (max-width: 900px) {
+  .landing-project-stack { --stack-offset: 96px; }
+  .landing-project-stack .landing-featured-project-card { padding: 32px 24px 24px; gap: 28px; }
+}
+@media (max-width: 767px) {
+  .about-page #services .services-cap-title,
+  .landing-project-stack .landing-featured-project-name { font-size: 1.125rem; }
+}
+@media (max-width: 600px) {
+  .landing-featured-projects-shell { padding-block: 56px; }
+  .landing-featured-projects-header { align-items: flex-start; gap: 24px; margin-bottom: 36px; }
+  .landing-featured-projects-actions { width: auto; }
+  .landing-project-stack { gap: 32px; }
+  .landing-project-stack .landing-featured-project-card { padding: 28px 18px 24px; }
+  .landing-project-stack .landing-featured-project-name { font-size: 1.125rem; }
+  .landing-project-stack .landing-featured-project-description { margin-top: 16px; font-size: 0.9375rem; }
+  .landing-project-gallery { width: 94%; height: 210px; margin-inline: 0; }
+  .landing-browser-preview--main { width: 88%; left: 6%; height: 86%; top: 7%; }
+  .landing-browser-preview--left, .landing-browser-preview--right { height: 72%; }
+  .landing-browser-preview--left { top: 0; }
+  .landing-browser-preview--right { top: 28%; }
+  .landing-browser-toolbar { height: 22px; padding-inline: 7px; gap: 5px; }
+  .landing-browser-address { font-size: 0.5rem; }
+  .landing-project-stack .landing-featured-project-footer { align-items: center; flex-direction: column; gap: 20px; }
+  .landing-project-stack .landing-featured-project-tags { justify-content: center; }
+}

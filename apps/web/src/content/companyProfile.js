@@ -130,7 +130,7 @@ export const companyProfile = {
     {
       id: 'services',
       type: 'cards',
-      title: 'Services',
+      title: 'Capabilities',
       variant: 'swipe',
       intro:
         'We build practical digital solutions for businesses, schools, retail operations, and enterprise teams, from internal systems to customer-facing platforms.',
@@ -138,61 +138,33 @@ export const companyProfile = {
       cards: [
         {
           title: 'Custom Web Application Development',
-          description: 'Responsive portals, dashboards, and scalable business platforms tailored to your needs.'
+          description: 'Business platforms, dashboards, web portals, MIS, ERP, payroll, and management systems',
+          tags: ['Business Platforms', 'Dashboards', 'Web Portals', 'MIS', 'ERP', 'Payroll', 'Management Systems']
         },
         {
           title: 'Mobile App Development',
-          description: 'Mobile applications for business operations, customer engagement, and digital products.'
+          description: 'Android and iOS apps, customer applications, business applications',
+          tags: ['Android', 'iOS', 'Customer Applications', 'Business Applications']
         },
         {
           title: 'Desktop Application Development',
-          description:
-            'We build desktop applications tailored for schools, offices, and specialized operational workflows.'
+          description: 'Desktop software, school systems, office applications',
+          tags: ['Desktop Software', 'School Systems', 'Office Applications']
         },
         {
-          title: 'POS & Inventory Systems',
-          description:
-            '(Flexible plans: Subscription or One-Time Payment)\nIntegrated POS and inventory solutions designed to manage sales, branches, and business reporting efficiently.'
+          title: 'POS, Inventory & Retail Solutions',
+          description: 'POS, inventory, e-commerce, sales tracking, multi-branch management',
+          tags: ['POS', 'Inventory', 'E-Commerce', 'Sales Tracking', 'Multi-Branch Management']
         },
         {
-          title: 'E-Commerce & Retail Solutions',
-          description:
-            'Integrated systems for online stores and physical retail operations, including sales, inventory, and order management.'
+          title: 'Booking & Business Management Systems',
+          description: 'Hotel management, online reservations, appointments, scheduling',
+          tags: ['Hotel Management', 'Online Reservations', 'Appointments', 'Scheduling']
         },
         {
-          title: 'Booking & Reservation Systems',
-          description:
-            'Custom booking and reservation platforms for hotels, services, and appointment-based businesses.'
-        },
-        {
-          title: 'Hotel Management Systems',
-          description:
-            'End-to-end hotel management solutions covering reservations, front desk operations, billing, and reporting.'
-        },
-        {
-          title: 'Payroll Systems',
-          description:
-            'Automated payroll solutions for salary computation, deductions, payslips, and employee records.'
-        },
-        {
-          title: 'Management Information Systems (MIS)',
-          description:
-            'Integrated MIS solutions for HR, enrollment, warehouse operations, and internal monitoring.'
-        },
-        {
-          title: 'Custom ERP Systems',
-          description:
-            'Fully integrated ERP solutions designed to unify finance, operations, HR, inventory, and reporting in one system.'
-        },
-        {
-          title: 'Company Profile & Digital Presence Solutions',
-          description:
-            'Custom digital company profiles, web-based presentations, and business profile systems.'
-        },
-        {
-          title: 'AI and Automation Solutions',
-          description:
-            'AI-powered features, automation, transcription, and intelligent workflow enhancements.'
+          title: 'AI & Business Automation',
+          description: 'AI integrations, workflow automation, intelligent business solutions',
+          tags: ['AI Integrations', 'Workflow Automation', 'Intelligent Business Solutions']
         }
       ]
     },

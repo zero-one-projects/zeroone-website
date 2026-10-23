@@ -1,5 +1,3 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-
 function HeroIcon({ name }) {
   if (name === 'code') {
     return (
@@ -64,96 +62,13 @@ function HeroIcon({ name }) {
   );
 }
 
-function AnimatedCounter({ value, shouldAnimate }) {
-  const target = useMemo(() => Number.parseInt(value, 10), [value]);
-  const width = `${value}`.length;
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    if (!Number.isFinite(target)) {
-      return undefined;
-    }
-
-    if (!shouldAnimate) {
-      setDisplayValue(0);
-      return undefined;
-    }
-
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) {
-      setDisplayValue(target);
-      return undefined;
-    }
-
-    let animationFrame = 0;
-    const duration = 1050;
-    const cycles = 2;
-    const startTime = performance.now();
-
-    const tick = (currentTime) => {
-      const elapsed = currentTime - startTime;
-      const cycleProgress = Math.min((elapsed % duration) / duration, 1);
-      const progress = Math.min(elapsed / (duration * cycles), 1);
-      const activeProgress = progress === 1 ? 1 : cycleProgress;
-      const easedProgress = 1 - Math.pow(1 - activeProgress, 3);
-
-      setDisplayValue(Math.round(target * easedProgress));
-
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(tick);
-      }
-    };
-
-    animationFrame = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(animationFrame);
-    };
-  }, [shouldAnimate, target]);
-
-  if (!Number.isFinite(target)) {
-    return `${value}+`;
-  }
-
-  return `${String(displayValue).padStart(width, '0')}+`;
-}
-
-function HeroSection({ brand, hero, stats, projectCounters = [], logo }) {
-  const [countersVisible, setCountersVisible] = useState(false);
-  const countersRef = useRef(null);
-  const eyebrowParts = brand.eyebrow.split('|').map((part) => part.trim());
-
-  useEffect(() => {
-    const node = countersRef.current;
-    if (!node || !projectCounters.length) {
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        setCountersVisible(entries.some((entry) => entry.isIntersecting));
-      },
-      {
-        threshold: 0.32,
-        rootMargin: '0px 0px -10% 0px'
-      }
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [projectCounters.length]);
-
+function HeroSection({ hero, stats, projectCounters = [] }) {
   return (
     <section className="hero section reveal-section reveal-delay-1">
       <div className="hero-layout">
         <div className="hero-content hero-copy-stack">
-          <p className="eyebrow">
-            <span>{eyebrowParts[0]}</span>
-            <span className="eyebrow-separator" aria-hidden="true" />
-            <span>{eyebrowParts[1]}</span>
-          </p>
           <h1 className="hero-title">
-            <span className="hero-title-prefix">{hero.title.prefix}</span>
+            <span className="hero-title-prefix">{hero.title.prefix}</span>{' '}
             <span className="hero-title-highlight">{hero.title.highlight}</span>
           </h1>
           {hero.paragraphs.map((paragraph) => (
@@ -172,11 +87,10 @@ function HeroSection({ brand, hero, stats, projectCounters = [], logo }) {
           </div>
         </div>
 
-        <aside className="hero-logo-wrap" aria-label="Company logo">
-          <img className="hero-logo" src={logo} alt={brand.name} />
-        </aside>
+
       </div>
 
+      <div className="hero-metrics-panel">
       <div className="stats-grid">
         {stats.map((item, index) => (
           <article
@@ -195,26 +109,20 @@ function HeroSection({ brand, hero, stats, projectCounters = [], logo }) {
 
       {projectCounters.length ? (
         <div
-          ref={countersRef}
-          className={`project-counters-grid ${countersVisible ? 'is-visible' : ''}`}
+          className="project-counters-grid counter-strip is-visible"
         >
-          {projectCounters.map((item, index) => (
-            <article
-              key={item.label}
-              className="counter-card"
-              style={{ '--stagger-index': index }}
-            >
-              <strong>
-                <AnimatedCounter value={item.value} shouldAnimate={countersVisible} />
-              </strong>
-              <span>{item.label}</span>
-              <span className="card-icon counter-card-icon" aria-hidden="true">
-                <HeroIcon name={item.icon} />
-              </span>
-            </article>
-          ))}
+          <div className="project-counter-items">
+            {projectCounters.map((item) => (
+              <article key={item.label} className="counter-card">
+                <strong>{item.value}+</strong>
+                <span>{item.label}</span>
+              </article>
+            ))}
+          </div>
         </div>
       ) : null}
+      </div>
+
     </section>
   );
 }

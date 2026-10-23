@@ -1,12 +1,22 @@
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import logo2 from "../assets/landing/logo2.png";
+import { useEffect, useRef, useState } from "react";
+import heroLogo from '../assets/company/zeroone-dark-logo.png';
+import rcmVenturesProject from '../assets/featured-projects/rcm-ventures-login.png';
+import diamondlinkProject from '../assets/featured-projects/diamond-link-ict.png';
+import diamondlinkClientLogin from '../assets/featured-projects/diamond-link-client-login.png';
+import diamondlinkCareers from '../assets/featured-projects/diamond-link-careers.png';
 import birLogo from "../assets/landing/BIR.png";
 import secLogo from "../assets/landing/sec.jpg";
 import zeroOneLogo from "../assets/landing/zeroone-logo.png";
-import italianHolidaysProject from "../assets/featured-projects/italian-holidays-platform.png";
-import madrasaManagementProject from "../assets/featured-projects/madrasa-management-platform.png";
-import pickleballSaasProject from "../assets/featured-projects/pickleball-saas-platform.png";
-import livePosProject from "../assets/featured-projects/live-pos-platform.png";
+import italianHolidaysProject from "../assets/featured-projects/italian-holidays-login.png";
+import italianHolidaysAbout from "../assets/featured-projects/italian-holidays-about.png";
+import italianHolidaysContact from "../assets/featured-projects/italian-holidays-contact.png";
+import madrasaManagementProject from "../assets/featured-projects/madrasa-management-login.png";
+import madrasaLoginPortal from "../assets/featured-projects/madrasa-login-portal.png";
+import madrasaDashboard from "../assets/featured-projects/madrasa-management-dashboard.png";
+import synccourtProject from "../assets/featured-projects/synccourt-platform.png";
+import livePosProject from "../assets/featured-projects/zeroone-pos-login.png";
+import posDashboard from "../assets/featured-projects/zeroone-pos-dashboard.png";
+import posReports from "../assets/featured-projects/zeroone-pos-reports.png";
 import ChatWidget from "../components/ChatWidget";
 import Header from "../components/Header";
 import Seo, { defaultSiteUrl, toAbsoluteUrl } from "../components/Seo";
@@ -103,66 +113,22 @@ const homeStructuredData = [
   }
 ];
 
-const binaryPatterns = [
-  "0101011010010110",
-  "1010010101101001",
-  "0011010110101101",
-  "1100101001011010",
-  "0101101001100101",
-  "1010110010101011",
-  "<1<1<1<1<1<1<1<1",
-  "<1<1<1<1<1<1<1<1",
-  "<1<1<1<1<1<1<1<1",
-  "0110010101101001",
-  "1001011010010110",
-  "0100101101011001",
-  "<1<1<1<1<1<1<1<1",
-  "<1<1<1<1<1<1<1<1",
-  "<1<1<1<1<1<1<1<1",
-  "1011010010101100",
-  "1011010010101100",
-  "0110100101101010",
-  "1001101010010101",
-  "1001101010010101",
-  "1001101010010101",
-  "1001101010010101",
-  "1001101010010101",
-  "1001101010010101",
-  "<1<1<1<1<1<1<1<1",
-  "<1<1<1<1<1<1<1<1",
-  "<1<1<1<1<1<1<1<1",
-];
-
-const binaryColumns = Array.from({ length: 24 }, (_, index) => ({
-  pattern: binaryPatterns[index % binaryPatterns.length],
-  duration: 10 + (index % 5) * 1.8,
-  delay: index * 0.65,
-  segments: Array.from({ length: 9 }, (_, segmentIndex) => ({
-    text: binaryPatterns[(index + segmentIndex) % binaryPatterns.length].slice(
-      0,
-      5 + ((index + segmentIndex) % 8),
-    ),
-    active:
-      segmentIndex === 1 ||
-      segmentIndex === 4 ||
-      (index + segmentIndex) % 5 === 0,
-    gap: 18 + ((index * 7 + segmentIndex * 11) % 34),
-  })),
-}));
-
 const heroCards = [
   {
     title: "Build smarter digital systems for your business.",
+    label: "Digital systems",
     subtitle: "",
     className: "landing-hero-card-centered landing-hero-card-message",
   },
   {
     title: "We design and build custom software and SaaS platforms that grow with your business.",
+    label: "Software & SaaS",
     subtitle: "",
     className: "landing-hero-card-centered landing-hero-card-message",
   },
   {
     title: "Don’t adapt your business to software. Build software that adapts to you.",
+    label: "Built around you",
     subtitle: "",
     className: "landing-hero-card-centered landing-hero-card-message",
   },
@@ -171,21 +137,48 @@ const heroCards = [
 const featuredProjects = [
   {
     title: "Italian Holidays Travel Platform",
+    category: "Travel & Tourism",
     description:
       "A premium travel website experience for curated Italian holiday tours, destination discovery, and lead generation.",
     image: italianHolidaysProject,
-    alt: "Travel booking platform mockup with Italian coastline imagery",
+    imageLabel: "Traveler login",
+    previewLabels: { left: "About Us", right: "Contact" },
+    previewImages: {
+      left: italianHolidaysAbout,
+      right: italianHolidaysContact,
+    },
+    alt: "Italian Holidays traveler login page with a Cinque Terre coastal image and account sign-in form",
     tags: ["Travel Web", "Booking UX", "SEO"],
-    href: "https://italianholidays.net/",
+    href: "https://italianholidays.net/login",
     cta: "View Live Project",
     status: "Live",
   },
   {
+    title: "RCM Ventures Business Portal",
+    category: "Business Operations",
+    description:
+      "A centralized business portal for tenant operations, user administration, and branch coordination, with dedicated administrator access.",
+    image: rcmVenturesProject,
+    imageLabel: "Administrator login",
+    alt: "RCM Ventures business portal with tenant operations, user administration, branch coordination, and an administrator sign-in form",
+    tags: ["Business Portal", "Tenant Operations", "User Management"],
+    href: "https://www.rcmventures.net/admin/login",
+    cta: "View Live Project",
+    status: "Completed",
+  },
+  {
     title: "Madrasa Management Enrollment System",
+    category: "Education Management",
     description:
       "An ongoing centralized platform for admissions, enrollment, students, attendance, payments, hifz tracking, and reports.",
-    image: madrasaManagementProject,
-    alt: "Madrasa management enrollment system dashboard mockup",
+    image: madrasaLoginPortal,
+    imageLabel: "Login portal",
+    previewLabels: { left: "Alternate login", right: "Dashboard" },
+    previewImages: {
+      left: madrasaManagementProject,
+      right: madrasaDashboard,
+    },
+    alt: "Madrasa Management and Enrollment System login portal with a centered school crest and sign-in form on an ivory background",
     tags: ["Enrollment", "Payments", "Reports"],
     href: "",
     cta: "Ongoing Project",
@@ -193,25 +186,51 @@ const featuredProjects = [
   },
   {
     title: "SaaS Pickleball Booking Platform",
+    category: "Sports & Recreation",
     description:
       "An ongoing SaaS product for court reservations, player profiles, tournaments, memberships, schedules, and online payments.",
-    image: pickleballSaasProject,
-    alt: "Pickleball SaaS booking platform dashboard and mobile app mockup",
+    image: synccourtProject,
+    alt: "Sync Court coming-soon website with its pickleball club dashboard and mobile booking preview",
     tags: ["SaaS", "Bookings", "Payments"],
     href: "",
     cta: "Ongoing Project",
     status: "Ongoing",
   },
   {
-    title: "Live POS Platform",
+    title: "SaaS POS Platform",
+    category: "Retail Operations",
     description:
-      "A live point-of-sale web app for checkout, inventory, orders, receipts, cashier activity, and daily sales reporting.",
+      "A SaaS point-of-sale platform for checkout, inventory, orders, receipts, cashier activity, and daily sales reporting.",
     image: livePosProject,
-    alt: "Live POS platform dashboard mockup with checkout, inventory, and sales analytics",
-    tags: ["POS", "Inventory", "Sales"],
+    imageLabel: "Staff login",
+    previewLabels: { left: "Dashboard", right: "Reports" },
+    previewImages: {
+      left: posDashboard,
+      right: posReports,
+    },
+    alt: "ZeroOne Point of Sale System staff login page with sales and operations features",
+    tags: ["SaaS", "POS", "Inventory", "Sales"],
     href: "https://pos.zeroone-apps.com/login",
     cta: "View Live Project",
     status: "Live",
+  },
+  {
+    title: "Diamondlink ICT Services Platform",
+    category: "ICT & Connected Services",
+    description:
+      "An ongoing platform for technology support, connected security, and smart-space services, with client accounts and staff access.",
+    image: diamondlinkProject,
+    imageLabel: "ICT services homepage",
+    previewLabels: { left: "Client login", right: "Careers" },
+    previewImages: {
+      left: diamondlinkClientLogin,
+      right: diamondlinkCareers,
+    },
+    alt: "Diamondlink ICT homepage with a blue cityscape, client and staff login links, and technology support, security, and smart-space services",
+    tags: ["ICT Services", "Client Portal", "Smart Spaces"],
+    href: "https://www.diamondlinkict.com/",
+    cta: "View Project Preview",
+    status: "Ongoing",
   },
 ];
 
@@ -226,7 +245,7 @@ const footerCapabilities = [
 const footerLinks = [
   { label: "Home", href: companyProfileHomeUrl },
   { label: "About", href: companyProfileAboutUrl },
-  { label: "Services", href: companyProfileServicesUrl },
+  { label: "Capabilities", href: companyProfileServicesUrl },
   { label: "Contact", href: "/#contact" },
   { label: "Facebook", href: "https://www.facebook.com/zeroone.it.inc" },
 ];
@@ -273,131 +292,58 @@ const contactMethods = [
   },
 ];
 
-const BinaryRain = memo(function BinaryRain() {
+function ProjectBrowserPreview({ project, variant = 'main' }) {
+  const decorative = variant !== 'main';
+  const image = decorative ? project.previewImages?.[variant] || project.image : project.image;
+  const label = project.href ? new URL(project.href).hostname : 'Product preview';
   return (
-    <div className="landing-binary-rain" aria-hidden="true">
-      {binaryColumns.map((column, index) => (
-        <div
-          className="landing-binary-column"
-          key={`${column.pattern}-${index}`}
-          style={{
-            "--column-duration": `${column.duration}s`,
-            "--column-delay": `-${column.delay}s`,
-          }}
-        >
-          {column.segments.map((segment, segmentIndex) => (
-            <span
-              className={segment.active ? "landing-binary-segment landing-is-active" : "landing-binary-segment"}
-              key={`${index}-${segmentIndex}`}
-              style={{ marginBottom: `${segment.gap}px` }}
-            >
-              {segment.text}
-            </span>
-          ))}
-        </div>
-      ))}
+    <div className={`landing-browser-preview landing-browser-preview--${variant}`} aria-hidden={decorative || undefined}>
+      <div className="landing-browser-toolbar" aria-hidden="true">
+        <span className="landing-browser-lights"><i /><i /><i /></span>
+        <span className="landing-browser-address">{label}</span>
+        <span className="landing-browser-expand">↗</span>
+      </div>
+      <div className="landing-browser-viewport">
+        <img src={image} alt={decorative ? '' : project.alt} loading="lazy" />
+      </div>
     </div>
   );
-});
+}
 
-function FeaturedProjectCard({
-  project,
-  positionClass,
-  isActive,
-  isExpanded,
-  onToggleDescription,
-  onPause,
-  onResume,
-}) {
-  const descriptionRef = useRef(null);
-  const [canExpandDescription, setCanExpandDescription] = useState(false);
-
-  useEffect(() => {
-    const descriptionElement = descriptionRef.current;
-
-    if (!descriptionElement || isExpanded) {
-      return undefined;
-    }
-
-    function measureDescriptionOverflow() {
-      window.requestAnimationFrame(() => {
-        if (!descriptionElement.offsetParent) {
-          return;
-        }
-
-        setCanExpandDescription(
-          descriptionElement.scrollHeight > descriptionElement.clientHeight + 1,
-        );
-      });
-    }
-
-    measureDescriptionOverflow();
-    window.addEventListener("resize", measureDescriptionOverflow);
-
-    return () => {
-      window.removeEventListener("resize", measureDescriptionOverflow);
-    };
-  }, [isActive, isExpanded, project.description]);
-
+function FeaturedProjectCard({ project }) {
   return (
-    <article
-      className={`landing-featured-project-card ${positionClass}`}
-      onMouseEnter={isActive ? onPause : undefined}
-      onMouseLeave={isActive ? onResume : undefined}
-      onFocus={isActive ? onPause : undefined}
-      onBlur={isActive ? onResume : undefined}
-    >
-      <div className="landing-featured-project-image-wrap">
-        <img className="landing-featured-project-image" src={project.image} alt={project.alt} />
-        <span className="landing-featured-project-status">{project.status}</span>
-      </div>
-      <div className="landing-featured-project-body">
-        <h3 className="landing-featured-project-name">{project.title}</h3>
-        <p
-          className={
-            isExpanded
-              ? "landing-featured-project-description landing-is-expanded"
-              : "landing-featured-project-description"
-          }
-          ref={descriptionRef}
-        >
-          {project.description}
-        </p>
-        {canExpandDescription ? (
-          <button
-            className="landing-featured-project-more"
-            type="button"
-            onClick={() => onToggleDescription(project.title)}
-          >
-            {isExpanded ? "Show Less" : "Show More"}
-          </button>
-        ) : null}
-        <div className="landing-featured-project-footer">
-          <div className="landing-featured-project-tags" aria-label={`${project.title} technologies`}>
-            {project.tags.map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
-          </div>
-          {project.href ? (
-            <a className="landing-featured-project-link" href={project.href} target="_blank" rel="noreferrer">
-              {project.cta}
-              <span aria-hidden="true">↗</span>
-            </a>
-          ) : (
-            <span className="landing-featured-project-link landing-is-pending">
-              {project.cta}
-            </span>
-          )}
+    <article className="landing-featured-project-card">
+      <div className="landing-project-info">
+        <div className="landing-project-meta">
+          <p className="landing-project-category">{project.category}</p>
+          <span className="landing-featured-project-status">{project.status}</span>
         </div>
+        <h3 className="landing-featured-project-name">{project.title}</h3>
+        <p className="landing-featured-project-description">{project.description}</p>
+      </div>
+      <div className="landing-project-gallery">
+        <ProjectBrowserPreview project={project} variant="left" />
+        <ProjectBrowserPreview project={project} variant="right" />
+        <ProjectBrowserPreview project={project} />
+      </div>
+      <div className="landing-featured-project-footer">
+        <div className="landing-featured-project-tags" aria-label={`${project.title} technologies`}>
+          {project.tags.map((tag) => <span key={tag}>{tag}</span>)}
+        </div>
+        {project.href ? (
+          <a className="landing-featured-project-link" href={project.href} target="_blank" rel="noreferrer">
+            {project.cta || "View Live Project"}<span aria-hidden="true">↗</span>
+          </a>
+        ) : (
+          <span className="landing-featured-project-link landing-is-pending">Currently in development</span>
+        )}
       </div>
     </article>
   );
 }
 
 export default function App() {
-  const [activeFeaturedProjectIndex, setActiveFeaturedProjectIndex] = useState(1);
-  const [isFeaturedProjectsPaused, setIsFeaturedProjectsPaused] = useState(false);
-  const [expandedFeaturedProjectTitles, setExpandedFeaturedProjectTitles] = useState([]);
+  const projectStackRef = useRef(null);
   const [cooldownRemainingMs, setCooldownRemainingMs] = useState(0);
   const [formState, setFormState] = useState({
     name: "",
@@ -414,10 +360,48 @@ export default function App() {
     message: "",
   });
 
-  const scrollToFeaturedProject = useCallback((index) => {
-    const nextIndex = Math.min(featuredProjects.length - 1, Math.max(0, index));
+  useEffect(() => {
+    const stack = projectStackRef.current;
+    const media = window.matchMedia?.(
+      '(prefers-reduced-motion: no-preference)',
+    );
+    if (!stack || !media) return undefined;
 
-    setActiveFeaturedProjectIndex(nextIndex);
+    const slides = Array.from(stack.children);
+    let frame = 0;
+    function updateStack() {
+      frame = 0;
+      const preferredTop = Number.parseFloat(window.getComputedStyle(stack).getPropertyValue('--stack-offset')) || 112;
+      slides.forEach((slide) => {
+        const card = slide.firstElementChild;
+        // Tall cards scroll fully into view before sticking, even on short phones.
+        const top = Math.min(preferredTop, window.innerHeight - card.offsetHeight - 24);
+        slide.style.setProperty('--stack-top', `${top}px`);
+      });
+      const positions = slides.map((slide) => slide.getBoundingClientRect());
+      slides.forEach((slide, index) => {
+        const top = Number.parseFloat(slide.style.getPropertyValue('--stack-top'));
+        const next = positions[index + 1];
+        const progress = media.matches && next
+          ? Math.min(1, Math.max(0, 1 - (next.top - top) / Math.max(1, positions[index].height)))
+          : 0;
+        slide.style.setProperty('--stack-scale', String(1 - progress * 0.15));
+        slide.style.setProperty('--stack-brightness', String(1 - progress * 0.25));
+      });
+    }
+    function queueUpdate() {
+      if (!frame) frame = window.requestAnimationFrame(updateStack);
+    }
+    queueUpdate();
+    window.addEventListener('scroll', queueUpdate, { passive: true });
+    window.addEventListener('resize', queueUpdate);
+    media.addEventListener?.('change', queueUpdate);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', queueUpdate);
+      window.removeEventListener('resize', queueUpdate);
+      media.removeEventListener?.('change', queueUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -447,21 +431,6 @@ export default function App() {
       window.clearInterval(intervalId);
     };
   }, []);
-
-  useEffect(() => {
-    if (isFeaturedProjectsPaused) {
-      return undefined;
-    }
-
-    const intervalId = window.setInterval(() => {
-      const nextIndex = (activeFeaturedProjectIndex + 1) % featuredProjects.length;
-      scrollToFeaturedProject(nextIndex);
-    }, 3800);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [activeFeaturedProjectIndex, isFeaturedProjectsPaused, scrollToFeaturedProject]);
 
   function scrollToContact(event) {
     event.preventDefault();
@@ -505,50 +474,6 @@ export default function App() {
       top: scrollTop,
       behavior: "smooth",
     });
-  }
-
-  function slideFeaturedProjects(direction) {
-    const nextIndex =
-      (activeFeaturedProjectIndex + direction + featuredProjects.length) % featuredProjects.length;
-
-    setIsFeaturedProjectsPaused(true);
-    scrollToFeaturedProject(nextIndex);
-  }
-
-  function getFeaturedProjectPosition(index) {
-    const totalProjects = featuredProjects.length;
-    const previousIndex = (activeFeaturedProjectIndex - 1 + totalProjects) % totalProjects;
-    const nextIndex = (activeFeaturedProjectIndex + 1) % totalProjects;
-
-    if (index === activeFeaturedProjectIndex) {
-      return "landing-is-active";
-    }
-
-    if (index === previousIndex) {
-      return "landing-is-before";
-    }
-
-    if (index === nextIndex) {
-      return "landing-is-after";
-    }
-
-    return "landing-is-hidden";
-  }
-
-  function handleFeaturedProjectsTouchStart(event) {
-    const isTouchingActiveProject = event.target.closest(
-      ".landing-featured-project-card.landing-is-active",
-    );
-
-    setIsFeaturedProjectsPaused(Boolean(isTouchingActiveProject));
-  }
-
-  function toggleFeaturedProjectDescription(title) {
-    setExpandedFeaturedProjectTitles((current) =>
-      current.includes(title)
-        ? current.filter((currentTitle) => currentTitle !== title)
-        : [...current, title],
-    );
   }
 
   function handleChange(event) {
@@ -647,9 +572,6 @@ export default function App() {
             : item,
         )}
       />
-      <div className="landing-ambient landing-ambient-left" />
-      <div className="landing-ambient landing-ambient-right" />
-      <BinaryRain />
 
       <main className="landing-hero-shell">
         <section className="landing-hero-copy">
@@ -661,20 +583,18 @@ export default function App() {
                 <span>Information Technology Inc.</span>
               </p>
               <h1 className="landing-hero-title">
-                <span className="landing-hero-title-line">Build. Transform.</span>
+                <span className="landing-hero-title-line">Build. Transform.</span>{' '}
                 <span className="landing-hero-title-line">
                   Scale with <span className="landing-hero-title-accent">Confidence.</span>
                 </span>
               </h1>
               <p className="landing-hero-lead">
-                <span className="landing-hero-lead-line">We build custom software, SaaS platforms, and AI-powered</span>
-                <span className="landing-hero-lead-line">solutions that help organizations streamline operations,</span>
-                <span className="landing-hero-lead-line">delight users, and accelerate growth.</span>
+                We build custom software, SaaS platforms, and AI-powered solutions that help
+                organizations streamline operations, delight users, and accelerate growth.
               </p>
             </div>
-
-            <div className="landing-hero-brand-panel">
-              <img className="landing-hero-copy-logo" src={logo2} alt="ZeroOne logo" />
+            <div className="landing-hero-logo-panel">
+              <img className="zeroone-hero-logo" src={heroLogo} alt="ZeroOne Information Technology Inc." />
             </div>
           </div>
 
@@ -684,8 +604,14 @@ export default function App() {
                 className={card.className ? `landing-hero-card ${card.className}` : "landing-hero-card"}
                 key={card.title}
               >
-                <h2 className="landing-hero-card-title">{card.title}</h2>
-                {card.subtitle ? <p className="landing-hero-card-subtitle">{card.subtitle}</p> : null}
+                <div className="landing-hero-card-content">
+                  <div className="landing-hero-card-meta" aria-hidden="true">
+                    <span>{card.label}</span>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                  </div>
+                  <h2 className="landing-hero-card-title">{card.title}</h2>
+                  {card.subtitle ? <p className="landing-hero-card-subtitle">{card.subtitle}</p> : null}
+                </div>
               </article>
             ))}
           </div>
@@ -708,7 +634,6 @@ export default function App() {
       <section
         className="landing-featured-projects-shell"
         id="featured-projects"
-        onTouchStart={handleFeaturedProjectsTouchStart}
       >
         <div className="landing-featured-projects-header">
           <div>
@@ -719,66 +644,45 @@ export default function App() {
             </p>
           </div>
           <div className="landing-featured-projects-actions">
-            <button
-              className="landing-featured-projects-control"
-              type="button"
-              onClick={() => slideFeaturedProjects(-1)}
-              aria-label="Previous featured projects"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M15 6l-6 6 6 6" />
-              </svg>
-            </button>
-            <button
-              className="landing-featured-projects-control"
-              type="button"
-              onClick={() => slideFeaturedProjects(1)}
-              aria-label="Next featured projects"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M9 6l6 6-6 6" />
-              </svg>
-            </button>
             <a className="landing-featured-projects-contact" href="/#contact" onClick={scrollToContact}>
-              <span>Start Yours</span>
+              <span>Get a Quote</span>
               <span aria-hidden="true">↗</span>
             </a>
           </div>
         </div>
 
-        <div className="landing-featured-projects-grid">
+        <p className="landing-projects-scroll-hint">Scroll to explore our work <span aria-hidden="true">↓</span></p>
+        <div
+          className="landing-project-stack"
+          ref={projectStackRef}
+          role="region"
+          aria-label="Featured projects"
+        >
           {featuredProjects.map((project, index) => (
-            <FeaturedProjectCard
-              isActive={index === activeFeaturedProjectIndex}
-              isExpanded={expandedFeaturedProjectTitles.includes(project.title)}
+            <div
+              className="landing-project-stack-slide"
               key={project.title}
-              onPause={() => setIsFeaturedProjectsPaused(true)}
-              onResume={() => setIsFeaturedProjectsPaused(false)}
-              onToggleDescription={toggleFeaturedProjectDescription}
-              positionClass={getFeaturedProjectPosition(index)}
-              project={project}
-            />
+              style={{ zIndex: index + 1 }}
+              onFocus={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                  const stack = projectStackRef.current;
+                  const gap = Number.parseFloat(window.getComputedStyle(stack).rowGap) || 0;
+                  const precedingHeight = Array.from(stack.children).slice(0, index)
+                    .reduce((height, slide) => height + slide.offsetHeight + gap, 0);
+                  window.scrollTo({
+                    top: stack.getBoundingClientRect().top + window.scrollY + precedingHeight - (Number.parseFloat(window.getComputedStyle(event.currentTarget).top) || 112),
+                    behavior: 'instant',
+                  });
+                }
+              }}
+            >
+              <FeaturedProjectCard
+                project={project}
+              />
+            </div>
           ))}
         </div>
 
-        <div className="landing-featured-projects-dots" aria-label="Featured project slides">
-          {featuredProjects.map((project, index) => (
-            <button
-              className={
-                index === activeFeaturedProjectIndex
-                  ? "landing-featured-projects-dot landing-is-active"
-                  : "landing-featured-projects-dot"
-              }
-              key={project.title}
-              type="button"
-              onClick={() => {
-                setIsFeaturedProjectsPaused(true);
-                scrollToFeaturedProject(index);
-              }}
-              aria-label={`Show ${project.title}`}
-            />
-          ))}
-        </div>
       </section>
 
       <section className="landing-contact-shell" id="contact">
@@ -792,7 +696,6 @@ export default function App() {
                 <span>Start a Project</span>
               </div>
 
-              <p className="landing-footer-kicker">ZeroOne IT Inc.</p>
               <h2 className="landing-contact-title">Contact Us</h2>
               <p className="landing-contact-copy-text">
                 Have questions or ready to transform your business with AI automation,
@@ -894,7 +797,7 @@ export default function App() {
           <div className="landing-footer-main">
             <div className="landing-footer-brand">
               <a className="landing-footer-wordmark" href={companyProfileHomeUrl} aria-label="ZeroOne home">
-                <span className="landing-footer-wordmark-primary">Zero One IT Inc.</span>
+                <span className="landing-footer-wordmark-primary">Zero<span className="brand-one">One</span> IT <span className="brand-one">Inc.</span></span>
               </a>
               <p className="landing-footer-description">
                 Scaling operations requires software that works for operators. ZeroOne

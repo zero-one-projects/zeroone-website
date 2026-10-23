@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-function ImpactStatement({ id, statement, className = '' }) {
+function ImpactStatement({ id, statement, className = '', scrollReveal = false }) {
   const [isVisible, setIsVisible] = useState(false);
   const statementRef = useRef(null);
 
@@ -34,7 +34,8 @@ function ImpactStatement({ id, statement, className = '' }) {
     <div ref={statementRef} className={classes} id={id}>
       <div className="impact-lines">
         {statement.lines.map((line, lineIndex) => (
-          <p key={`impact-line-${lineIndex}`} className="impact-line" style={{ '--line-index': lineIndex }}>
+          <p key={`impact-line-${lineIndex}`} className="impact-line" style={{ '--line-index': lineIndex }} data-scroll-reveal-block={scrollReveal || undefined}>
+            <span className={scrollReveal ? 'scroll-reveal-content' : undefined}>
             {line.map((part, partIndex) => {
               const isLastPart = partIndex === line.length - 1;
               return (
@@ -49,6 +50,7 @@ function ImpactStatement({ id, statement, className = '' }) {
                 </span>
               );
             })}
+            </span>
           </p>
         ))}
       </div>

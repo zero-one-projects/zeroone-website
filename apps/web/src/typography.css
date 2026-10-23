@@ -1,0 +1,138 @@
+/* Shared public-page font family and type scale. */
+.landing-page-shell,
+.site {
+  --font-site: Arial, Helvetica, sans-serif;
+  font-family: var(--font-site);
+  --type-page: 3rem;
+  --type-section: 1.75rem;
+  --type-card: 1.25rem;
+  --type-body: 1rem;
+  --type-ui: 0.875rem;
+  --type-caption: 0.75rem;
+  --type-lead: 1.25rem;
+  --type-counter: 2.5rem;
+}
+
+/* Uppercase titles and subtitles across the public pages. */
+:is(.landing-page-shell, .site) :is(h1, h2, h3, h4, h5, h6),
+.landing-page-shell :is(.landing-hero-lead, .landing-hero-card-subtitle, .landing-featured-projects-lead, .landing-contact-copy-text, .landing-contact-form-heading, .landing-footer-kicker, .landing-footer-label),
+.about-page :is(.hero-copy, .section-copy, .impact-line, .solution-process-eyebrow, .solution-process-intro, .process-flow-title),
+.about-page .hero-metrics-panel :is(.stat-card strong, .stat-card > span:not(.card-icon), .counter-card > span),
+.site .landing-footer-label {
+  text-transform: uppercase;
+}
+
+/* Section titles share the same size and reading rhythm. */
+.landing-page-shell .landing-featured-projects-title,
+.landing-page-shell .landing-contact-title,
+.about-page .section-heading h2 {
+  font-family: var(--font-site, Arial, Helvetica, sans-serif);
+  font-size: var(--type-section);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  white-space: normal;
+  text-wrap: balance;
+}
+
+/* Card titles and introductory subheadings. */
+.landing-project-stack .landing-featured-project-name,
+.landing-page-shell .landing-contact-form-heading,
+.about-page #services .services-cap-title,
+.about-page .solution-step-card h4,
+.about-page .hero-metrics-panel .stat-card strong,
+.about-page .solution-process-title {
+  font-family: var(--font-site, Arial, Helvetica, sans-serif);
+  font-size: var(--type-card);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.025em;
+}
+.about-page .solution-process-title { font-size: min(var(--type-card), 3.5cqw); white-space: nowrap; }
+.landing-contact-form-copy { min-width: 0; width: 100%; container-type: inline-size; }
+.landing-page-shell .landing-contact-form-heading {
+  max-width: none;
+  font-size: min(var(--type-card), 3.1cqw);
+  white-space: nowrap;
+}
+.about-page #services .section-copy {
+  font-size: var(--type-lead);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+/* Descriptions use one size across heroes, projects, capabilities, and contact. */
+.landing-page-shell .landing-hero-lead,
+.landing-page-shell .landing-hero-card-message .landing-hero-card-title,
+.landing-page-shell .landing-featured-projects-lead,
+.landing-project-stack .landing-featured-project-description,
+.landing-page-shell .landing-contact-copy-text,
+.landing-page-shell .landing-footer-description,
+.site .landing-footer-description,
+.about-page .hero-copy,
+.about-page .hero-copy:first-of-type,
+.about-page .hero-copy:nth-of-type(2),
+.about-page .section-copy,
+.about-page .text-section-copy,
+.about-page .solution-process-intro,
+.about-page .solution-step-card p,
+.about-page #services .services-cap-description {
+  font-family: var(--font-site, Arial, Helvetica, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: 0;
+}
+.about-page .hero-copy { max-width: none; }
+.landing-page-shell .landing-contact-copy-text { max-width: none; text-wrap: balance; }
+.about-page .about-impact-statement .impact-line {
+  font-size: clamp(1.5rem, 3.8vw, 3rem);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.about-page .about-impact-statement .impact-lines { gap: 12px; }
+
+/* Supporting labels and controls stay consistent, below the body-text size. */
+.about-page .counter-strip .counter-card > span,
+.about-page .hero-metrics-panel .stat-card > span:not(.card-icon),
+:is(.landing-page-shell, .site) :is(.nav-link, .btn, .landing-hero-button, .landing-featured-projects-contact, .landing-featured-project-link, .landing-contact-submit, .landing-footer-cta, .landing-footer-list a, .landing-footer-direct-link, .landing-contact-card-value) {
+  font-size: var(--type-ui);
+  line-height: 1.5;
+}
+:is(.landing-page-shell, .site) .topbar .nav-link { font-weight: 600; }
+
+.landing-page-shell .landing-hero-card-meta,
+.landing-page-shell .landing-footer-kicker,
+.landing-page-shell .landing-footer-label,
+.site .landing-footer-label,
+.landing-page-shell .landing-contact-card-title,
+.landing-page-shell .landing-project-category,
+.landing-project-stack .landing-featured-project-status,
+.landing-project-stack .landing-featured-project-tags span,
+.about-page #services .section-heading h2,
+.about-page .solution-process-eyebrow,
+.about-page .solution-step-number,
+.about-page #services .services-cap-tags li {
+  font-size: var(--type-caption);
+  line-height: 1.5;
+}
+.about-page #services .services-cap-number { font-size: var(--type-card); }
+.about-page .counter-strip .counter-card strong { font-size: var(--type-counter); }
+
+/* Keep short display lines responsive without shrinking paragraph text. */
+.landing-hero-heading-block .landing-hero-title { font-size: min(var(--type-page), 6.25cqw); }
+@media (max-width: 1099px) {
+  .about-page .hero-copy:first-of-type,
+  .about-page .hero-copy:nth-of-type(2) { white-space: normal; }
+}
+@media (max-width: 767px) {
+  .landing-page-shell,
+  .site {
+    --type-section: 1.5rem;
+    --type-card: 1.125rem;
+    --type-lead: 1.125rem;
+    --type-body: 0.9375rem;
+    --type-counter: 2rem;
+  }
+}
