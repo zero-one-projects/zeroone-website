@@ -1,4 +1,5 @@
 import BackToTop from '../components/BackToTop';
+import ArrowUpRight from '../components/ArrowUpRight';
 import { useEffect, useRef, useState } from "react";
 import HeroSlideshow from "../components/HeroSlideshow";
 import rcmVenturesProject from '../assets/featured-projects/rcm-ventures-login.png';
@@ -288,7 +289,7 @@ function ProjectBrowserPreview({ project, variant = 'main' }) {
       <div className="landing-browser-toolbar" aria-hidden="true">
         <span className="landing-browser-lights"><i /><i /><i /></span>
         <span className="landing-browser-address">{label}</span>
-        <span className="landing-browser-expand">↗</span>
+        <span className="landing-browser-expand"><ArrowUpRight /></span>
       </div>
       <div className="landing-browser-viewport">
         <img src={image} alt={decorative ? '' : project.alt} loading="lazy" />
@@ -333,7 +334,7 @@ function FeaturedProjectCard({ project }) {
         </div>
         {project.href ? (
           <a className="landing-featured-project-link" href={project.href} target="_blank" rel="noreferrer">
-            {project.cta || "View Live Project"}<span aria-hidden="true">↗</span>
+            {project.cta || "View Live Project"}<ArrowUpRight />
           </a>
         ) : (
           <span className="landing-featured-project-link landing-is-pending">Currently in development</span>
@@ -586,7 +587,7 @@ export default function App() {
                 Get a Quote
               </a>
               <a className="landing-hero-button landing-hero-button-secondary" href="/#featured-projects" onClick={scrollToFeaturedProjects}>
-                View Our Work
+                View Our Work <ArrowUpRight />
               </a>
             </div>
           </HeroSlideshow>
@@ -672,7 +673,7 @@ export default function App() {
                       <span className="landing-contact-card-value">{item.value}</span>
                     </span>
                     <span className="landing-contact-card-arrow" aria-hidden="true">
-                      ↗
+                      <ArrowUpRight />
                     </span>
                   </a>
                 ))}

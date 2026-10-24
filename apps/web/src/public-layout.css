@@ -739,16 +739,34 @@ body,
 :is(.landing-page-shell, .about-page) .landing-topbar .nav-link:hover { background: transparent; color: #c5adff; }
 @media (max-width: 767px) {
   :is(.landing-page-shell, .about-page) .landing-topbar {
-    position: absolute;
-    top: 12px;
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top, 0px));
     min-height: 56px;
     padding: 8px 12px;
     gap: 0 12px;
     border: 1px solid #ffffff14;
     border-radius: 14px;
     background: #111019f2;
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
   }
   :is(.landing-page-shell, .about-page) .landing-topbar .brand-copy strong { font-size: 1rem; }
+  :is(.landing-page-shell, .about-page) .landing-topbar .header-menu-toggle {
+    justify-content: center;
+    width: 44px;
+    min-height: 44px;
+    padding: 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #f5f5f5;
+  }
+  .header-menu-icon { display: block; flex-shrink: 0; }
   :is(.landing-page-shell, .about-page) .landing-topbar .nav { margin-left: 0; gap: 0; }
   :is(.landing-page-shell, .about-page) .landing-topbar .nav-link { padding: 12px 4px; font-size: 0.875rem; }
+  :is(.landing-page-shell, .about-page) .landing-topbar .nav.is-open {
+    max-height: calc(100svh - 112px - env(safe-area-inset-top, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }

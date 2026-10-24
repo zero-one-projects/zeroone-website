@@ -338,6 +338,7 @@ function App() {
                 <TextSection
                   id={section.id}
                   title="Who We Are"
+                  revealHeading={false}
                   paragraphs={section.paragraphs}
                   noWrapper={true}
                   scrollReveal

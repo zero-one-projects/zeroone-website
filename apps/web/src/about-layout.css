@@ -488,7 +488,7 @@
   .about-page .team-card-featured:hover { transform: translateY(-34px); }
 }
 @media (max-width: 600px) {
-  .about-page #about-us.about-introduction { padding-top: 112px; padding-bottom: 24px; }
+  .about-page #about-us.about-introduction { padding-top: calc(112px + env(safe-area-inset-top, 0px)); padding-bottom: 24px; }
   .about-page .hero-metrics-panel + .hero { padding-top: 48px; }
   .about-page .hero { margin-bottom: 24px; }
   .about-page .solution-step-card { padding: 24px; }

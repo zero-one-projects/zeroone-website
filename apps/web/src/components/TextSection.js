@@ -1,10 +1,10 @@
 import SectionHeading from './SectionHeading';
 import ImpactStatement from './ImpactStatement';
 
-function TextSection({ id, title, paragraphs, highlightStatement, noWrapper = false, scrollReveal = false }) {
+function TextSection({ id, title, paragraphs, highlightStatement, noWrapper = false, scrollReveal = false, revealHeading = scrollReveal }) {
   const content = (
     <>
-      <SectionHeading title={title} scrollReveal={scrollReveal} />
+      <SectionHeading title={title} scrollReveal={revealHeading} />
       <div className="text-section-body">
         {paragraphs.map((paragraph) => (
           <p key={paragraph} className="text-section-copy" data-scroll-reveal-block={scrollReveal || undefined}>

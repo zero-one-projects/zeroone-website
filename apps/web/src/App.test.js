@@ -56,6 +56,8 @@ test('renders about page from the about route', () => {
   });
 
   expect(heading).toBeInTheDocument();
+  expect(heading).not.toHaveAttribute('data-scroll-reveal-block');
+  expect(heading.querySelector('.scroll-reveal-content')).toBeNull();
   expect(screen.queryByRole('heading', { name: /from idea to deployment/i })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: /open chat/i })).toBeInTheDocument();
 });
