@@ -1,5 +1,5 @@
 import alKhalidPalahuddinImage from '../assets/team/Khalid.jpg';
-import alrizaPalahuddinImage from '../assets/team/riza.jpeg';
+import alrizaPalahuddinImage from '../assets/team/riza-portrait.png';
 import hassanImage from '../assets/team/Hassan.png';
 import paulJohnPeligroImage from '../assets/team/pj.png';
 
@@ -133,7 +133,7 @@ export const companyProfile = {
       title: 'Capabilities',
       variant: 'swipe',
       intro:
-        'We build practical digital solutions that simplify operations and support business growth.',
+        'We build practical digital solutions\nthat simplify operations and support business growth.\n\nAs a full-stack software development company, we handle every stage of your project—from planning and UI/UX design to front-end and back-end development, testing, and deployment. We also provide ongoing maintenance and technical support to ensure your software remains secure, scalable, and reliable.',
       outro: '...and other custom software solutions tailored to your business needs.',
       cards: [
         {
@@ -177,17 +177,20 @@ export const companyProfile = {
       members: [
         {
           name: 'PJ',
-          role: 'Chief Executive Officer (CEO)\nSenior Lead Software Developer & IT Consultant',
+          roleLabel: 'Executive Leadership',
+          role: 'Chief Executive Officer (CEO)',
           image: paulJohnPeligroImage
         },
         {
           name: 'Riza',
-          role: 'Account Manager\nDesktop Engineer & Software Developer',
+          roleLabel: 'Operations & Client Relations',
+          role: 'Operations & Account Manager',
           image: alrizaPalahuddinImage
         },
         {
           name: 'AL',
-          role: 'Business Development Officer (BDO)\nMid-Level Software Developer',
+          roleLabel: 'Business Development & Technology',
+          role: 'Business Development & Technical Officer',
           image: alKhalidPalahuddinImage
         }
       ]

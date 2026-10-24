@@ -42,6 +42,7 @@
 .about-page #services .services-cap-title,
 .about-page .solution-step-card h4,
 .about-page .hero-metrics-panel .stat-card strong,
+.about-page #services .services-section-title,
 .about-page .solution-process-title {
   font-family: var(--font-site, Arial, Helvetica, sans-serif);
   font-size: var(--type-card);
@@ -49,7 +50,12 @@
   line-height: 1.35;
   letter-spacing: -0.025em;
 }
-.about-page .solution-process-title { font-size: min(var(--type-card), 3.5cqw); white-space: nowrap; }
+.about-page .solution-process-title,
+.about-page #services .services-section-title {
+  font-size: var(--type-card);
+  white-space: normal;
+}
+.about-page #services .services-section-title { white-space: pre-line; }
 .landing-contact-form-copy { min-width: 0; width: 100%; container-type: inline-size; }
 .landing-page-shell .landing-contact-form-heading {
   max-width: none;
@@ -62,6 +68,9 @@
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+  max-width: none;
 }
 
 /* Descriptions use one size across heroes, projects, capabilities, and contact. */
@@ -77,6 +86,7 @@
 .about-page .hero-copy:nth-of-type(2),
 .about-page .section-copy,
 .about-page .text-section-copy,
+.about-page #services .services-section-intro,
 .about-page .solution-process-intro,
 .about-page .solution-step-card p,
 .about-page #services .services-cap-description {

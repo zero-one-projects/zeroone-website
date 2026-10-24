@@ -16,7 +16,7 @@ test('renders landing hero heading by default', () => {
   expect(screen.getByRole('button', { name: /open chat/i })).toBeInTheDocument();
 });
 
-test('about services display numbered capabilities and tags while the team stays hidden', () => {
+test('about services display numbered capabilities and tags followed by the team', () => {
   window.history.pushState({}, '', '/about-us');
   render(<App />);
   const services = screen.getByRole('heading', { name: 'Capabilities', level: 2 }).closest('section');
@@ -38,7 +38,8 @@ test('about services display numbered capabilities and tags while the team stays
     const row = screen.getByRole('heading', { name: title, level: 3 }).closest('article');
     expect(row.querySelector('.services-cap-description')).toHaveTextContent(description);
   }
-  expect(screen.queryByRole('heading', { name: 'Team' })).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Team' })).toBeInTheDocument();
+  expect(document.getElementById('services').nextElementSibling).toHaveAttribute('id', 'team');
   expect(screen.queryByRole('link', { name: 'Team' })).not.toBeInTheDocument();
   expect(screen.queryByText('Common Challenges')).not.toBeInTheDocument();
   expect(screen.queryByRole('heading', { name: 'Operational bottlenecks should not hold your business back.' })).not.toBeInTheDocument();
@@ -51,10 +52,11 @@ test('renders about page from the about route', () => {
   render(<App />);
 
   const heading = screen.getByRole('heading', {
-    name: /from idea to deployment/i
+    name: /who we are/i
   });
 
   expect(heading).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: /from idea to deployment/i })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: /open chat/i })).toBeInTheDocument();
 });
 

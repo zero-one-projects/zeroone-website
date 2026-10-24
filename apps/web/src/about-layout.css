@@ -1,5 +1,23 @@
-/* Charcoal canvas, open sections, and quiet dividers. */
-.about-page { background: var(--page-background); }
+/* Shared ZeroOne surfaces match the homepage's blue and purple palette. */
+.about-page {
+  --about-surface:
+    linear-gradient(165deg, #d7c9f912, transparent 28%, #00000030 80%),
+    radial-gradient(ellipse at 8% 0%, #9b7ae028, transparent 60%),
+    radial-gradient(ellipse at 100% 40%, #5c9fd71c, transparent 65%),
+    linear-gradient(135deg, #242333, #151b29 50%, #181521);
+  --about-surface-shadow:
+    inset 0 2px 1px #e4dcff1f,
+    inset 2px 0 2px #c1cafa0d,
+    inset 0 -3px 5px #00000080,
+    0 6px 0 #080a12,
+    0 7px 0 #8c81b526,
+    0 18px 28px #00000066,
+    0 36px 64px #00000059;
+  --page-background:
+    radial-gradient(ellipse at 20% 0%, #2b2b3026, transparent 65%),
+    linear-gradient(145deg, #1c1c20, #0d0d10 45%, #030304 85%, #000);
+  background: var(--page-background);
+}
 .about-page > main { z-index: auto; }
 .about-page main :is(h1, h2, h3, h4, p) { font-family: var(--font-site, Arial, Helvetica, sans-serif); }
 .about-page :is(.reveal-section, .reveal-card, .hero-title-prefix, .hero-title-highlight),
@@ -25,6 +43,14 @@
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  filter:
+    drop-shadow(1px 1px 0 #493c86)
+    drop-shadow(1px 2px 0 #302751)
+    drop-shadow(1px 2px 0 #1b182e)
+    drop-shadow(0 8px 8px #00000080);
+}
+.about-page .hero .hero-title-prefix {
+  text-shadow: 0 1px 0 #d8d5e4, 1px 2px 0 #777182, 2px 3px 0 #302d3b, 0 6px 10px #00000080;
 }
 @keyframes deploymentGradientShimmer {
   0%, 100% { background-position: 0% 50%; }
@@ -129,9 +155,9 @@
 .about-page .about-vision-mission-grid.about-overview-only { grid-template-columns: minmax(0, 1fr); }
 .about-page .about-overview-only .about-column {
   display: grid;
-  grid-template-columns: minmax(0, 0.65fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: clamp(32px, 5vw, 64px);
+  gap: 24px;
 }
 .about-page .about-overview-only .section-heading { margin: 0; }
 .about-page .about-overview-only .text-section-body { gap: 24px; }
@@ -202,7 +228,15 @@
 .about-page .solution-process-header { gap: 16px; container-type: inline-size; }
 .about-page .solution-process-eyebrow { font-size: 0.75rem; font-weight: 700; line-height: 1.5; letter-spacing: 0.12em; }
 .about-page .solution-process-title { max-width: none; color: #f5f5f5; font-family: var(--font-site, Arial, Helvetica, sans-serif); font-size: min(1.25rem, 3.5cqw); font-weight: 700; font-style: normal; line-height: 1.3; letter-spacing: -0.025em; text-transform: uppercase; white-space: nowrap; }
-.about-page .solution-process-intro { max-width: 72ch; color: #bdbdc7; font-size: 1rem; font-weight: 400; line-height: 1.75; }
+.about-page .solution-process-header .solution-process-intro { max-width: 72ch; color: #bdbdc7; font-size: 1rem; font-weight: 400; line-height: 1.75; text-transform: none; }
+.about-page .solution-process-header .solution-process-title {
+  width: fit-content;
+  color: #bca5ef;
+  background: linear-gradient(110deg, #a9dcf5 5%, #b9a2f3 65%, #d7c9f9);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 .about-page .solution-process-grid { gap: 32px; perspective: none; }
 .about-page .solution-step-card { padding: 24px 0 0; border: 0; border-top: 1px solid #444; border-radius: 0; background: transparent; box-shadow: none; opacity: 1; transform: none; animation: none; will-change: auto; }
 .about-page .solution-step-card:hover { transform: none; box-shadow: none; border-color: #aaa; }
@@ -212,6 +246,24 @@
 
 .about-page #services.section { padding-block: 72px; }
 .about-page #services .section-heading { max-width: none; margin-bottom: 48px; }
+.about-page #services .services-section-header { display: grid; gap: 16px; container-type: inline-size; }
+.about-page #services .services-quote-button {
+  justify-self: start;
+  margin-top: 8px;
+  min-height: 50px;
+  padding: 13px 22px;
+  border: 1px solid #fff;
+  border-radius: 8px;
+  background: #fff;
+  color: #18181b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: none;
+}
+.about-page #services .services-quote-button:hover { background: #e4e4e7; border-color: #e4e4e7; color: #18181b; }
+.about-page #services .services-section-header > :is(h2, h3, p) { margin: 0; }
+.about-page #services .services-section-title { color: #f5f5f5; text-transform: uppercase; }
+.about-page #services .services-section-intro { max-width: 72ch; color: #bdbdc7; text-transform: none; }
 .about-page #services .section-heading h2 { font-size: 0.75rem; font-weight: 700; line-height: 1.5; letter-spacing: 0.12em; text-transform: uppercase; }
 .about-page #services .section-copy { max-width: none; color: #f5f5f5; font-family: var(--font-site, Arial, Helvetica, sans-serif); font-size: clamp(1.125rem, 2vw, 1.5rem); font-weight: 400; font-style: normal; line-height: 1.4; letter-spacing: -0.025em; text-transform: uppercase; text-wrap: balance; }
 .about-page #services .services-cap-grid { grid-template-columns: 1fr; gap: 0; margin-top: 0; }
@@ -244,17 +296,30 @@
   .about-page #services .services-cap-description { font-size: 0.9375rem; }
 }
 
-.about-page .team-profile-section { padding-block: 72px; }
+.about-page .team-profile-section { margin-top: 56px; padding-block: 72px; }
+.about-page #team .section-heading h2 {
+  width: fit-content;
+  text-transform: none;
+  color: #bca5ef;
+  background: linear-gradient(110deg, #a9dcf5 5%, #b9a2f3 65%, #d7c9f9);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.about-page #team .section-copy,
+.about-page #services .section-heading .section-copy { text-transform: none; }
+.about-page #services .section-heading .section-copy { white-space: pre-line; }
 .about-page .team-section-header,
 .about-page .team-section-header .section-heading { max-width: 100%; margin-inline: 0; text-align: left; }
 .about-page .team-section-center { width: 100%; }
-.about-page .team-showcase { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 100%; gap: 28px; margin-top: 104px; align-items: stretch; }
+.about-page .team-showcase { grid-template-columns: repeat(3, minmax(0, 320px)); justify-content: center; max-width: 100%; gap: 24px; margin-top: 88px; align-items: stretch; }
 .about-page .team-showcase-compact { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 760px; margin-left: 0; }
 .about-page .team-showcase-solo.team-showcase-compact { grid-template-columns: minmax(0, 360px); }
 .about-page .team-card {
-  max-width: none;
+  max-width: 320px;
+  justify-self: center;
   margin-top: 0;
-  padding: 0 0 30px;
+  padding: 0 0 22px;
   align-self: stretch;
   overflow: visible;
   text-align: center;
@@ -265,35 +330,35 @@
   transform: none;
 }
 .about-page .team-card:hover { transform: translateY(-6px); border-color: #ffffff40; box-shadow: 0 24px 48px #00000038; }
-.about-page .team-card .team-avatar-orbit { width: auto; height: auto; margin: -54px 0 22px; padding: 0; }
+.about-page .team-card .team-avatar-orbit { width: auto; height: auto; margin: -40px 0 16px; padding: 0; }
 .about-page .team-card .team-avatar-frame {
-  width: clamp(148px, 15vw, 184px);
+  width: 132px;
   height: auto;
   aspect-ratio: 1;
   margin: 0;
-  border: 7px solid #222226;
+  border: 5px solid #222226;
   border-radius: 50%;
   background: #222226;
   box-shadow: 0 0 0 1px #a69bd84d, 0 12px 28px #00000033;
 }
-.about-page .team-card-featured .team-avatar-frame { width: clamp(164px, 16vw, 200px); box-shadow: 0 0 0 1px #78a4d65c, 0 12px 28px #00000033; }
+.about-page .team-card-featured .team-avatar-frame { width: 144px; box-shadow: 0 0 0 1px #78a4d65c, 0 12px 28px #00000033; }
 .about-page .team-card:hover .team-avatar-frame { transform: translateY(-3px); box-shadow: 0 0 0 1px #b5bbdb80, 0 16px 32px #00000040; }
 .about-page .team-card .team-name-band {
-  margin: 0 20px;
-  padding: 16px;
+  margin: 0 16px;
+  padding: 10px;
   border-block: 1px solid #ffffff14;
   background: linear-gradient(110deg, #39373f, #514b63);
   box-shadow: inset 0 1px 0 #ffffff08;
 }
 .about-page .team-card-featured .team-name-band { background: linear-gradient(110deg, #333b47, #485a72); }
-.about-page .team-name-band h3 { text-transform: uppercase; font-size: 1.25rem; font-weight: 600; letter-spacing: 0.06em; }
-.about-page .team-card-body { padding: 24px 24px 0; gap: 20px; justify-items: center; }
+.about-page .team-name-band h3 { text-transform: uppercase; font-size: 1.125rem; font-weight: 600; letter-spacing: 0.06em; }
+.about-page .team-card-body { padding: 18px 18px 0; gap: 12px; justify-items: center; }
 .about-page .team-role { min-height: 0; margin: 0; }
-.about-page .team-role-primary { color: #f5f5f5; font-size: 1rem; font-weight: 600; line-height: 1.5; }
-.about-page .team-role-secondary { color: #b9b9c4; font-size: 0.9375rem; line-height: 1.6; }
+.about-page .team-role-primary { color: #f5f5f5; font-size: 0.875rem; font-weight: 600; line-height: 1.5; }
+.about-page .team-role-secondary { color: #b9b9c4; font-size: 0.8125rem; line-height: 1.6; }
 .about-page .team-role-label { max-width: 30ch; color: #beb8d0; font-size: 0.6875rem; font-weight: 600; line-height: 1.6; letter-spacing: 0.12em; }
 .about-page .team-card-featured .team-role-label { color: #b5c9e1; }
-.about-page .landing-site-footer { margin-top: 48px; padding-top: 56px; border-bottom: 0; }
+.about-page .landing-site-footer { max-width: var(--content-width); margin: 48px auto 0; padding-top: 64px; border-bottom: 0; }
 
 @media (max-width: 900px) {
   .about-page .team-showcase { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 96px; }
@@ -305,6 +370,7 @@
 
 @media (max-width: 600px) {
   .about-page :is(.hero-copy, .section-copy, .text-section-copy, .solution-process-intro) { font-size: 0.9375rem; }
+  .about-page .team-profile-section { margin-top: 32px; }
   .about-page .hero .eyebrow { font-size: 0.625rem; letter-spacing: 0.08em; gap: 6px; }
   .about-page .section,
   .about-page #about-us.section,
@@ -326,4 +392,104 @@
   .about-page .team-showcase { grid-template-columns: 1fr; }
   .about-page .team-showcase-solo.team-showcase-compact { grid-template-columns: 1fr; }
   .about-page .team-showcase { row-gap: 88px; max-width: 420px; margin-inline: auto; }
+}
+
+/* Open hero, raised cards, and flat full-width bands. */
+.about-page .hero { position: relative; isolation: isolate; margin-bottom: 40px; }
+.about-page .hero::before {
+  content: none;
+}
+.about-page :is(.hero-metrics-panel, .about-impact-statement) {
+  background: var(--about-surface);
+  border-color: #ffffff14;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.about-page .about-vision-mission-grid {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.about-page #about-us.about-introduction { padding-top: 152px; padding-bottom: 32px; }
+.about-page .about-introduction .about-column .section-heading h2 {
+  width: fit-content;
+  color: #bca5ef;
+  background: linear-gradient(110deg, #a9dcf5 5%, #b9a2f3 65%, #d7c9f9);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.about-page .about-introduction { position: relative; isolation: isolate; }
+.about-page .about-introduction::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: calc((100% - 100vw) / 2);
+  width: 100vw;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(145deg, #24242ac9, #15151bd1 45%, #0c0c12cc 85%, #08080ed6),
+    url('./assets/landing/zeroone-body-panels.png') right center / cover no-repeat,
+    #030304;
+}
+.about-page main > .hero-metrics-panel { margin-top: 24px; }
+.about-page .hero-metrics-panel + .hero { padding-top: 64px; }
+.about-page .solution-process-grid { gap: 24px; }
+.about-page :is(.solution-step-card, .team-card) {
+  background: var(--about-surface);
+  border: 1px solid;
+  border-color: #c6b5ff45 #77769e2e #04050b #a5a0ce38;
+  border-radius: 20px;
+  box-shadow: var(--about-surface-shadow);
+}
+.about-page .solution-step-card { padding: 28px; }
+.about-page :is(.solution-step-card, .team-card):hover {
+  border-color: #bca5ef55;
+  box-shadow: var(--about-surface-shadow);
+}
+.about-page #services .services-cap-grid { gap: 0; }
+.about-page #services { position: relative; isolation: isolate; }
+.about-page #services::before {
+  content: ''; position: absolute; inset-block: 0;
+  left: calc((100% - 100vw) / 2); width: 100vw;
+  z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(180deg, #090a10 0%, transparent 14%, transparent 86%, #090a10 100%),
+    radial-gradient(ellipse 70% 35% at 0% 20%, #8b67c31c, transparent 75%),
+    radial-gradient(ellipse 65% 40% at 100% 65%, #5c9fd714, transparent 75%),
+    linear-gradient(135deg, #171622, #111722 55%, #13111d);
+}
+.about-page #services .services-cap-card {
+  padding-block: clamp(24px, 3vw, 36px);
+  padding-inline: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.about-page #services .services-cap-card:hover { box-shadow: none; transform: none; }
+.about-page #services .services-cap-card + .services-cap-card { border-top: 1px solid #b5a5db14; }
+.about-page #services .services-cap-tags li {
+  background: #ffffff04;
+  border-color: #b5a5db33;
+  border-radius: 999px;
+}
+.about-page .solution-step-number,
+.about-page #services .services-cap-icon { color: #bca5ef; }
+.about-page .team-card .team-avatar-frame { border-color: #202236; background: #202236; }
+.about-page .team-card .team-name-band { background: #9b7ae018; border-color: #b5a5db26; }
+.about-page .team-card-featured .team-name-band { background: #5c9fd718; }
+@media (min-width: 901px) {
+  .about-page .team-card-featured { transform: translateY(-28px); }
+  .about-page .team-card-featured:hover { transform: translateY(-34px); }
+}
+@media (max-width: 600px) {
+  .about-page #about-us.about-introduction { padding-top: 112px; padding-bottom: 24px; }
+  .about-page .hero-metrics-panel + .hero { padding-top: 48px; }
+  .about-page .hero { margin-bottom: 24px; }
+  .about-page .solution-step-card { padding: 24px; }
 }

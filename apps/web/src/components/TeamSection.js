@@ -30,6 +30,7 @@ function TeamSection({ id, title, intro, members }) {
     return 'operations';
   };
   const getRoleLabel = (member) => {
+    if (member.roleLabel) return member.roleLabel;
     if (member.name === 'PJ') {
       return 'Leadership & Technical Consulting';
     }

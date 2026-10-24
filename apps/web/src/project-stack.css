@@ -1,16 +1,14 @@
 /* ZeroOne project showcase: editorial details and an interactive product gallery. */
 .landing-page-shell { overflow: clip; }
-.landing-featured-projects-shell { isolation: isolate; padding-block: 88px; border-color: #ffffff1a; }
+.landing-featured-projects-shell { position: relative; isolation: isolate; margin-top: 56px; padding-block: 88px; border-color: #ffffff1a; border-top: 0; }
+/* Let the page background show through the project section. */
 .landing-featured-projects-shell::before {
-  content: ''; position: absolute; inset: 0 auto 0 50%; width: 100vw;
-  transform: translateX(-50%); z-index: -1; pointer-events: none;
-  background: radial-gradient(ellipse 85vw 800px at 65% 30%, #ffffff08, transparent 70%), #1b1b1e;
-  mask-image: linear-gradient(180deg, transparent, #000 160px, #000 calc(100% - 160px), transparent);
+  content: none;
 }
 .landing-featured-projects-header { justify-content: space-between; align-items: flex-end; text-align: left; gap: 40px; margin-bottom: 48px; }
 .landing-featured-projects-header .landing-footer-kicker { font-weight: 700; }
 .landing-featured-projects-header > div:first-child { flex: 1 1 0; width: 100%; min-width: 0; max-width: none; container-type: inline-size; }
-.landing-featured-projects-header .landing-featured-projects-title { max-width: none; font-size: min(2.5rem, 5.5cqw); white-space: nowrap; }
+.landing-page-shell .landing-featured-projects-header .landing-featured-projects-title { max-width: 29ch; font-size: clamp(1.75rem, 3vw, 2.5rem); white-space: normal; text-wrap: balance; line-height: 1.2; }
 .landing-featured-projects-title, .landing-featured-projects-lead { margin-inline: 0; }
 .landing-featured-projects-actions { display: flex; }
 .landing-featured-projects-contact { border-color: #555; }
@@ -21,9 +19,23 @@
 .landing-project-stack .landing-featured-project-card {
   display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
   align-items: stretch; gap: 32px; padding: 40px 36px 28px;
-  border: 0; border-radius: 12px; overflow: hidden; transform-origin: center top;
-  background: radial-gradient(ellipse at 48% 0%, #45454a 0%, transparent 64%), linear-gradient(145deg, #27272b, #121214 80%);
-  box-shadow: 0 20px 56px #00000055;
+  border: 1px solid; border-color: #c6b5ff45 #77769e2e #04050b #a5a0ce38;
+  border-radius: 20px; overflow: hidden; transform-origin: center top;
+  background:
+    linear-gradient(165deg, #d7c9f912, transparent 28%, #00000030 80%),
+    radial-gradient(ellipse at 8% 0%, #9b7ae028, transparent 60%),
+    radial-gradient(ellipse at 100% 40%, #5c9fd71c, transparent 65%),
+    linear-gradient(135deg, #242333, #151b29 50%, #181521);
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 2px 1px #e4dcff1f,
+    inset 2px 0 2px #c1cafa0d,
+    inset 0 -3px 5px #00000080,
+    0 6px 0 #080a12,
+    0 7px 0 #8c81b526,
+    0 14px 22px -4px #000000a6,
+    0 32px 48px -8px #00000099,
+    0 56px 88px -16px #00000080;
 }
 .landing-project-info { min-width: 0; text-align: center; }
 .landing-project-meta { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
@@ -44,8 +56,8 @@
   text-transform: uppercase;
   text-wrap: balance;
 }
-.landing-project-stack .landing-featured-project-name { margin: 0; color: #f5f5f5; text-align: center; }
-.landing-project-stack .landing-featured-project-description { display: block; margin: 20px auto 0; max-width: 66ch; color: #c3c3cd; font-size: 1rem; line-height: 1.65; overflow: visible; }
+.landing-page-shell .landing-project-stack .landing-featured-project-name { margin: 0; color: #f5f5f5; text-align: center; font-size: clamp(1.25rem, 2vw, 1.75rem); text-transform: none; }
+.landing-page-shell .landing-project-stack .landing-featured-project-description { display: block; margin: 16px auto 0; max-width: 66ch; color: #b9b9c3; font-size: 1rem; line-height: 1.75; overflow: visible; text-transform: none; text-wrap: pretty; }
 .landing-project-stack .landing-featured-project-tags { gap: 8px; }
 .landing-project-stack .landing-featured-project-tags span { padding: 0 10px; background: #ffffff04; color: #bdbdc7; border-color: #ffffff18; font-size: 0.6875rem; }
 .landing-project-stack .landing-featured-project-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 0; padding: 0; border: 0; }
@@ -67,9 +79,41 @@
 .landing-browser-expand { font-size: 0.75rem; color: #aaaab5; }
 .landing-browser-viewport { flex: 1; background: #151518; min-height: 0; }
 .landing-browser-viewport img { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* Each screenshot takes a turn at the front without replacing its image. */
+@keyframes project-preview-center {
+  0%, 27%, 100% { transform: translate(0, 0) scale(1); opacity: 1; z-index: 3; }
+  33.333%, 60% { transform: translate(-36%, 9%) scale(0.76); opacity: 0.56; z-index: 1; }
+  66.667%, 94% { transform: translate(36%, 6%) scale(0.76); opacity: 0.56; z-index: 2; }
+}
+@keyframes project-preview-left {
+  0%, 27%, 100% { transform: translate(-36%, 9%) scale(0.76); opacity: 0.56; z-index: 1; }
+  33.333%, 60% { transform: translate(36%, 6%) scale(0.76); opacity: 0.56; z-index: 2; }
+  66.667%, 94% { transform: translate(0, 0) scale(1); opacity: 1; z-index: 3; }
+}
+@keyframes project-preview-right {
+  0%, 27%, 100% { transform: translate(36%, 6%) scale(0.76); opacity: 0.56; z-index: 2; }
+  33.333%, 60% { transform: translate(0, 0) scale(1); opacity: 1; z-index: 3; }
+  66.667%, 94% { transform: translate(-36%, 9%) scale(0.76); opacity: 0.56; z-index: 1; }
+}
 @media (prefers-reduced-motion: no-preference) {
+  .landing-project-gallery .landing-browser-preview {
+    width: 70%; height: 100%; left: 15%; right: auto; top: 0;
+    transform-origin: center;
+    animation-duration: 18s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    animation-iteration-count: infinite;
+    animation-play-state: paused;
+  }
+  .landing-project-gallery[data-visible="true"] .landing-browser-preview { animation-play-state: running; }
+  .landing-browser-preview--main { animation-name: project-preview-center; }
+  .landing-browser-preview--left { animation-name: project-preview-left; }
+  .landing-browser-preview--right { animation-name: project-preview-right; }
+  .landing-project-gallery:focus-within .landing-browser-preview { animation-play-state: paused; }
   .landing-project-stack-slide { position: sticky; top: var(--stack-top, 112px); }
   .landing-project-stack .landing-featured-project-card { transform: scale(var(--stack-scale, 1)); filter: brightness(var(--stack-brightness, 1)); will-change: transform, filter; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .landing-project-gallery:hover .landing-browser-preview { animation-play-state: paused; }
 }
 @media (min-width: 901px) and (min-height: 800px) and (prefers-reduced-motion: no-preference) {
   .landing-project-stack { gap: 64px; }
@@ -85,14 +129,14 @@
   .landing-project-stack .landing-featured-project-name { font-size: 1.125rem; }
 }
 @media (max-width: 600px) {
-  .landing-featured-projects-shell { padding-block: 56px; }
+  .landing-featured-projects-shell { margin-top: 32px; padding-block: 56px; }
   .landing-featured-projects-header { align-items: flex-start; gap: 24px; margin-bottom: 36px; }
   .landing-featured-projects-actions { width: auto; }
   .landing-project-stack { gap: 32px; }
   .landing-project-stack .landing-featured-project-card { padding: 28px 18px 24px; }
   .landing-project-stack .landing-featured-project-name { font-size: 1.125rem; }
   .landing-project-stack .landing-featured-project-description { margin-top: 16px; font-size: 0.9375rem; }
-  .landing-project-gallery { width: 94%; height: 210px; margin-inline: 0; }
+  .landing-project-gallery { width: 94%; height: clamp(150px, 45vw, 220px); margin-inline: 0; }
   .landing-browser-preview--main { width: 88%; left: 6%; height: 86%; top: 7%; }
   .landing-browser-preview--left, .landing-browser-preview--right { height: 72%; }
   .landing-browser-preview--left { top: 0; }

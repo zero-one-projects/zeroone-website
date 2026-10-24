@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+
 function HeroIcon({ name }) {
   if (name === 'code') {
     return (
@@ -62,7 +64,7 @@ function HeroIcon({ name }) {
   );
 }
 
-function HeroSection({ hero, stats, projectCounters = [] }) {
+function HeroSection({ hero }) {
   return (
     <section className="hero section reveal-section reveal-delay-1">
       <div className="hero-layout">
@@ -90,7 +92,62 @@ function HeroSection({ hero, stats, projectCounters = [] }) {
 
       </div>
 
-      <div className="hero-metrics-panel">
+
+    </section>
+  );
+}
+
+export function HeroMetrics({ stats, projectCounters = [] }) {
+  const countersRef = useRef(null);
+  const [progress, setProgress] = useState(1);
+
+  useEffect(() => {
+    const counters = countersRef.current;
+    const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (!counters || !window.IntersectionObserver || media?.matches) return undefined;
+
+    let frame = 0;
+    let start;
+    let inView = false;
+    setProgress(0);
+    function animate(now) {
+      start ??= now;
+      const elapsed = Math.min((now - start) / 1600, 1);
+      setProgress(1 - (1 - elapsed) ** 3);
+      if (elapsed < 1) frame = window.requestAnimationFrame(animate);
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && entry.intersectionRatio >= 0.4 && !inView) {
+        inView = true;
+        start = undefined;
+        setProgress(0);
+        frame = window.requestAnimationFrame(animate);
+      } else if (!entry.isIntersecting) {
+        inView = false;
+        window.cancelAnimationFrame(frame);
+        start = undefined;
+        setProgress(0);
+      }
+    }, { threshold: [0, 0.4] });
+    observer.observe(counters);
+
+    function finish() {
+      if (media.matches) {
+        observer.disconnect();
+        window.cancelAnimationFrame(frame);
+        setProgress(1);
+      }
+    }
+    media?.addEventListener?.('change', finish);
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+      media?.removeEventListener?.('change', finish);
+    };
+  }, []);
+
+  return (
+    <div className="hero-metrics-panel">
       <div className="stats-grid">
         {stats.map((item, index) => (
           <article
@@ -110,11 +167,14 @@ function HeroSection({ hero, stats, projectCounters = [] }) {
       {projectCounters.length ? (
         <div
           className="project-counters-grid counter-strip is-visible"
+          ref={countersRef}
         >
           <div className="project-counter-items">
             {projectCounters.map((item) => (
               <article key={item.label} className="counter-card">
-                <strong>{item.value}+</strong>
+                <strong aria-label={`${item.value}+`}>
+                  {String(Math.round(Number(item.value) * progress)).padStart(String(item.value).length, '0')}+
+                </strong>
                 <span>{item.label}</span>
               </article>
             ))}
@@ -122,8 +182,6 @@ function HeroSection({ hero, stats, projectCounters = [] }) {
         </div>
       ) : null}
       </div>
-
-    </section>
   );
 }
 

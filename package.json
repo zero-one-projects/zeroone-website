@@ -6,6 +6,7 @@
     "apps/*"
   ],
   "scripts": {
+    "start": "npm run dev:web",
     "dev:web": "npm run start -w apps/web",
     "build:web": "npm run build -w apps/web",
     "test:web": "npm test -w apps/web -- --watchAll=false",

@@ -2,10 +2,20 @@ import SectionHeading from './SectionHeading';
 
 function CardSection({ id, title, intro, outro, cards, variant }) {
   const isCapabilities = variant === 'swipe';
+  const [statement, ...supportingParagraphs] = (intro || '').split('\n\n');
 
   return (
     <section className={`section reveal-section reveal-delay-2${isCapabilities ? ' services-editorial' : ''}`} id={id}>
-      <SectionHeading title={title} intro={intro} />
+      {isCapabilities && statement ? (
+        <div className="section-heading services-section-header">
+          <h2>{title}</h2>
+          <h3 className="services-section-title">{statement}</h3>
+          {supportingParagraphs.map(paragraph => (
+            <p className="services-section-intro" key={paragraph}>{paragraph}</p>
+          ))}
+          <a className="btn btn-solid services-quote-button" href="/#contact">Get a Quote</a>
+        </div>
+      ) : <SectionHeading title={title} intro={intro} />}
       <div className={isCapabilities ? 'services-cap-grid' : 'card-grid'}>
         {cards.map((card, index) => (
           <article

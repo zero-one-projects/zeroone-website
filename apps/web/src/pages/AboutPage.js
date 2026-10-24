@@ -1,14 +1,14 @@
+import BackToTop from '../components/BackToTop';
 import { useEffect, useRef, useState } from 'react';
 import secLogo from '../assets/company/sec.jpg';
 import birLogo from '../assets/company/BIR.png';
 import ChatWidget from '../components/ChatWidget';
 import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
+import { HeroMetrics } from '../components/HeroSection';
 import CardSection from '../components/CardSection';
 import Seo, { defaultSiteUrl, toAbsoluteUrl } from '../components/Seo';
 import TeamSection from '../components/TeamSection';
 import TextSection from '../components/TextSection';
-import ImpactStatement from '../components/ImpactStatement';
 import { companyProfile } from '../content/companyProfile';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
 import useScrollReveal from '../hooks/useScrollReveal';
@@ -188,7 +188,6 @@ function App() {
   const [aboutContentOverrides, setAboutContentOverrides] = useState([]);
   const aboutSectionRef = useRef(null);
   useScrollReveal(aboutSectionRef, aboutContentOverrides);
-  const [showScrollTop, setShowScrollTop] = useState(false);
   const [solutionCardsVisible, setSolutionCardsVisible] = useState(false);
   const solutionProcessRef = useRef(null);
   const solutionCardsInViewRef = useRef(false);
@@ -196,7 +195,7 @@ function App() {
   const pageProfile = {
     ...mergedProfile,
     // Keep these sections saved while hiding them from the public page.
-    sections: mergedProfile.sections.filter((section) => !['business-partner', 'team', 'vision', 'mission'].includes(section.id))
+    sections: mergedProfile.sections.filter((section) => !['business-partner', 'vision', 'mission'].includes(section.id))
   };
   const footerCapabilities = [
     { label: 'Custom Software', href: companyProfileServicesUrl },
@@ -208,8 +207,8 @@ function App() {
   const footerLinks = [
     { label: 'Home', href: companyProfileHomeUrl },
     { label: 'About', href: aboutRoute },
-    { label: 'Capabilities', href: companyProfileServicesUrl },
-    { label: 'Contact', href: `${aboutRoute}#${pageProfile.contact.id}` },
+    { label: 'Services', href: companyProfileServicesUrl },
+    { label: 'Contact Us', href: '/#contact' },
     { label: 'Facebook', href: 'https://www.facebook.com/zeroone.it.inc' }
   ];
   const registrationBadges = [
@@ -274,19 +273,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => {
-      setShowScrollTop(window.scrollY > 260);
-    };
-
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, []);
-
-  useEffect(() => {
     const node = solutionProcessRef.current;
 
     if (!node) {
@@ -320,28 +306,16 @@ function App() {
     };
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const baseNavigation = pageProfile.sections
-    .filter(section => section.id !== 'vision' && section.id !== 'mission')
-    .map(({ id, title }) => ({
-      id,
-      label: title,
-      href: id === 'about' ? `${aboutRoute}#about-us` : `${aboutRoute}#${id}`
-    }));
   const navigation = [
-    {
-      id: 'home',
-      label: 'Home',
-      href: '/'
-    },
-    ...baseNavigation
+    { id: 'home', label: 'Home', href: '/' },
+    { id: 'services', label: 'Services', href: companyProfileServicesUrl },
+    { id: 'about', label: 'About Us', href: aboutRoute },
+    { id: 'contact', label: 'Contact', href: '/#contact' }
   ];
 
   const renderSections = () => {
     const sections = [];
+    let overview = null;
     let i = 0;
     while (i < pageProfile.sections.length) {
       const section = pageProfile.sections[i];
@@ -351,10 +325,10 @@ function App() {
         const missionSection = pageProfile.sections[i + 2];
         const hasVision = visionSection && visionSection.id === 'vision';
         const hasMission = missionSection && missionSection.id === 'mission';
-        sections.push(
+        overview = (
           <section
             key="about-vision-mission"
-            className="section reveal-section reveal-delay-2"
+            className="section about-introduction reveal-section reveal-delay-2"
             id="about-us"
             ref={aboutSectionRef}
           >
@@ -390,13 +364,12 @@ function App() {
                 ) : null}
               </div> : null}
             </div>
+          </section>
+        );
+        sections.push(
+          <section key="about-details" className="section about-details">
             {section.highlightStatement ? (
               <>
-                <ImpactStatement
-                  statement={section.highlightStatement}
-                  className="about-impact-statement"
-                  scrollReveal
-                />
                 {section.highlightStatement.problemSection?.solutionSection ? (
                   <section className="solution-process-block" ref={solutionProcessRef}>
                     <div className="solution-process-header">
@@ -440,8 +413,9 @@ function App() {
         i++;
       }
     }
-    return sections;
+    return { overview, sections };
   };
+  const renderedSections = renderSections();
 
   return (
     <div className="site about-page">
@@ -453,19 +427,15 @@ function App() {
       />
       <Header
         brand={pageProfile.brand}
+        className="landing-topbar"
         navigation={navigation}
-        contactHref={`${aboutRoute}#${pageProfile.contact.id}`}
       />
 
       <main>
-        <HeroSection
-          brand={pageProfile.brand}
-          hero={pageProfile.hero}
-          stats={pageProfile.stats}
-          projectCounters={pageProfile.projectCounters}
-        />
+        {renderedSections.overview}
+        <HeroMetrics stats={pageProfile.stats} projectCounters={pageProfile.projectCounters} />
 
-        {renderSections()}
+        {renderedSections.sections}
 
         <footer className="landing-site-footer" id={pageProfile.contact.id}>
           <div className="landing-footer-inner">
@@ -490,8 +460,8 @@ function App() {
               </div>
 
               <div className="landing-footer-column">
-                <p className="landing-footer-label">Capabilities</p>
-                <nav className="landing-footer-list" aria-label="Capabilities">
+                <p className="landing-footer-label">Services</p>
+                <nav className="landing-footer-list" aria-label="Services">
                   {footerCapabilities.map((item) => (
                     <a key={item.label} href={item.href}>
                       {item.label}
@@ -528,24 +498,12 @@ function App() {
 
             <div className="landing-footer-bottom">
               <p className="landing-footer-copyright">© 2026 ZEROONE IT INC. ALL RIGHTS RESERVED.</p>
-              <a className="landing-footer-cta" href={`mailto:${pageProfile.contact.email}`}>
-                Start a Project
-              </a>
             </div>
           </div>
         </footer>
       </main>
 
-      <button
-        type="button"
-        className={`scroll-top-btn ${showScrollTop ? 'is-visible' : ''}`}
-        onClick={scrollToTop}
-        aria-label="Back to top"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M12 5l-7 7 1.4 1.4 4.6-4.6V19h2V8.8l4.6 4.6L19 12z" />
-        </svg>
-      </button>
+      <BackToTop />
       <ChatWidget />
     </div>
   );

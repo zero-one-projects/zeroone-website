@@ -21,7 +21,7 @@ npm install
 Run the website:
 
 ```bash
-npm run dev:web
+npm start
 ```
 
 Build the website:

@@ -1,12 +1,14 @@
+import BackToTop from '../components/BackToTop';
 import { useEffect, useRef, useState } from "react";
-import heroLogo from '../assets/company/zeroone-dark-logo.png';
+import HeroSlideshow from "../components/HeroSlideshow";
 import rcmVenturesProject from '../assets/featured-projects/rcm-ventures-login.png';
+import rcmVenturesBusinesses from '../assets/featured-projects/rcm-ventures-businesses.png';
+import rcmVenturesReleaseAnalytics from '../assets/featured-projects/rcm-ventures-release-analytics.png';
 import diamondlinkProject from '../assets/featured-projects/diamond-link-ict.png';
 import diamondlinkClientLogin from '../assets/featured-projects/diamond-link-client-login.png';
 import diamondlinkCareers from '../assets/featured-projects/diamond-link-careers.png';
 import birLogo from "../assets/landing/BIR.png";
 import secLogo from "../assets/landing/sec.jpg";
-import zeroOneLogo from "../assets/landing/zeroone-logo.png";
 import italianHolidaysProject from "../assets/featured-projects/italian-holidays-login.png";
 import italianHolidaysAbout from "../assets/featured-projects/italian-holidays-about.png";
 import italianHolidaysContact from "../assets/featured-projects/italian-holidays-contact.png";
@@ -33,8 +35,9 @@ const landingBrand = {
 };
 const landingNavigation = [
   { id: "home", label: "Home", href: "/" },
-  { id: "contact", label: "Contact Us", href: "/#contact" },
+  { id: "services", label: "Services", href: companyProfileServicesUrl },
   { id: "about", label: "About Us", href: "/about-us" },
+  { id: "contact", label: "Contact", href: "/#contact" },
 ];
 const homeTitle = "ZeroOne IT Inc. | Custom Software, Web Platforms and AI Automation";
 const homeDescription =
@@ -113,27 +116,6 @@ const homeStructuredData = [
   }
 ];
 
-const heroCards = [
-  {
-    title: "Build smarter digital systems for your business.",
-    label: "Digital systems",
-    subtitle: "",
-    className: "landing-hero-card-centered landing-hero-card-message",
-  },
-  {
-    title: "We design and build custom software and SaaS platforms that grow with your business.",
-    label: "Software & SaaS",
-    subtitle: "",
-    className: "landing-hero-card-centered landing-hero-card-message",
-  },
-  {
-    title: "Don’t adapt your business to software. Build software that adapts to you.",
-    label: "Built around you",
-    subtitle: "",
-    className: "landing-hero-card-centered landing-hero-card-message",
-  },
-];
-
 const featuredProjects = [
   {
     title: "Italian Holidays Travel Platform",
@@ -160,6 +142,11 @@ const featuredProjects = [
       "A centralized business portal for tenant operations, user administration, and branch coordination, with dedicated administrator access.",
     image: rcmVenturesProject,
     imageLabel: "Administrator login",
+    previewLabels: { right: "Business portals", left: "Release analytics" },
+    previewImages: {
+      right: rcmVenturesBusinesses,
+      left: rcmVenturesReleaseAnalytics,
+    },
     alt: "RCM Ventures business portal with tenant operations, user administration, branch coordination, and an administrator sign-in form",
     tags: ["Business Portal", "Tenant Operations", "User Management"],
     href: "https://www.rcmventures.net/admin/login",
@@ -245,8 +232,8 @@ const footerCapabilities = [
 const footerLinks = [
   { label: "Home", href: companyProfileHomeUrl },
   { label: "About", href: companyProfileAboutUrl },
-  { label: "Capabilities", href: companyProfileServicesUrl },
-  { label: "Contact", href: "/#contact" },
+  { label: "Services", href: companyProfileServicesUrl },
+  { label: "Contact Us", href: "/#contact" },
   { label: "Facebook", href: "https://www.facebook.com/zeroone.it.inc" },
 ];
 
@@ -311,6 +298,20 @@ function ProjectBrowserPreview({ project, variant = 'main' }) {
 }
 
 function FeaturedProjectCard({ project }) {
+  const galleryRef = useRef(null);
+
+  useEffect(() => {
+    const gallery = galleryRef.current;
+    if (!gallery || !window.IntersectionObserver) return undefined;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      gallery.dataset.visible = String(entry.isIntersecting && entry.intersectionRatio >= 0.25);
+    }, { threshold: [0, 0.25], rootMargin: '-80px 0px 0px 0px' });
+
+    observer.observe(gallery);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <article className="landing-featured-project-card">
       <div className="landing-project-info">
@@ -321,7 +322,7 @@ function FeaturedProjectCard({ project }) {
         <h3 className="landing-featured-project-name">{project.title}</h3>
         <p className="landing-featured-project-description">{project.description}</p>
       </div>
-      <div className="landing-project-gallery">
+      <div className="landing-project-gallery" ref={galleryRef}>
         <ProjectBrowserPreview project={project} variant="left" />
         <ProjectBrowserPreview project={project} variant="right" />
         <ProjectBrowserPreview project={project} />
@@ -575,59 +576,20 @@ export default function App() {
 
       <main className="landing-hero-shell">
         <section className="landing-hero-copy">
-          <div className="landing-hero-header">
-            <div className="landing-hero-heading-block">
-              <p className="landing-hero-eyebrow">
-                <span>ZeroOne</span>
-                <span className="landing-hero-eyebrow-separator" aria-hidden="true" />
-                <span>Information Technology Inc.</span>
-              </p>
-              <h1 className="landing-hero-title">
-                <span className="landing-hero-title-line">Build. Transform.</span>{' '}
-                <span className="landing-hero-title-line">
-                  Scale with <span className="landing-hero-title-accent">Confidence.</span>
-                </span>
-              </h1>
-              <p className="landing-hero-lead">
-                We build custom software, SaaS platforms, and AI-powered solutions that help
-                organizations streamline operations, delight users, and accelerate growth.
-              </p>
-            </div>
-            <div className="landing-hero-logo-panel">
-              <img className="zeroone-hero-logo" src={heroLogo} alt="ZeroOne Information Technology Inc." />
-            </div>
-          </div>
-
-          <div className="landing-hero-card-grid">
-            {heroCards.map((card, index) => (
-              <article
-                className={card.className ? `landing-hero-card ${card.className}` : "landing-hero-card"}
-                key={card.title}
+          <HeroSlideshow>
+            <div className="landing-hero-actions">
+              <a
+                className="landing-hero-button landing-hero-button-primary"
+                href="/#contact"
+                onClick={scrollToContact}
               >
-                <div className="landing-hero-card-content">
-                  <div className="landing-hero-card-meta" aria-hidden="true">
-                    <span>{card.label}</span>
-                    <span>{String(index + 1).padStart(2, '0')}</span>
-                  </div>
-                  <h2 className="landing-hero-card-title">{card.title}</h2>
-                  {card.subtitle ? <p className="landing-hero-card-subtitle">{card.subtitle}</p> : null}
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <div className="landing-hero-actions">
-            <a
-              className="landing-hero-button landing-hero-button-primary"
-              href="/#contact"
-              onClick={scrollToContact}
-            >
-              Schedule a Consultation
-            </a>
-            <a className="landing-hero-button landing-hero-button-secondary" href="/#featured-projects" onClick={scrollToFeaturedProjects}>
-              View Our Work
-            </a>
-          </div>
+                Get a Quote
+              </a>
+              <a className="landing-hero-button landing-hero-button-secondary" href="/#featured-projects" onClick={scrollToFeaturedProjects}>
+                View Our Work
+              </a>
+            </div>
+          </HeroSlideshow>
         </section>
       </main>
 
@@ -646,7 +608,6 @@ export default function App() {
           <div className="landing-featured-projects-actions">
             <a className="landing-featured-projects-contact" href="/#contact" onClick={scrollToContact}>
               <span>Get a Quote</span>
-              <span aria-hidden="true">↗</span>
             </a>
           </div>
         </div>
@@ -689,13 +650,6 @@ export default function App() {
         <div className="landing-contact-section">
           <div className="landing-contact-grid">
             <div className="landing-contact-copy">
-              <div className="landing-contact-chip">
-                <span className="landing-contact-chip-icon">
-                  <img src={zeroOneLogo} alt="ZeroOne logo" className="landing-contact-chip-logo" />
-                </span>
-                <span>Start a Project</span>
-              </div>
-
               <h2 className="landing-contact-title">Contact Us</h2>
               <p className="landing-contact-copy-text">
                 Have questions or ready to transform your business with AI automation,
@@ -708,6 +662,7 @@ export default function App() {
                     className="landing-contact-card"
                     key={item.title}
                     href={item.href}
+                    onClick={item.href === '/#contact' ? scrollToContact : undefined}
                     target={item.href.startsWith("http") ? "_blank" : undefined}
                     rel={item.href.startsWith("http") ? "noreferrer" : undefined}
                   >
@@ -734,33 +689,35 @@ export default function App() {
 
               <form className="landing-contact-form-panel" onSubmit={handleSubmit}>
                 <label className="landing-contact-field">
-                  <span className="landing-sr-only">Name</span>
+                  <span className="landing-contact-field-label">Name</span>
                   <input
                     type="text"
                     name="name"
-                    placeholder="Name"
+                    autoComplete="name"
+                    placeholder="Your name"
                     value={formState.name}
                     onChange={handleChange}
                     required
                   />
                 </label>
                 <label className="landing-contact-field">
-                  <span className="landing-sr-only">Email</span>
+                  <span className="landing-contact-field-label">Email</span>
                   <input
                     type="email"
                     name="email"
-                    placeholder="Email"
+                    autoComplete="email"
+                    placeholder="you@company.com"
                     value={formState.email}
                     onChange={handleChange}
                     required
                   />
                 </label>
                 <label className="landing-contact-field landing-contact-field-textarea">
-                  <span className="landing-sr-only">Message</span>
+                  <span className="landing-contact-field-label">Message</span>
                   <textarea
                     name="message"
-                    placeholder="Message"
-                    rows="8"
+                    placeholder="Tell us about your project and what you’d like to build."
+                    rows="6"
                     value={formState.message}
                     onChange={handleChange}
                     required
@@ -816,8 +773,8 @@ export default function App() {
             </div>
 
             <div className="landing-footer-column">
-              <p className="landing-footer-label">Capabilities</p>
-              <nav className="landing-footer-list" aria-label="Capabilities">
+              <p className="landing-footer-label">Services</p>
+              <nav className="landing-footer-list" aria-label="Services">
                 {footerCapabilities.map((item) => (
                   <a key={item.label} href={item.href}>
                     {item.label}
@@ -854,12 +811,10 @@ export default function App() {
 
           <div className="landing-footer-bottom">
             <p className="landing-footer-copyright">© 2026 ZEROONE IT INC. ALL RIGHTS RESERVED.</p>
-            <a className="landing-footer-cta" href="mailto:hello@zeroone-apps.com">
-              Start a Project
-            </a>
           </div>
         </div>
       </footer>
+      <BackToTop />
       <ChatWidget />
     </div>
   );
