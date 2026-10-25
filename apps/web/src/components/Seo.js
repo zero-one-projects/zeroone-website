@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 const defaultSiteUrl = process.env.REACT_APP_SITE_URL || 'https://zerooneitinc.com';
 const publicUrl = process.env.PUBLIC_URL || '';
-const defaultImagePath = `${publicUrl}/og-image-wordmark-2026.png`;
+const defaultImagePath = `${publicUrl}/og-image-wordmark-2026.png?v=3d91b31`;
 
 function normalizeSiteUrl(value) {
   return value.replace(/\/+$/, '');
