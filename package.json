@@ -6,6 +6,7 @@
     "apps/*"
   ],
   "scripts": {
+    "generate:social-preview": "node scripts/generate-social-preview.js",
     "start": "npm run dev:web",
     "dev:web": "npm run start -w apps/web",
     "build:web": "npm run build -w apps/web",

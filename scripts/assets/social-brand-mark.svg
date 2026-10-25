@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1346 1210" role="img" aria-label="Zero One logo">
+  <defs>
+    <linearGradient id="brandPastel" x1="200" y1="800" x2="1130" y2="350" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#aa89fa"/>
+      <stop offset=".35" stop-color="#d3c4ff"/>
+      <stop offset=".7" stop-color="#99b9ff"/>
+      <stop offset="1" stop-color="#bce6ff"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#brandPastel)">
+    <circle cx="658" cy="594" r="507" fill="none" stroke="url(#brandPastel)" stroke-width="56"/>
+    <path d="M507 437 561 497 365 613 527 726 478 787 250 615Z"/>
+    <path d="M720 359H805L576 884H492Z"/>
+    <path d="M790 494 953 436V745H1028V815H790V745H871V532L790 560Z"/>
+  </g>
+</svg>
