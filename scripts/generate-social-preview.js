@@ -11,7 +11,7 @@ async function generate() {
   const logo = await fs.readFile(path.resolve(assets, logoPath));
   const source = (await fs.readFile(path.join(assets, 'facebook-share.svg'), 'utf8'))
     .replace(`href="${logoPath}"`, `href="data:image/png;base64,${logo.toString('base64')}"`);
-  const target = path.join(output, 'og-image-wordmark-2026.png');
+  const target = path.join(output, 'og-image-hero-2026.png');
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'zeroone-social-'));
   try {
     const sourcePath = path.join(temporary, 'preview.svg');
@@ -25,6 +25,7 @@ async function generate() {
   // Keep older direct image URLs working too.
   await fs.copyFile(target, path.join(output, 'og-image.png'));
   await fs.copyFile(target, path.join(output, 'og-image-2026.png'));
+  await fs.copyFile(target, path.join(output, 'og-image-wordmark-2026.png'));
   console.log('Generated Facebook/social preview: 1200 × 630.');
 }
 
