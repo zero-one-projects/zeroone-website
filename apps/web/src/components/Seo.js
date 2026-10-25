@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 const defaultSiteUrl = process.env.REACT_APP_SITE_URL || 'https://zerooneitinc.com';
 const publicUrl = process.env.PUBLIC_URL || '';
-const defaultImagePath = `${publicUrl}/og-image-2026.png`;
+const defaultImagePath = `${publicUrl}/og-image-wordmark-2026.png`;
 
 function normalizeSiteUrl(value) {
   return value.replace(/\/+$/, '');
@@ -108,7 +108,7 @@ function Seo({
     setMeta('meta[property="og:image:height"]', { property: 'og:image:height', content: '630' });
     setMeta('meta[property="og:image:alt"]', {
       property: 'og:image:alt',
-      content: 'Zero One IT Inc. — Build. Transform. Scale with Confidence. Featuring our lavender and blue logo on charcoal.'
+      content: 'Zero One IT Inc. — Build. Transform. Scale with Confidence. Featuring our Zero One company wordmark on charcoal.'
     });
     setMeta('meta[property="og:locale"]', { property: 'og:locale', content: 'en_PH' });
 

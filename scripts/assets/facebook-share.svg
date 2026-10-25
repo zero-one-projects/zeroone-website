@@ -20,5 +20,7 @@
     <text x="64" y="587" fill="#e7e3f3" font-size="18" letter-spacing=".3">zerooneitinc.com</text>
     <text x="1136" y="587" text-anchor="end" fill="#9593a5" font-size="13" letter-spacing="1.6">SOFTWARE · WEB · AI AUTOMATION</text>
   </g>
-  <image href="social-brand-mark.svg" x="801" y="167" width="355" height="319"/>
+  <svg x="766" y="264" width="390" height="104" viewBox="150 290 1470 340" style="mix-blend-mode:screen">
+    <image href="../../apps/web/src/assets/company/zeroone-dark-logo.png" width="1716" height="917"/>
+  </svg>
 </svg>
