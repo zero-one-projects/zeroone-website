@@ -12,6 +12,8 @@ async function contractFormats() {
 }
 async function prepareQuotation(input) {
   if (!input || (input.contractText !== undefined && typeof input.contractText !== 'string')) return normalizeQuotation(input);
+  // Quotation-only delivery does not require a contract template or PDF.
+  if (input.clientFlow === 'quotation_only') return normalizeQuotation({ ...input, contractSource: 'default', contractPdf: undefined });
   if (input.contractSource === undefined && input.contractText === undefined) {
     const selected = (await contractSources())[input.quoteType || 'project'];
     if (selected?.source === 'pdf') input = { ...input, contractSource: 'pdf', contractPdf: selected.pdf };

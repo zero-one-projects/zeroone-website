@@ -15,7 +15,7 @@ const router = express.Router();
 const requestLimits = new Map();
 
 function pendingSignature(row) {
-  return row.clientResponse?.action === 'accept' && !row.clientResponse.signature && row.clientResponse.documentHash === documentHash(row.document);
+  return row.document.clientFlow !== 'quotation_only' && row.clientResponse?.action === 'accept' && !row.clientResponse.signature && row.clientResponse.documentHash === documentHash(row.document);
 }
 function signingContract(row) { return pendingSignature(row) ? row.clientResponse.contractText || quotationContract(row.document) : quotationContract(row.document); }
 
@@ -111,6 +111,7 @@ router.post('/:token/respond', async (req, res, next) => {
       const row = await Quotation.findOne({ where: { shareToken: req.params.token }, transaction, logging: false, lock: transaction.LOCK.UPDATE });
       if (!row) return { status: 404, message: 'Quotation link not found.' };
       if (quotationExpired(row.document)) return { status: 410, message: 'This quotation has expired.' };
+      if (row.document.clientFlow === 'quotation_only' && signature) return { status: 400, message: 'Contract signing is not included with this quotation.' };
       const challenge = await QuotationVerification.findByPk(challengeId, { transaction, logging: false, lock: transaction.LOCK.UPDATE });
       if (!challenge || challenge.quotationId !== row.id || challenge.action !== action || challenge.consumedAt || new Date(challenge.expiresAt).getTime() <= Date.now() || (action === 'requote' && challenge.attempts >= 5)) return { status: 400, message: 'This verification code is invalid or expired. Request a new code.' };
       if (action === 'accept') {
@@ -138,17 +139,17 @@ router.post('/:token/respond', async (req, res, next) => {
           total: row.document.total, currency: row.document.currency, validUntil: row.document.validUntil,
           hasRecurring: row.document.hasRecurring, recurringTotal: row.document.recurringTotal, billingPeriod: row.document.billingPeriod,
           billingCommencement: row.document.contractDetails?.billingCommencement, monthlySubscriptionNotice: row.document.monthlySubscription?.notice,
-          respondedAt: row.clientResponse.respondedAt, documentVersion: version, note, signedAt: response.signature?.signedAt, ...(signature ? { signedContract: { reference: serializeQuotation(row).reference, document: response.document, signature: response.signature } } : {}), signaturePending: action === 'accept' && !signature
+          respondedAt: row.clientResponse.respondedAt, documentVersion: version, note, signedAt: response.signature?.signedAt, ...(signature ? { signedContract: { reference: serializeQuotation(row).reference, document: response.document, signature: response.signature } } : {}), clientFlow: row.document.clientFlow, signaturePending: action === 'accept' && !signature && row.document.clientFlow !== 'quotation_only'
         } }, { transaction, logging: false });
       if (action === 'accept') await QuotationNotification.create({ id: crypto.randomUUID(), quotationId: row.id, payload: {
         action: 'client_accept', reference: serializeQuotation(row).reference, title: row.document.title,
         clientName: name, clientEmail: challenge.email, total: row.document.total, currency: row.document.currency,
         hasRecurring: row.document.hasRecurring, recurringTotal: row.document.recurringTotal, billingPeriod: row.document.billingPeriod,
         billingCommencement: row.document.contractDetails?.billingCommencement, monthlySubscriptionNotice: row.document.monthlySubscription?.notice,
-        respondedAt: response.respondedAt, signedAt: response.signature?.signedAt, signaturePending: !signature,
-        validUntil: row.document.validUntil, clientUrl: clientQuotationUrl(row.shareToken), ...(signature ? { signedContract: { reference: serializeQuotation(row).reference, document: response.document, signature: response.signature } } : {})
+        respondedAt: response.respondedAt, signedAt: response.signature?.signedAt, clientFlow: row.document.clientFlow, signaturePending: !signature && row.document.clientFlow !== 'quotation_only',
+        validUntil: row.document.validUntil, clientUrl: clientQuotationUrl(row.shareToken, row.document.clientFlow), ...(signature ? { signedContract: { reference: serializeQuotation(row).reference, document: response.document, signature: response.signature } } : {})
       } }, { transaction, logging: false });
-      return { status: 200, quotation: serializeQuotation(row), ...(action === 'accept' && !signature ? { signingSession: openPageSession(row, challenge) } : {}), notifyTeam: true };
+      return { status: 200, quotation: serializeQuotation(row), ...(action === 'accept' && !signature && row.document.clientFlow !== 'quotation_only' ? { signingSession: openPageSession(row, challenge) } : {}), notifyTeam: true };
     });
     if (result.notifyTeam) queueNotificationDelivery();
     return res.status(result.status).json(result.quotation ? { quotation: result.quotation, ...(result.signingSession ? { signingSession: result.signingSession } : {}) } : { message: result.message });
@@ -214,6 +215,7 @@ router.get('/:token/contract-pdf', async (req, res, next) => {
     const row = await Quotation.findOne({ where: { shareToken: req.params.token }, logging: false });
     if (!row) return res.status(404).json({ message: 'Quotation link not found.' });
     if (quotationExpired(row.document)) return res.status(410).json({ message: 'This quotation has expired.' });
+    if (row.document.clientFlow === 'quotation_only') return res.status(404).json({ message: 'Contract signing is not included with this quotation.' });
     if (row.document.contractSource !== 'pdf') return res.status(404).json({ message: 'This quotation uses a default contract.' });
     const file = await require('../utils/contract-files').getContractFile(row.document.contractPdf, true);
     return res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="contract.pdf"' }).send(file.data);

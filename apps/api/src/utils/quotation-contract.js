@@ -87,5 +87,5 @@ Should the Client voluntarily cancel, suspend indefinitely, or terminate the pro
 Any completed modules, source code, documentation, designs, or other deliverables shall remain the exclusive property of the Provider **until full payment of the agreed project cost has been received.**`;
 
 const defaultContractTexts = { project: defaultContractText, subscription: '', pos: require('../content/pos-contract-reference.json').terms };
-function quotationContract(document) { if (document.contractSource === 'pdf' && document.contractPdf) return `Uploaded PDF contract: ${document.contractPdf.fileName}\nSHA-256: ${document.contractPdf.sha256}`; return document.contractText?.trim() || defaultContractTexts[document.quoteType || 'project'] || ''; }
+function quotationContract(document) { if (document.clientFlow === 'quotation_only') return ''; if (document.contractSource === 'pdf' && document.contractPdf) return `Uploaded PDF contract: ${document.contractPdf.fileName}\nSHA-256: ${document.contractPdf.sha256}`; return document.contractText?.trim() || defaultContractTexts[document.quoteType || 'project'] || ''; }
 module.exports = { defaultContractText, defaultContractTexts, quotationContract };

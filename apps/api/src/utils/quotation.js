@@ -47,6 +47,8 @@ function normalizeQuotation(input = {}) {
   if (!['project', 'subscription', 'pos'].includes(quoteType)) invalid('Choose a valid quotation type.');
   const billingPeriod = input.billingPeriod || 'monthly';
   if (!['monthly', 'yearly'].includes(billingPeriod)) invalid('Choose monthly or yearly subscription billing.');
+  const clientFlow = input.clientFlow ?? 'full';
+  if (!['full', 'quotation_only'].includes(clientFlow)) invalid('Choose a valid client response flow.');
   const contractSource = input.contractSource || 'default';
   if (!['default', 'pdf'].includes(contractSource)) invalid('Choose a valid contract source.');
   let contractPdf;
@@ -56,7 +58,7 @@ function normalizeQuotation(input = {}) {
     contractPdf = { id: file.id, sha256: file.sha256, fileName: text(file.fileName, 'PDF name', 180, true), byteLength: file.byteLength, pageCount: file.pageCount };
   }
   const contractText = text(input.contractText, 'Contract terms', 30000);
-  if (!quotationContract({ quoteType, contractText, contractSource, contractPdf })) invalid('Enter the contract terms for this subscription or POS quotation before saving.');
+  if (clientFlow !== 'quotation_only' && !quotationContract({ quoteType, contractText, contractSource, contractPdf })) invalid('Enter the contract terms for this subscription or POS quotation before saving.');
   if (!Array.isArray(input.items) || !input.items.length || input.items.length > 100) invalid('Add between 1 and 100 line items.');
   const items = input.items.map((item) => {
     if (!item || typeof item !== 'object') invalid('Invalid line item.');
@@ -103,6 +105,7 @@ function normalizeQuotation(input = {}) {
   }
   return {
     title: text(input.title, 'Project title', 180, true), quoteType, billingPeriod, clientName, clientEmail,
+    ...(input.clientFlow !== undefined ? { clientFlow } : {}),
     clientAddress: text(input.clientAddress, 'Client address', 1000),
     issuedOn, validUntil, currency: input.currency, items,
     discount: discountCents / 100, taxRate,

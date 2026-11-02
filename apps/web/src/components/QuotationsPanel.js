@@ -339,6 +339,17 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
             <label className="grid gap-2 text-sm font-bold text-slate-700">Notes / payment terms
               <textarea className={fieldClass} rows={4} maxLength={10000} value={document.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Scope, delivery schedule, payment terms, and exclusions" />
             </label>
+            <section className="grid gap-3 rounded-lg border border-slate-200 p-4" aria-label="Client response flow">
+              <h3 className="text-lg font-bold">Client response options</h3>
+              <label className="grid gap-2 text-sm font-bold text-slate-700">After the client accepts
+                <select className={fieldClass} value={document.clientFlow || 'full'} onChange={(event) => update('clientFlow', event.target.value)}>
+                  <option value="full">Offer contract signing and payment</option>
+                  <option value="quotation_only">Quotation only — send contract and payment details later</option>
+                </select>
+              </label>
+              <p className="text-sm text-slate-600">{document.clientFlow === 'quotation_only' ? 'Clients can accept, request a requote, or decide later. After acceptance, the page and confirmation email explain that the contract, payment details, and terms will follow in another email. Send that follow-up separately when ready.' : 'After accepting, clients can sign the contract now or later, then view the payment instructions.'}</p>
+            </section>
+            {document.clientFlow !== 'quotation_only' && <>
             <section className="grid gap-3 rounded-lg border border-slate-200 p-4" aria-label="Payment configuration">
               <h3 className="text-lg font-bold">Payment after signing</h3>
               <p className="text-sm text-slate-600">Set these details before sharing. Clients see this payment step after signing the contract.</p>
@@ -364,6 +375,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
                 ['agreementDate', 'Agreement date'], ['authorizedRepresentative', 'Client authorized representative'], ['clientPosition', 'Client representative position'], ['providerRepresentative', 'Zero One authorized representative'], ['providerPosition', 'Zero One representative position'], ['branches', 'Branches / terminals'], ['effectiveDate', 'Subscription effective date'], ['minimumPeriod', 'Minimum subscription period'], ['billingCommencement', 'Subscription payment commencement'], ['initialBillingTerms', 'Initial billing arrangements'], ['paymentTerms', 'Payment due date / terms'], ['gracePeriod', 'Payment grace period'], ['terminationTerms', 'Early termination fee / formula']
               ].map(([key, label]) => <label key={key} className="grid gap-2 font-bold text-slate-700">{label}<textarea className={fieldClass} rows={key === 'paymentTerms' || key === 'terminationTerms' ? 3 : 2} readOnly={key === 'billingCommencement' && Boolean(document.monthlySubscription)} maxLength={key === 'paymentTerms' || key === 'terminationTerms' ? 2000 : 500} value={document.contractDetails?.[key] || ''} onChange={(event) => update('contractDetails', { ...document.contractDetails, [key]: event.target.value })} /></label>)}</div></details>
             </section>
+            </>}
             <div className="rounded-lg bg-slate-50 p-4 text-sm">
               <div className="flex justify-between gap-3"><span>Subtotal</span><span>{money(totals.subtotal)}</span></div>
               <div className="mt-2 flex justify-between gap-3"><span>Discount</span><span>−{money(Number(document.discount) || 0)}</span></div>
@@ -374,7 +386,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
             <div className="flex flex-wrap gap-3">
               <button className={primaryClass} type="submit">{saving ? 'Saving...' : selected ? 'Save Changes' : 'Save Quotation'}</button>
               <button className={secondaryClass} type="button" disabled={!selected || dirty} onClick={printQuotation}>Print / Save PDF</button>
-              <button className={secondaryClass} type="button" disabled={!selected || dirty} onClick={async () => { try { await printContract({ ...selected.document, contractText: selected.contractText }, selected.reference, selected.clientResponse?.current ? selected.clientResponse.signature : null, { adminToken: token, quotationId: selected.id }); } catch (error) { setNotice({ error: true, message: error.message }); } }}>Contract / Save PDF</button>
+              <button className={secondaryClass} type="button" disabled={!selected || dirty || document.clientFlow === 'quotation_only'} onClick={async () => { try { await printContract({ ...selected.document, contractText: selected.contractText }, selected.reference, selected.clientResponse?.current ? selected.clientResponse.signature : null, { adminToken: token, quotationId: selected.id }); } catch (error) { setNotice({ error: true, message: error.message }); } }}>Contract / Save PDF</button>
             </div>
             {(!selected || dirty) && <p className="text-xs text-slate-500">Save the quotation before printing to include its reference number.</p>}
             {selected?.clientResponse && <section className="rounded-lg border border-slate-200 bg-slate-50 p-4" aria-label="Client response">
@@ -383,7 +395,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               <p className="mt-2 text-sm text-slate-700">{selected.clientResponse.name} · {selected.clientResponse.email}</p>
               <p className="mt-1 text-xs text-slate-500">{new Date(selected.clientResponse.respondedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} (Manila)</p>
               {selected.clientResponse.note && <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{selected.clientResponse.note}</p>}
-              {selected.clientResponse.action === 'accept' && <p className="mt-3 text-sm font-bold">{selected.clientResponse.signedAt ? 'Contract signed' : 'Contract pending signature'}</p>}
+              {selected.clientResponse.action === 'accept' && <p className="mt-3 text-sm font-bold">{selected.clientResponse.signedAt ? 'Contract signed' : selected.clientResponse.signaturePending ? 'Contract pending signature' : 'Quotation only — send the contract, payment details, and terms separately.'}</p>}
               <SignedAgreement signature={selected.clientResponse.signature} document={selected.clientResponse.current ? selected.document : undefined} reference={selected.reference} token={token} quotationId={selected.id} />
             </section>}
             {selected && <QuotationHistory token={token} quotationId={selected.id} updatedAt={selected.updatedAt} reference={selected.reference} />}

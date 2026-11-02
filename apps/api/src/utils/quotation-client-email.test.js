@@ -32,3 +32,13 @@ test('receipt clearly separates setup and add-ons from the monthly subscription'
   assert(message.body.content.includes('700.00 / month'));
   assert(message.body.content.includes('After the official system go-live date.'));
 });
+
+test('quotation-only receipts explain the follow-up and never offer signing or imply a signed contract', () => {
+  const message = clientAcceptanceMessage({ clientFlow: 'quotation_only', reference: 'ZO-TEST', title: 'Website', clientName: 'Client', clientEmail: 'client@example.com', currency: 'PHP', total: 5000, respondedAt: '2026-11-03T01:00:00Z', validUntil: '2026-12-01', signaturePending: true, clientUrl: clientQuotationUrl('a'.repeat(64), 'quotation_only') });
+  assert(message.body.content.includes('another email'));
+  assert(message.body.content.includes('contract, payment details, and terms'));
+  assert(message.body.content.includes('View Quotation'));
+  assert(!message.body.content.includes('Review &amp; Sign Contract'));
+  assert(!message.body.content.includes('?sign=1'));
+  assert(!message.body.content.includes('Your contract has been signed'));
+});

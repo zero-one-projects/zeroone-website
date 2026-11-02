@@ -23,7 +23,7 @@ export function newQuotation() {
   const later = new Date(today);
   later.setDate(later.getDate() + 15);
   const localDate = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  return { title: '', quoteType: 'project', billingPeriod: 'monthly', clientName: '', clientEmail: '', clientAddress: '',
+  return { title: '', clientFlow: 'quotation_only', quoteType: 'project', billingPeriod: 'monthly', clientName: '', clientEmail: '', clientAddress: '',
     issuedOn: localDate(today), validUntil: localDate(later), currency: 'PHP',
     items: [{ description: '', quantity: 1, unitPrice: 0 }], discount: 0, taxRate: 0, notes: '', timeline: '', paymentInstructions: undefined, initialPaymentPercent: 20 };
 }

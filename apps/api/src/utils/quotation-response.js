@@ -15,7 +15,7 @@ function responseSummary(row, admin = false) {
   if (!response) return null;
   return { action: response.action, respondedAt: response.respondedAt,
     signedAt: response.signature?.signedAt || null,
-    signaturePending: response.action === 'accept' && !response.signature,
+    signaturePending: response.action === 'accept' && !response.signature && (response.document || row.document).clientFlow !== 'quotation_only',
     current: response.documentHash === documentHash(row.document),
     ...(admin ? { email: response.email, name: response.name, note: response.note, documentHash: response.documentHash, signature: response.signature || null } : {}) };
 }

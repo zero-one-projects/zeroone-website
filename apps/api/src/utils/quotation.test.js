@@ -124,3 +124,14 @@ test('monthly adjustment snapshots the revised recurring price and mandatory Go-
   const summary = require('./quotation-pricing').monthlySubscriptionSummary(taxable);
   assert.equal(summary.revisedAmount, taxable.recurringTotal); assert.equal(summary.currentAmount + summary.additionalAmount, summary.revisedAmount);
 });
+
+test('quotation-only subscriptions save without contract terms and validate the response mode', () => {
+  const input = sample({ clientFlow: 'quotation_only', quoteType: 'subscription', discount: 0, items: [
+    { description: 'Setup', chargeType: 'setup', quantity: 1, unitPrice: 0 },
+    { description: 'Plan', chargeType: 'recurring', quantity: 1, unitPrice: 1000 }
+  ] });
+  assert.equal(normalizeQuotation(input).clientFlow, 'quotation_only');
+  assert.throws(() => normalizeQuotation({ ...input, clientFlow: 'full' }), { statusCode: 400 });
+  assert.throws(() => normalizeQuotation({ ...input, clientFlow: 'unknown' }), { statusCode: 400 });
+  assert.equal(normalizeQuotation(sample()).clientFlow, undefined);
+});

@@ -34,7 +34,7 @@ export default function QuotationHistory({ token, quotationId, updatedAt, refere
         <p className="mt-2 text-sm">{entry.name} · {entry.email}</p>
         <p className="mt-1 text-xs text-slate-500">{new Date(entry.respondedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} (Manila)</p>
         {entry.note && <p className="mt-3 whitespace-pre-wrap text-sm">{entry.note}</p>}
-        {entry.action === 'accept' && !entry.signature && <p className="mt-3 text-sm text-amber-800">Contract pending signature</p>}
+        {entry.action === 'accept' && !entry.signature && entry.document?.clientFlow !== 'quotation_only' && <p className="mt-3 text-sm text-amber-800">Contract pending signature</p>}
         <SignedAgreement signature={entry.signature} document={entry.document} reference={reference} token={token} quotationId={quotationId} />
         {entry.document && <details className="mt-3 text-sm">
           <summary className="cursor-pointer font-bold">View quotation at time of response</summary>

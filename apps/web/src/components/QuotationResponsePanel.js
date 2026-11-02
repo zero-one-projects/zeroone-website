@@ -10,7 +10,9 @@ import { printContract } from '../utils/printContract';
 const field = 'w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950';
 
 export default function QuotationResponsePanel({ quotation, token, onResponse }) {
-  const [action, setAction] = useState(() => new URLSearchParams(window.location.search).get('sign') === '1' && quotation.clientResponse?.current && quotation.clientResponse.action === 'accept' && !quotation.clientResponse.signedAt ? 'sign' : '');
+  const quotationOnly = quotation.document.clientFlow === 'quotation_only';
+  const followUpMessage = 'You will receive another email from Zero One with your contract, payment details, and terms.';
+  const [action, setAction] = useState(() => new URLSearchParams(window.location.search).get('sign') === '1' && !quotationOnly && quotation.clientResponse?.current && quotation.clientResponse.action === 'accept' && !quotation.clientResponse.signedAt ? 'sign' : '');
   const [signingSession, setSigningSession] = useState(() => readSigningSession(token, quotation.documentVersion));
   const [email, setEmail] = useState(signingSession?.email || quotation.document.clientEmail || '');
   const [name, setName] = useState(signingSession?.name || quotation.document.contractDetails?.authorizedRepresentative || quotation.document.clientName || '');
@@ -29,7 +31,7 @@ export default function QuotationResponsePanel({ quotation, token, onResponse })
   const isAcceptancePrompt = action === 'accepted';
   const isPayment = action === 'payment';
   const [downloading, setDownloading] = useState(false);
-  const signaturePending = response?.current && response.action === 'accept' && !response.signedAt;
+  const signaturePending = !quotationOnly && response?.current && response.action === 'accept' && !response.signedAt;
   const dialogRef = useRef(null);
   const signNowRef = useRef(null);
   const dialogTitleId = useId();
@@ -104,7 +106,7 @@ export default function QuotationResponsePanel({ quotation, token, onResponse })
         ...(isSigning ? { signature: { type: 'drawn', strokes, agreed } } : {})
       } : { code }), action: isSigning ? 'accept' : action, name, note });
       if (payload.signingSession) setSigningSession(payload.signingSession);
-      onResponse(payload.quotation); setAction(action === 'accept' ? 'accepted' : isSigning ? 'payment' : ''); setCode('');
+      onResponse(payload.quotation); setAction(action === 'accept' ? quotationOnly ? 'confirmed' : 'accepted' : isSigning ? 'payment' : ''); setCode('');
       if (action !== 'accept') { setVerified(null); setChallenge(null); }
       setStrokes([]); setAgreed(false); setDeferred(false);
     } catch (failure) { setError(failure.message); }
@@ -116,7 +118,7 @@ export default function QuotationResponsePanel({ quotation, token, onResponse })
     try {
       const payload = await request('verify', { challengeId: challenge, code });
       if (payload.signingSession) setSigningSession(payload.signingSession);
-      setVerified(payload); setCode(''); setMessage(isSigning ? 'Email verified. Review the agreement and sign.' : 'Email verified. Confirm acceptance; you can sign the contract now or later.');
+      setVerified(payload); setCode(''); setMessage(isSigning ? 'Email verified. Review the agreement and sign.' : quotationOnly ? 'Email verified. Confirm your quotation acceptance.' : 'Email verified. Confirm acceptance; you can sign the contract now or later.');
     } catch (failure) { setError(failure.message); }
     finally { setBusy(false); }
   }
@@ -143,7 +145,8 @@ export default function QuotationResponsePanel({ quotation, token, onResponse })
       {response?.current ? <>
         <h2 className="text-lg font-bold text-emerald-900">{response.action === 'accept' ? 'Quotation accepted' : 'Requote requested'}</h2>
         <p className="mt-2 text-sm text-emerald-800">Your verified response has been recorded. {response.action === 'requote' ? 'Zero One will review the changes you requested.' : 'Thank you for confirming this quotation.'}</p>
-        {response.signedAt && <><p className="mt-2 text-sm text-emerald-800">Agreement electronically signed on {new Date(response.signedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} (Manila).</p><button type="button" className="admin-brand-surface mt-4 rounded-lg px-5 py-3 text-sm font-bold" onClick={() => { setAction('payment'); setError(''); }}>Continue to Payment</button></>}
+        {!quotationOnly && response.signedAt && <><p className="mt-2 text-sm text-emerald-800">Agreement electronically signed on {new Date(response.signedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} (Manila).</p><button type="button" className="admin-brand-surface mt-4 rounded-lg px-5 py-3 text-sm font-bold" onClick={() => { setAction('payment'); setError(''); }}>Continue to Payment</button></>}
+        {quotationOnly && response.action === 'accept' && <p className="mt-4 text-sm text-slate-600">{followUpMessage}</p>}
         {signaturePending && !isAcceptancePrompt && <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
           <h3 className="font-bold text-amber-900">Contract pending signature</h3>
           <p className="mt-2 text-sm text-amber-900">{deferred ? 'You chose to sign later. Your quotation remains accepted.' : 'You can sign the contract now or choose to sign later. Your quotation is already accepted.'} Return using this link before it expires to sign.</p>
@@ -158,7 +161,9 @@ export default function QuotationResponsePanel({ quotation, token, onResponse })
       <div className="mt-4 flex flex-wrap gap-3">
         <button className="admin-brand-surface rounded-lg px-5 py-3 text-sm font-bold disabled:opacity-50" type="button" disabled={busy} onClick={() => { setAction('accept'); setChallenge(null); setError(''); setMessage(''); }}>Accept Quotation</button>
         <button className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-[#514568] disabled:opacity-50" type="button" disabled={busy} onClick={() => { setAction('requote'); setChallenge(null); setError(''); setMessage(''); }}>Request Requote</button>
+        {quotationOnly && <button className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-600" type="button" onClick={() => setDeferred(true)}>Decide Later</button>}
       </div>
+      {quotationOnly && deferred && <p className="mt-4 text-sm text-slate-600" role="status">You can return to this link before it expires to accept or request a requote. No response has been submitted.</p>}
       </>}
       {action && <dialog
         ref={dialogRef}
@@ -168,12 +173,16 @@ export default function QuotationResponsePanel({ quotation, token, onResponse })
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[#6b617a]">{isPayment ? 'Contract signed' : isAcceptancePrompt ? 'Quotation accepted' : isSigning ? 'Sign contract' : action === 'accept' ? 'Accept quotation' : 'Request requote'}</p>
-            <h2 className="mt-2 text-2xl font-bold" id={dialogTitleId}>{isPayment ? 'Next step: Payment' : isAcceptancePrompt ? 'Ready to sign your contract?' : verified ? isSigning ? 'Review and sign agreement' : 'Confirm quotation acceptance' : challenge ? 'Verify your email' : 'Sign in to respond'}</h2>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#6b617a]">{action === 'confirmed' ? 'Quotation accepted' : isPayment ? 'Contract signed' : isAcceptancePrompt ? 'Quotation accepted' : isSigning ? 'Sign contract' : action === 'accept' ? 'Accept quotation' : 'Request requote'}</p>
+            <h2 className="mt-2 text-2xl font-bold" id={dialogTitleId}>{action === 'confirmed' ? 'Thank you for accepting' : isPayment ? 'Next step: Payment' : isAcceptancePrompt ? 'Ready to sign your contract?' : verified ? isSigning ? 'Review and sign agreement' : 'Confirm quotation acceptance' : challenge ? 'Verify your email' : 'Sign in to respond'}</h2>
           </div>
           <button className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-xl text-slate-600 hover:bg-slate-50 disabled:opacity-40" type="button" disabled={busy} aria-label="Close response popup" onClick={closeDialog}>×</button>
         </div>
-        {isPayment ? <QuotationPaymentStep quotation={quotation} onDownload={signingSession ? downloadSignedContract : null} downloading={downloading} error={error} /> : isAcceptancePrompt ? <section aria-label="Contract signing options">
+        {action === 'confirmed' ? <section aria-label="Quotation acceptance confirmation">
+          <p className="text-sm leading-6 text-emerald-800">Your verified acceptance has been recorded.</p>
+          <p className="mt-4 text-sm leading-6 text-slate-600">{followUpMessage}</p>
+          <button type="button" className="admin-brand-surface mt-6 rounded-lg px-5 py-3 text-sm font-bold" onClick={closeDialog}>Done</button>
+        </section> : isPayment ? <QuotationPaymentStep quotation={quotation} onDownload={signingSession ? downloadSignedContract : null} downloading={downloading} error={error} /> : isAcceptancePrompt ? <section aria-label="Contract signing options">
           <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg></div>
           <p className="text-sm leading-6 text-slate-600">Your verified acceptance has been recorded. You can review and electronically sign your contract now, or choose to do it later. While this page stays open, you will not need another verification code.</p>
           <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4"><h3 className="font-bold text-amber-900">Contract pending signature</h3><p className="mt-2 text-sm leading-6 text-amber-900">Your quotation is already accepted. Signing the contract is a separate step. Please return before your quotation link expires.</p></div>
@@ -204,7 +213,7 @@ export default function QuotationResponsePanel({ quotation, token, onResponse })
             {!verified && <label className="grid gap-2 text-sm font-bold text-slate-700">Verification code
               <input className={field} required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))} placeholder="Six-digit code from your inbox" />
             </label>}
-            {verified && action === 'accept' && <p className="text-sm text-slate-600">After confirming acceptance, you can choose Sign Contract Now or Sign Later. Signing is a separate step.</p>}
+            {verified && action === 'accept' && <p className="text-sm text-slate-600">{quotationOnly ? followUpMessage : 'After confirming acceptance, you can choose Sign Contract Now or Sign Later. Signing is a separate step.'}</p>}
             {verified && isSigning && <>
               <section className="rounded-lg border border-slate-200 bg-white p-4" aria-label="Agreement terms">
                 <h3 className="font-bold">{quotation.reference} · {quotation.document.title}</h3>

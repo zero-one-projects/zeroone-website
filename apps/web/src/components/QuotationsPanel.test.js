@@ -26,6 +26,7 @@ test('mixed POS pricing keeps setup and add-ons separate from the subscription',
 test('choosing a payment type automatically loads its own saved contract', async () => {
   global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotations: [], total: 0, defaultContractText: 'One-time payment agreement', defaultContractTexts: { project: 'One-time payment agreement', subscription: 'Subscription agreement', pos: 'POS agreement' } }) }));
   render(<QuotationsPanel token="test-session" />);
+  fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
   await waitFor(() => expect(screen.getByLabelText('Contract terms (optional override)')).toHaveValue('One-time payment agreement'));
   expect(screen.getByText('Saved one-time payment contract loaded.')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Quotation type'), { target: { value: 'subscription' } });
@@ -38,6 +39,7 @@ test('choosing a payment type automatically loads its own saved contract', async
 test('a subscription starts with separate setup and recurring prices', async () => {
   global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotations: [], total: 0, defaultContractTexts: { project: 'Project terms', subscription: 'Subscription terms' } }) }));
   render(<QuotationsPanel token="test-session" />);
+  fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
   await screen.findByText(/No quotations yet/);
   fireEvent.change(screen.getByLabelText('Quotation type'), { target: { value: 'subscription' } });
   expect(screen.getByLabelText('Item 1 description')).toHaveValue('One-time setup fee');
@@ -100,6 +102,7 @@ test('new save resets the form, opens a copy-link popup, and keeps edits on late
   await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/quotations/1'), expect.objectContaining({ method: 'PUT' })));
   await screen.findByText('ZO-2026-00001 saved successfully.');
   expect(stored.document.clientName).toBe('Updated client');
+  expect(stored.document.clientFlow).toBe('quotation_only');
   expect(screen.getByLabelText('Client / company name')).toHaveValue('Updated client');
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
@@ -137,6 +140,7 @@ test('new quotations follow the selected PDF and can switch back to the kept def
   const pdf = { id:'12345678-1234-4234-8234-123456789012', fileName:'Selected contract.pdf', pageCount:2, byteLength:1000, sha256:'a'.repeat(64) };
   global.fetch = jest.fn(async()=>({ok:true,json:async()=>({quotations:[],defaultContractText:'My saved default',defaultContractTexts:{project:'My saved default'},defaultContracts:{project:{source:'pdf',pdf}}})}));
   render(<QuotationsPanel token="admin-token" />);
+  fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
   await screen.findByText('Selected contract.pdf');
   expect(screen.getByLabelText('Contract source')).toHaveValue('pdf');
   expect(screen.queryByLabelText('Contract terms (optional override)')).not.toBeInTheDocument();
@@ -149,6 +153,7 @@ test('new quotations follow the selected PDF and can switch back to the kept def
 test('new quotations load editable default payment instructions and preserve edits', async () => {
   global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotations: [], defaultPaymentInstructions: 'Bank: AUB\nAccount number: 310-11-003883-1' }) }));
   render(<QuotationsPanel token="test-session" />);
+  fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
   const field = screen.getByLabelText('Bank / payment instructions');
   await waitFor(() => expect(field).toHaveValue('Bank: AUB\nAccount number: 310-11-003883-1'));
   fireEvent.change(field, { target: { value: 'Client-specific instructions' } });
@@ -199,4 +204,17 @@ test('POS monthly Go-Live option combines current and additional subscription ch
   fireEvent.click(screen.getByLabelText('Show monthly subscription after Go-Live'));
   expect(within(preview).queryByRole('region', { name: 'Monthly subscription after Go-Live' })).not.toBeInTheDocument();
   expect(screen.getByLabelText('Recurring total')).toHaveTextContent('4,199');
+});
+
+test('client flow selector hides contract and payment setup and restores it when enabled', async () => {
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotations: [], defaultContractText: 'Saved terms', defaultPaymentInstructions: 'Bank details' }) }));
+  render(<QuotationsPanel token="test-session" />);
+  await screen.findByText(/No quotations yet/);
+  expect(screen.getByLabelText('After the client accepts')).toHaveValue('quotation_only');
+  expect(screen.queryByRole('region', { name: 'Payment configuration' })).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Contract terms (optional override)')).not.toBeInTheDocument();
+  expect(screen.getByText(/Send that follow-up separately when ready/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
+  expect(screen.getByLabelText('Bank / payment instructions')).toHaveValue('Bank details');
+  expect(screen.getByLabelText('Contract terms (optional override)')).toHaveValue('Saved terms');
 });

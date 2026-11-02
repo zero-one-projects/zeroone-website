@@ -136,3 +136,34 @@ test('verified signing session survives a refresh in the same tab but another ta
   fireEvent.click(screen.getByRole('button', { name: 'Sign Contract Now' }));
   expect(screen.getByRole('button', { name: 'Send Verification Code' })).toBeInTheDocument();
 });
+
+test('quotation-only acceptance confirms a separate follow-up without signing or payment', async () => {
+  const quote = { ...quotation, document: { ...quotation.document, clientFlow: 'quotation_only' } };
+  const accepted = { ...quote, clientResponse: { action: 'accept', current: true, signaturePending: false } };
+  global.fetch = jest.fn(async url => ({ ok: true, json: async () => url.endsWith('/verification') ? { challengeId: 'challenge' } : url.endsWith('/verify') ? { verificationProof: 'proof' } : { quotation: accepted } }));
+  function Harness() { const [row, setRow] = useState(quote); return <QuotationResponsePanel quotation={row} token="quote-only" onResponse={setRow} />; }
+  render(<Harness />);
+  fireEvent.click(screen.getByRole('button', { name: 'Decide Later' }));
+  expect(screen.getByRole('status')).toHaveTextContent('No response has been submitted');
+  expect(global.fetch).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Accept Quotation' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Send Verification Code' }));
+  fireEvent.change(await screen.findByLabelText('Verification code'), { target: { value: '123456' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Verify & Continue' }));
+  fireEvent.change(await screen.findByLabelText('Your full name'), { target: { value: 'Client' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm Acceptance' }));
+  expect(await screen.findByRole('dialog', { name: 'Thank you for accepting' })).toHaveTextContent('another email');
+  expect(screen.queryByRole('button', { name: 'Sign Contract Now' })).not.toBeInTheDocument();
+  expect(screen.queryByText('Contract pending signature')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Continue to Payment' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+  expect(screen.getByText(/contract, payment details, and terms/)).toBeInTheDocument();
+});
+
+test('quotation-only accepted links ignore the sign query and keep the follow-up message after reload', () => {
+  window.history.replaceState({}, '', '/quotation/token?sign=1');
+  render(<QuotationResponsePanel quotation={{ ...quotation, document: { clientFlow: 'quotation_only' }, clientResponse: { current: true, action: 'accept' } }} token="token" onResponse={jest.fn()} />);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Sign Contract Now' })).not.toBeInTheDocument();
+  expect(screen.getByText(/another email/)).toBeInTheDocument();
+});

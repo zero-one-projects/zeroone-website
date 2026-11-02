@@ -50,6 +50,7 @@ function acceptanceMessage(payload) {
       `Accepted on: ${acceptedAt} (Asia/Manila)`, `Acceptance timestamp: ${timestamp}`,
       `Quotation valid until: ${payload.validUntil}`, `Accepted document version: ${payload.documentVersion}`,
       ...(payload.signedAt ? [`Agreement electronically signed by: ${payload.clientName}`, `Signed at: ${payload.signedAt}`, 'The signature and agreed contract terms are saved in the quotation response history.'] : []),
+      ...(payload.clientFlow === 'quotation_only' ? ['Quotation only: Send the contract, payment details, and terms to the client in a separate follow-up email.'] : []),
       ...(payload.signaturePending ? ['Contract status: Pending signature. The client may sign now or return later using the quotation link.'] : []),
       ...(payload.note ? ['', 'Client message:', payload.note] : []), '',
       'The acceptance is recorded in Admin → Quotation List. This confirmation refers to the quotation version reviewed by the client.'
