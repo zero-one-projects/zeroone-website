@@ -97,8 +97,8 @@ export default function ContractDocument({ document, reference, signature, templ
   const showRecurring = totals.hasRecurring || (templatePreview && document.quoteType !== 'project');
   const period = templatePreview ? 'agreed billing period' : document.billingPeriod === 'yearly' ? 'year' : 'month';
   const pos = document.quoteType === 'pos';
-  const showPaymentAnnex = pos || document.quoteType === 'subscription';
-  const mainTitle = pos ? 'POS SYSTEM SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'subscription' ? 'SUBSCRIPTION & SERVICE AGREEMENT' : 'PROJECT SERVICE AGREEMENT';
+  const showPaymentAnnex = pos || ['subscription', 'sync_court'].includes(document.quoteType);
+  const mainTitle = pos ? 'POS SYSTEM SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'sync_court' ? 'SYNC COURT SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'subscription' ? 'SUBSCRIPTION & SERVICE AGREEMENT' : 'PROJECT SERVICE AGREEMENT';
   const paymentTitle = pos ? 'POS SUBSCRIPTION ORDER FORM & PAYMENT AGREEMENT' : showRecurring ? 'SUBSCRIPTION ORDER FORM & PAYMENT AGREEMENT' : 'PROJECT ORDER FORM & PAYMENT AGREEMENT';
   const tableValue = (text) => text || '';
   const signingParties = [

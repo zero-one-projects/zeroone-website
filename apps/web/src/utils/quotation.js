@@ -38,12 +38,12 @@ export function monthlySubscriptionSummary(document) {
   const taxRate = Number(document.taxRate || 0);
   const current = currentCents + Math.round(currentCents * taxRate / 100);
   const revised = currentCents + additionalCents + Math.round((currentCents + additionalCents) * taxRate / 100);
-  return { currentAmount: current / 100, additionalAmount: (revised - current) / 100, revisedAmount: revised / 100, systemName: config.systemName || (document.quoteType === 'pos' ? 'POS System' : 'System') };
+  return { currentAmount: current / 100, additionalAmount: (revised - current) / 100, revisedAmount: revised / 100, systemName: config.systemName || (document.quoteType === 'pos' ? 'POS System' : document.quoteType === 'sync_court' ? 'Sync Court' : 'System') };
 }
 
 export function configureMonthlySubscription(document, changes = {}) {
   const recurring = document.items.filter(item => item.chargeType === 'recurring');
-  const config = { currentAmount: quotationTotals(document).recurringSubtotal, additionalAmount: 0, systemName: document.quoteType === 'pos' ? 'POS System' : 'System', ...document.monthlySubscription, ...changes };
+  const config = { currentAmount: quotationTotals(document).recurringSubtotal, additionalAmount: 0, systemName: document.quoteType === 'pos' ? 'POS System' : document.quoteType === 'sync_court' ? 'Sync Court' : 'System', ...document.monthlySubscription, ...changes };
   let base = recurring.find(item => item.subscriptionRole === 'current');
   if (!base && recurring.length === 1) base = recurring[0];
   if (!base && recurring.length > 1) {

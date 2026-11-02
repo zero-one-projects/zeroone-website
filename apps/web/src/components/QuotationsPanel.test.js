@@ -282,3 +282,23 @@ test('quotation hides zero subscription additions and shows a single monthly tot
   expect(screen.getByText('Subscription tax:')).toBeInTheDocument();
   expect(screen.getByText('₱2,014.88/month')).toBeInTheDocument();
 });
+
+test('Sync Court matches POS setup and subscription options and leaves its contract blank until upload', async () => {
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotations: [], defaultContractTexts: { project: 'Project agreement', sync_court: '' } }) }));
+  render(<QuotationsPanel token="admin-token" />);
+  await screen.findByText(/No quotations yet/);
+  fireEvent.change(screen.getByLabelText('Quotation type'), { target: { value: 'sync_court' } });
+  expect(screen.getByLabelText('Project / quotation title')).toHaveValue('Sync Court Subscription');
+  expect(screen.getByLabelText('Item 1 charge type')).toHaveValue('setup');
+  expect(screen.getByLabelText('Item 1 description')).toHaveValue('');
+  expect(screen.queryByLabelText('Item 2 description')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByLabelText('Show monthly subscription after Go-Live'));
+  fireEvent.change(screen.getByLabelText('Current monthly subscription'), { target: { value: '2500' } });
+  expect(screen.getByLabelText('Item 2 charge type')).toHaveValue('recurring');
+  expect(screen.queryByLabelText('Item 3 description')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('System name')).toHaveValue('Sync Court');
+  fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
+  expect(screen.getByLabelText('Contract terms (optional override)')).toHaveValue('');
+  expect(screen.getByLabelText('Payment due date / terms')).toHaveValue('');
+  expect(screen.getByLabelText('Initial payment (%)')).toHaveValue(100);
+});

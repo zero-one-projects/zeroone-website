@@ -99,3 +99,10 @@ test('subscription advances reduce the amount due while preserving agreed recurr
   assert.equal(bill.subtotal, 1500); assert.equal(bill.tax, 180); assert.equal(bill.total, 1680); assert.equal(bill.amountDue, 1180); assert.equal(bill.taxTreatment, 'vat');
   assert.throws(() => createBillingDocument(subscription(), { ...input, advancePayment: 1680.01 }), /cannot exceed/);
 });
+
+test('Sync Court uses the signed monthly subscription billing flow and excludes one-time setup charges', () => {
+  const row = subscription({ quoteType: 'sync_court', title: 'Sync Court Subscription' });
+  assert.equal(subscriptionDocument(row).quoteType, 'sync_court');
+  const bill = createBillingDocument(row, input);
+  assert.equal(bill.items.length, 1); assert.equal(bill.total, 1680);
+});

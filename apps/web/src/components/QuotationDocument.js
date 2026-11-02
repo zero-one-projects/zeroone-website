@@ -29,7 +29,7 @@ export default function QuotationDocument({ document, reference }) {
         </div>
         <div className="quotation-reference">
           <h2>QUOTATION</h2>
-          {document.quoteType && document.quoteType !== 'project' && <p>{document.quoteType === 'pos' ? 'Cloud-Based POS System' : 'Custom subscription'}</p>}
+          {document.quoteType && document.quoteType !== 'project' && <p>{document.quoteType === 'pos' ? 'Cloud-Based POS System' : document.quoteType === 'sync_court' ? 'Sync Court Subscription' : 'Custom subscription'}</p>}
           <p><strong>Quotation No.</strong> {reference || 'DRAFT'}</p>
           <p><strong>DATE</strong> {formatDate(document.issuedOn)}</p>
           <p className="quotation-expiry">Valid until {formatDate(document.validUntil)}</p>

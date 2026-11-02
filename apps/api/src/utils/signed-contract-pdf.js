@@ -31,7 +31,7 @@ function renderDefaultSignedContractPdf({ document, signature, reference, signat
         }
       }
       const details = document.contractDetails || {};
-      text(signaturePageOnly ? 'ELECTRONIC SIGNATURE & ACCEPTANCE' : document.quoteType === 'pos' ? 'POS SYSTEM SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'subscription' ? 'SUBSCRIPTION & SERVICE AGREEMENT' : 'PROJECT SERVICE AGREEMENT', { size: 16, color: '#514568', bold: true });
+      text(signaturePageOnly ? 'ELECTRONIC SIGNATURE & ACCEPTANCE' : document.quoteType === 'pos' ? 'POS SYSTEM SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'sync_court' ? 'SYNC COURT SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'subscription' ? 'SUBSCRIPTION & SERVICE AGREEMENT' : 'PROJECT SERVICE AGREEMENT', { size: 16, color: '#514568', bold: true });
       pdf.moveDown(.7);
       if (!template) {
         text(`Quotation reference: ${reference}`, { size: 9 });
@@ -61,7 +61,7 @@ function renderDefaultSignedContractPdf({ document, signature, reference, signat
         rich(block.text, style); pdf.moveDown(block.heading ? .6 : .7);
       });
       // Subscription/POS records retain their accepted commercial details as part of the signed copy.
-      if (!template && (document.quoteType === 'subscription' || document.quoteType === 'pos')) {
+      if (!template && (['subscription', 'pos', 'sync_court'].includes(document.quoteType))) {
         room(150); text('ACCEPTED COMMERCIAL TERMS', { size: 12, bold: true, color: '#514568' }); pdf.moveDown(.5);
         const money = (amount) => `${document.currency} ${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
         text(`One-time charges: ${money(document.total)}`);

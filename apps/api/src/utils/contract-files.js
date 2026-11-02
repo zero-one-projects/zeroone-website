@@ -44,7 +44,7 @@ async function contractSources() {
   const { ContractTemplate } = require('../models');
   const rows = await ContractTemplate.findAll({ logging: false });
   const result = {};
-  for (const type of ['project','subscription','pos']) {
+  for (const type of ['project','subscription','pos','sync_court']) {
     const row = rows.find((entry) => entry.quoteType === type);
     const file = row?.pdfId ? await ContractFile.findByPk(row.pdfId, { attributes: fileAttributes, logging: false }) : null;
     result[type] = { source: row?.source === 'pdf' && file ? 'pdf' : 'default', pdf: file ? fileMetadata(file) : null };

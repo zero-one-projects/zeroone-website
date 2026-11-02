@@ -9,7 +9,7 @@ const { contractDefaults, contractFormats } = require('../utils/contract-templat
 const { defaultContractTexts } = require('../utils/quotation-contract');
 const { maxPdfBytes, validatePdf, contractSources, getContractFile } = require('../utils/contract-files');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: maxPdfBytes, files: 1, fields: 0 } });
-const validType = (type) => ['project', 'subscription', 'pos'].includes(type);
+const validType = (type) => ['project', 'subscription', 'pos', 'sync_court'].includes(type);
 async function result(message) { return { templates: await contractDefaults(), formats: await contractFormats(), contracts: await contractSources(), ...(message ? { message } : {}) }; }
 router.use(requireAuth, requireRole([roles.ADMIN, roles.SUPERADMIN]));
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });

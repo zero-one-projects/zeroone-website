@@ -9,7 +9,7 @@ function subscriptionDocument(quotation) {
   const response = quotation.clientResponse;
   if (response?.action !== 'accept' || !response.signature?.signedAt || response.documentHash !== documentHash(quotation.document)) fail('Select a subscription with a current accepted quotation and signed contract.');
   const document = response.document || quotation.document;
-  if (document.quoteType !== 'subscription' || (document.billingPeriod || 'monthly') !== 'monthly' || !document.items?.some(item => item.chargeType === 'recurring')) fail('Select a custom subscription with monthly recurring charges.');
+  if (!['subscription', 'sync_court'].includes(document.quoteType) || (document.billingPeriod || 'monthly') !== 'monthly' || !document.items?.some(item => item.chargeType === 'recurring')) fail('Select a custom subscription with monthly recurring charges.');
   return document;
 }
 function applyBillingDeduction(input, total) {

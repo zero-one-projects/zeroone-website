@@ -14,7 +14,7 @@ function monthlySubscriptionSummary(document) {
   const current = currentCents + Math.round(currentCents * taxRate / 100);
   const revised = currentCents + additionalCents + Math.round((currentCents + additionalCents) * taxRate / 100);
   const money = amount => new Intl.NumberFormat('en-PH', { style: 'currency', currency: document.currency || 'PHP' }).format(amount / 100);
-  const systemName = config.systemName || (document.quoteType === 'pos' ? 'POS System' : 'System');
+  const systemName = config.systemName || (document.quoteType === 'pos' ? 'POS System' : document.quoteType === 'sync_court' ? 'Sync Court' : 'System');
   const notice = additionalCents > 0
     ? `This will require an additional monthly charge of ${money(revised - current)}, adjusting your subscription from ${money(current)} to ${money(revised)} per month. Please note that the revised monthly subscription will only commence after the official Go-Live of your ${systemName}.`
     : `Your monthly subscription of ${money(revised)} will only commence after the official Go-Live of your ${systemName}.`;

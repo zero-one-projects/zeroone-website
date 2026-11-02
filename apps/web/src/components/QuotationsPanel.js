@@ -109,7 +109,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
 
   function changeContractSource(source) {
     setDocument((current) => ({ ...current, contractSource: source, contractPdf: source === 'pdf' ? current.contractPdf || defaultContracts[current.quoteType || 'project']?.pdf : undefined,
-      contractStyle: undefined, contractText: source === 'pdf' ? '' : defaultContractTexts[current.quoteType || 'project'] || defaultContractText }));
+      contractStyle: undefined, contractText: source === 'pdf' ? '' : defaultContractTexts[current.quoteType || 'project'] || ((!current.quoteType || current.quoteType === 'project') ? defaultContractText : '') }));
     setDirty(true); setNotice(null);
   }
 
@@ -139,15 +139,16 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
     if (document.contractText?.trim() && document.contractText !== currentTemplate && !window.confirm('Load the saved contract for this quotation type and replace the terms currently in this form?')) return;
     if (value === 'project' && document.items.some((item) => item.chargeType === 'recurring') && !window.confirm('Changing to a one-time project will make subscription items one-time charges. Continue?')) return;
     const blank = document.items.length === 1 && !document.items[0].description && !Number(document.items[0].unitPrice) && !document.items[0].scope?.length;
-    let items = document.items.map((item) => ({ ...item, chargeType: value === 'project' && item.chargeType === 'recurring' ? 'one_time' : blank && value === 'pos' ? 'setup' : item.chargeType || 'one_time' }));
+    let items = document.items.map((item) => ({ ...item, chargeType: value === 'project' && item.chargeType === 'recurring' ? 'one_time' : blank && ['pos', 'sync_court'].includes(value) ? 'setup' : item.chargeType || 'one_time' }));
     if (value === 'subscription') {
       if (blank) items = [];
       if (!items.some((item) => item.chargeType === 'setup')) items.unshift({ description: 'One-time setup fee', chargeType: 'setup', quantity: 1, unitPrice: 0 });
       if (!items.some((item) => item.chargeType === 'recurring')) items.push({ description: 'Subscription plan', chargeType: 'recurring', quantity: 1, unitPrice: 0 });
       if (items.length > 100) { setNotice({ error: true, message: 'Remove an item to make room for the setup fee and subscription plan before changing types.' }); return; }
     }
-    setDocument((current) => ({ ...current, quoteType: value, ...(value === 'pos' && !(current.title || '').trim() ? { title: 'Cloud-Based POS System' } : {}), ...(value === 'project' ? { monthlySubscription: undefined } : {}), contractSource: defaultContracts[value]?.source || 'default', contractPdf: defaultContracts[value]?.source === 'pdf' ? defaultContracts[value].pdf : undefined, initialPaymentPercent: value === 'project' ? 20 : value === 'pos' ? 100 : '', contractStyle: undefined, contractText: defaultContractTexts[value] || (value === 'project' ? defaultContractText : ''), items,
+    setDocument((current) => ({ ...current, quoteType: value, ...(['pos', 'sync_court'].includes(value) && !(current.title || '').trim() ? { title: value === 'pos' ? 'Cloud-Based POS System' : 'Sync Court Subscription' } : {}), ...(value === 'project' ? { monthlySubscription: undefined } : {}), contractSource: defaultContracts[value]?.source || 'default', contractPdf: defaultContracts[value]?.source === 'pdf' ? defaultContracts[value].pdf : undefined, initialPaymentPercent: value === 'project' ? 20 : ['pos', 'sync_court'].includes(value) ? 100 : '', contractStyle: undefined, contractText: defaultContractTexts[value] || (value === 'project' ? defaultContractText : ''), items,
       contractDetails: { ...current.contractDetails,
+        ...(value === 'sync_court' && current.quoteType !== 'sync_court' ? { paymentTerms: '' } : {}),
         ...(value === 'pos' && !current.contractDetails?.paymentTerms?.trim() ? { paymentTerms: current.billingPeriod === 'yearly' ? defaultPosPaymentTerms.replace('monthly subscription fee', 'yearly subscription fee') : defaultPosPaymentTerms } : {}),
         ...(items.some(item => item.chargeType === 'recurring') && !current.contractDetails?.billingCommencement ? { billingCommencement: defaultBillingCommencement } : {})
       }
@@ -260,7 +261,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               <span className="rounded-full bg-[#f4f1f7] px-3 py-1 text-xs font-bold text-[#514568]">{dirty ? 'Unsaved changes' : selected ? 'Saved' : 'Draft'}</span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-sm font-bold text-slate-700">Quotation type<select className={fieldClass} disabled={loading} value={document.quoteType || 'project'} onChange={(event) => changeQuoteType(event.target.value)}><option value="project">One-time payment</option><option value="subscription">Custom subscription</option><option value="pos">Cloud-Based POS System</option></select></label>
+              <label className="grid gap-2 text-sm font-bold text-slate-700">Quotation type<select className={fieldClass} disabled={loading} value={document.quoteType || 'project'} onChange={(event) => changeQuoteType(event.target.value)}><option value="project">One-time payment</option><option value="subscription">Custom subscription</option><option value="pos">Cloud-Based POS System</option><option value="sync_court">Sync Court Subscription</option></select></label>
               {document.quoteType && document.quoteType !== 'project' && <label className="grid gap-2 text-sm font-bold text-slate-700">Subscription billing<select className={fieldClass} disabled={Boolean(document.monthlySubscription)} value={document.billingPeriod || 'monthly'} onChange={(event) => update('billingPeriod', event.target.value)}><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></label>}
             </div>
             {document.quoteType === 'subscription' && <p className="text-sm text-slate-600">This subscription includes a one-time setup fee plus recurring plan charges. Subscription billing starts after the official system go-live date. Enter the setup price once and the subscription price per billing period.</p>}
@@ -373,7 +374,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               <p className="text-sm text-slate-600">Choosing a quotation type automatically loads its saved contract from Contracts. You can adjust the terms for this client. Saving keeps this version with the quotation.</p>
               <label className="grid gap-2 text-sm font-bold text-slate-700">Contract source<select className={fieldClass} value={document.contractSource || 'default'} onChange={(event) => changeContractSource(event.target.value)}><option value="default">Default Contract</option><option value="pdf" disabled={!document.contractPdf && !defaultContracts[document.quoteType || 'project']?.pdf}>Uploaded PDF</option></select></label>
               {document.contractSource === 'pdf' && document.contractPdf ? <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><p className="break-words font-bold">{document.contractPdf.fileName}</p><p className="mt-1 text-sm text-slate-500">{document.contractPdf.pageCount} pages · This PDF version will be kept with the quotation.</p><button type="button" className={`${secondaryClass} mt-3`} onClick={() => setPdfPreview(true)}>Preview PDF Contract</button><a className="ml-3 text-sm font-bold text-[#514568] underline" href="/admin/contracts" target="_blank" rel="noreferrer">Manage contracts</a></div> : <>
-              {document.contractText && document.contractText === defaultContractTexts[document.quoteType || 'project'] && <p className="text-sm font-bold text-emerald-800">Saved {document.quoteType === 'subscription' ? 'subscription' : document.quoteType === 'pos' ? 'POS' : 'one-time payment'} contract loaded.</p>}
+              {document.contractText && document.contractText === defaultContractTexts[document.quoteType || 'project'] && <p className="text-sm font-bold text-emerald-800">Saved {document.quoteType === 'sync_court' ? 'Sync Court subscription' : document.quoteType === 'subscription' ? 'subscription' : document.quoteType === 'pos' ? 'POS' : 'one-time payment'} contract loaded.</p>}
               <label className="grid gap-2 text-sm font-bold text-slate-700">Contract terms (optional override)
                 <textarea className={fieldClass} rows={6} maxLength={30000} required={Boolean(document.quoteType && document.quoteType !== 'project' && !defaultContractTexts[document.quoteType])} value={document.contractText || ''} onChange={(e) => update('contractText', e.target.value)} placeholder="Leave blank to use the matching template, or enter this client's agreement" />
               </label>

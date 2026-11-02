@@ -8,7 +8,7 @@ function clientRecords(rows, type, search = '', savedClients = []) {
   const groups = new Map();
   for (const row of rows) {
     const d = row.document;
-    if (!d || (d.quoteType || 'project') !== type) continue;
+    if (!d || (d.quoteType === 'sync_court' ? 'subscription' : d.quoteType || 'project') !== type) continue;
     const id = clientId(type, d.clientName, d.clientEmail);
     if (!groups.has(id)) groups.set(id, { id, type, isActive: true, clientName: d.clientName || 'Unnamed client', clientEmail: d.clientEmail || '', clientAddress: d.clientAddress || '', contactPerson: d.contractDetails?.authorizedRepresentative || '', updatedAt: row.updatedAt, quotations: [] });
     const group = groups.get(id);

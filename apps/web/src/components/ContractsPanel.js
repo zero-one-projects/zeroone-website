@@ -3,7 +3,7 @@ import { getApiBaseUrl } from '../utils/apiBaseUrl';
 import { newQuotation } from '../utils/quotation';
 import { openContractPreview } from '../utils/printContract';
 
-export const contractTypes = { project: 'One-time payment', subscription: 'Custom subscription', pos: 'POS setup & add-ons' };
+export const contractTypes = { project: 'One-time payment', subscription: 'Custom subscription', pos: 'Cloud-Based POS System', sync_court: 'Sync Court Subscription' };
 const secondary = 'rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-[#514568] disabled:opacity-40';
 const primary = 'admin-brand-surface rounded-lg px-4 py-2.5 text-sm font-bold disabled:opacity-40';
 

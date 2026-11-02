@@ -40,3 +40,10 @@ test('saved activity status is preserved when clients are grouped with quotation
   assert.equal(clientRecords([row(1, 'subscription')], 'subscription')[0].isActive, true);
   assert.equal(clientRecords([], 'subscription', '', [{ ...saved, isActive: true }])[0].isActive, true);
 });
+
+test('Sync Court clients appear in subscription client records with linked quotations', () => {
+  const rows = [row(1, 'sync_court'), row(2, 'project')];
+  const groups = clientRecords(rows, 'subscription');
+  assert.equal(groups.length, 1); assert.equal(groups[0].quotations[0].id, 1);
+  assert.equal(groups[0].type, 'subscription');
+});

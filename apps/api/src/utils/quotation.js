@@ -45,7 +45,7 @@ function normalizeQuotation(input = {}) {
   if (validUntil < issuedOn) invalid('Valid until must be on or after the issue date.');
   if (!['PHP', 'USD'].includes(input.currency)) invalid('Choose PHP or USD.');
   const quoteType = input.quoteType || 'project';
-  if (!['project', 'subscription', 'pos'].includes(quoteType)) invalid('Choose a valid quotation type.');
+  if (!['project', 'subscription', 'pos', 'sync_court'].includes(quoteType)) invalid('Choose a valid quotation type.');
   const billingPeriod = input.billingPeriod || 'monthly';
   if (!['monthly', 'yearly'].includes(billingPeriod)) invalid('Choose monthly or yearly subscription billing.');
   const clientFlow = input.clientFlow ?? 'full';
@@ -87,7 +87,7 @@ function normalizeQuotation(input = {}) {
   const taxCents = Math.round((subtotalCents - discountCents) * taxRate / 100);
   const recurringTaxCents = Math.round(recurringSubtotalCents * taxRate / 100);
   if (input.contractDetails !== undefined && (!input.contractDetails || typeof input.contractDetails !== 'object' || Array.isArray(input.contractDetails))) invalid('Contract details must be an object.');
-  const initialPaymentPercent = input.initialPaymentPercent !== undefined && input.initialPaymentPercent !== '' && input.initialPaymentPercent !== null ? number(input.initialPaymentPercent, 'Initial payment percentage', 100) : quoteType === 'pos' ? 100 : undefined;
+  const initialPaymentPercent = input.initialPaymentPercent !== undefined && input.initialPaymentPercent !== '' && input.initialPaymentPercent !== null ? number(input.initialPaymentPercent, 'Initial payment percentage', 100) : ['pos', 'sync_court'].includes(quoteType) ? 100 : undefined;
   const contractDetails = Object.fromEntries(['agreementDate', 'authorizedRepresentative', 'clientPosition', 'providerRepresentative', 'providerPosition', 'branches', 'effectiveDate', 'minimumPeriod', 'billingCommencement', 'paymentTerms', 'gracePeriod', 'terminationTerms', 'initialBillingTerms'].map((key) => [key, text(input.contractDetails?.[key], 'Contract details', key === 'paymentTerms' || key === 'terminationTerms' ? 2000 : 500)]));
   if (quoteType === 'pos' && initialPaymentPercent === 100 && !contractDetails.paymentTerms) contractDetails.paymentTerms = billingPeriod === 'yearly' ? defaultPosPaymentTerms.replace('monthly subscription fee', 'yearly subscription fee') : defaultPosPaymentTerms;
   if (items.some((item) => item.chargeType === 'recurring') && !contractDetails.billingCommencement) contractDetails.billingCommencement = defaultBillingCommencement;

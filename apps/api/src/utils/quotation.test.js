@@ -167,3 +167,19 @@ test('new POS quotations default to full setup payment and go-live subscription 
   assert.equal(require('./quotation-payment').paymentSummary(legacy).amountDue, null);
   assert.equal(legacy.initialPaymentPercent, undefined);
 });
+
+test('Sync Court matches POS charge options and upfront defaults while keeping its own signing terms empty', () => {
+  const input = sample({ quoteType: 'sync_court', clientFlow: 'quotation_only', title: 'Sync Court Subscription', discount: 0, taxRate: 0, items: [
+    { description: 'Setup', chargeType: 'setup', quantity: 1, unitPrice: 1000 },
+    { description: 'Court subscription', chargeType: 'recurring', quantity: 1, unitPrice: 2500 }
+  ] });
+  const q = normalizeQuotation(input);
+  assert.equal(q.quoteType, 'sync_court'); assert.equal(q.total, 1000); assert.equal(q.recurringTotal, 2500);
+  assert.equal(q.initialPaymentPercent, 100);
+  assert.equal(q.contractText, '');
+  assert.equal(q.contractDetails.paymentTerms, '');
+  assert.equal(normalizeQuotation({ ...input, items: input.items.slice(0, 1) }).items.length, 1);
+  assert.equal(normalizeQuotation({ ...input, items: input.items.slice(1) }).items.length, 1);
+  assert.throws(() => normalizeQuotation({ ...input, clientFlow: 'full' }), /contract terms/);
+  assert.equal(normalizeQuotation({ ...input, clientFlow: 'full', contractText: 'Agreed Sync Court subscription terms' }).contractText, 'Agreed Sync Court subscription terms');
+});
