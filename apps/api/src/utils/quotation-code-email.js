@@ -5,7 +5,7 @@ function escapeHtml(value) {
 function verificationMessage({ email, code, reference, action, requestedAt = new Date(), requestIp, expiresAt = new Date(Date.now() + 600000) }) {
   if (!/^\d{6}$/.test(code)) throw new Error('Invalid verification code format.');
   const expiry = new Date(expiresAt);
-  const purpose = action === 'sign' ? 'sign the contract for this accepted quotation' : action === 'accept' ? 'accept this quotation' : 'request a revised quotation';
+  const purpose = action === 'payment' ? 'submit proof of payment for your signed contract' : action === 'sign' ? 'sign the contract for this accepted quotation' : action === 'accept' ? 'accept this quotation' : 'request a revised quotation';
   const time = expiry.toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' });
   const requestTime = new Date(requestedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'medium' });
   const requestDetails = `A request to ${purpose} was made using your email address on ${escapeHtml(requestTime)} (Manila time)${requestIp ? ` from IP address <strong>${escapeHtml(requestIp)}</strong>` : ''}.`;

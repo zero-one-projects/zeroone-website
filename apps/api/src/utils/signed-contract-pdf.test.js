@@ -20,23 +20,30 @@ test('signed receipt is addressed only to the verified client and explains PDF a
   assert(message.body.content.includes('Next step: Payment'));
 });
 
-test('signed delivery attaches a PDF and sends client/team jobs to their intended recipients', async () => {
+test('acceptance and signed delivery send internal copies only to billing and sales despite the configured info mailbox', async () => {
   const { mock } = require('node:test');
   const { MailConfig } = require('../models');
   const { sendQuotationResponseNotification } = require('./quotation-verification-mail');
   const messages = [];
-  mock.method(MailConfig, 'findOne', async () => ({ tenantId: 'test-tenant', clientId: 'test-client', clientSecret: 'test-secret', senderEmail: 'info@example.com' }));
+  mock.method(MailConfig, 'findOne', async () => ({ tenantId: 'test-tenant', clientId: 'test-client', clientSecret: 'test-secret', senderEmail: 'info@zerooneitinc.com', recipientEmail: 'info@zerooneitinc.com' }));
   mock.method(global, 'fetch', async (url, options) => {
     if (String(url).includes('oauth2')) return { ok: true, json: async () => ({ access_token: 'test-token' }) };
     messages.push(JSON.parse(options.body).message); return { ok: true };
   });
   try {
     const payload = { reference: record.reference, title: 'Example project', clientCompany: 'Example Client', clientName: 'Client Name', clientEmail: 'client@example.com', currency: 'PHP', total: 5000, respondedAt: '2026-10-26T00:00:00Z', signedAt: record.signature.signedAt, signedContract: record };
+    await sendQuotationResponseNotification({ ...payload, action: 'accept', signedContract: undefined });
     await sendQuotationResponseNotification({ ...payload, action: 'signed' });
     await sendQuotationResponseNotification({ ...payload, action: 'client_signed' });
     assert.deepEqual(messages[0].toRecipients.map(recipient => recipient.emailAddress.address), ['billing@zerooneitinc.com','sales@zerooneitinc.com']);
-    assert.deepEqual(messages[1].toRecipients.map(recipient => recipient.emailAddress.address), ['client@example.com']);
+    assert.deepEqual(messages[1].toRecipients.map(recipient => recipient.emailAddress.address), ['billing@zerooneitinc.com','sales@zerooneitinc.com']);
+    assert.deepEqual(messages[2].toRecipients.map(recipient => recipient.emailAddress.address), ['client@example.com']);
     for (const message of messages) {
+      const recipients = [...message.toRecipients, ...(message.ccRecipients || []), ...(message.bccRecipients || [])];
+      assert(!recipients.some(recipient => recipient.emailAddress.address === 'info@zerooneitinc.com'));
+    }
+    assert.equal(messages[0].attachments, undefined);
+    for (const message of messages.slice(1)) {
       const attachment = message.attachments[0];
       assert.equal(attachment['@odata.type'], '#microsoft.graph.fileAttachment');
       assert.equal(attachment.contentType, 'application/pdf');

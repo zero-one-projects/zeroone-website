@@ -17,7 +17,9 @@ const requestLimits = new Map();
 function pendingSignature(row) {
   return row.document.clientFlow !== 'quotation_only' && row.clientResponse?.action === 'accept' && !row.clientResponse.signature && row.clientResponse.documentHash === documentHash(row.document);
 }
-function signingContract(row) { return pendingSignature(row) ? row.clientResponse.contractText || quotationContract(row.document) : quotationContract(row.document); }
+function signingContract(row) { return row.clientResponse?.action === 'accept' && row.clientResponse.documentHash === documentHash(row.document) ? row.clientResponse.contractText || quotationContract(row.document) : quotationContract(row.document); }
+
+function signedCurrent(row) { return row.document.clientFlow !== 'quotation_only' && row.clientResponse?.action === 'accept' && Boolean(row.clientResponse.signature) && row.clientResponse.documentHash === documentHash(row.document); }
 
 function openPageSession(row, challenge) {
   const contractText = signingContract(row);
@@ -49,13 +51,14 @@ router.post('/:token/verification', async (req, res, next) => {
     if (!limitRequests(req)) return res.status(429).json({ message: 'Too many code requests. Please try again in 10 minutes.' });
     const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
     const action = req.body?.action;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 180 || !['accept', 'requote'].includes(action)) return res.status(400).json({ message: 'Enter a valid email and choose Accept or Request Requote.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 180 || !['accept', 'requote', 'payment'].includes(action)) return res.status(400).json({ message: 'Enter a valid email and choose Accept or Request Requote.' });
     const row = await Quotation.findOne({ where: { shareToken: req.params.token }, logging: false });
     if (!row) return res.status(404).json({ message: 'Quotation link not found.' });
     if (quotationExpired(row.document)) return res.status(410).json({ message: 'This quotation has expired.' });
     const version = documentHash(row.document);
     if (req.body.documentVersion !== version) return res.status(409).json({ message: 'This quotation has changed. Refresh and review it before responding.' });
-    if (row.clientResponse?.documentHash === version && !(action === 'accept' && pendingSignature(row))) return res.status(409).json({ message: 'A response has already been recorded for this quotation.' });
+    if (action === 'payment' && (!signedCurrent(row) || email !== row.clientResponse.email)) return res.status(403).json({ message: 'Use the email that signed this contract to submit payment proof.' });
+    if (row.clientResponse?.documentHash === version && !(action === 'accept' && pendingSignature(row)) && !(action === 'payment' && signedCurrent(row))) return res.status(409).json({ message: 'A response has already been recorded for this quotation.' });
     if (pendingSignature(row) && email !== row.clientResponse.email) return res.status(403).json({ message: 'Use the email that accepted this quotation to sign its contract.' });
     if (row.document.clientEmail && row.document.clientEmail.toLowerCase() !== email) return res.status(403).json({ message: 'Use the client email listed on this quotation. Contact Zero One if it needs to be changed.' });
     const last = await QuotationVerification.findOne({ where: { quotationId: row.id, email }, order: [['createdAt', 'DESC']] });
@@ -80,14 +83,15 @@ router.post('/:token/verify', async (req, res, next) => {
       if (!row) return { status: 404, message: 'Quotation link not found.' };
       if (quotationExpired(row.document)) return { status: 410, message: 'This quotation has expired.' };
       const challenge = await QuotationVerification.findByPk(challengeId, { transaction, logging: false, lock: transaction.LOCK.UPDATE });
-      if (!challenge || challenge.quotationId !== row.id || challenge.action !== 'accept' || challenge.consumedAt || new Date(challenge.expiresAt).getTime() <= Date.now() || challenge.attempts >= 5) return { status: 400, message: 'This verification code is invalid or expired. Request a new code.' };
+      if (!challenge || challenge.quotationId !== row.id || !['accept', 'payment'].includes(challenge.action) || challenge.consumedAt || new Date(challenge.expiresAt).getTime() <= Date.now() || challenge.attempts >= 5) return { status: 400, message: 'This verification code is invalid or expired. Request a new code.' };
       await challenge.update({ attempts: challenge.attempts + 1 }, { transaction, logging: false });
       if (!crypto.timingSafeEqual(Buffer.from(codeHash(challengeId, code), 'hex'), Buffer.from(challenge.codeHash, 'hex'))) return { status: 400, message: 'Incorrect code. Please check your inbox and try again.' };
       if (challenge.documentHash !== documentHash(row.document) || (row.document.clientEmail && row.document.clientEmail.toLowerCase() !== challenge.email)) return { status: 409, message: 'The quotation changed. Refresh and review it before signing.' };
-      if (row.clientResponse?.documentHash === challenge.documentHash && !pendingSignature(row)) return { status: 409, message: 'A response has already been recorded for this quotation.' };
+      if (challenge.action === 'payment' && (!signedCurrent(row) || challenge.email !== row.clientResponse.email)) return { status: 403, message: 'Use the email that signed this contract to submit payment proof.' };
+      if (row.clientResponse?.documentHash === challenge.documentHash && !pendingSignature(row) && !(challenge.action === 'payment' && signedCurrent(row))) return { status: 409, message: 'A response has already been recorded for this quotation.' };
       if (pendingSignature(row) && challenge.email !== row.clientResponse.email) return { status: 403, message: 'Use the email that accepted this quotation to sign its contract.' };
       const contractText = signingContract(row);
-      const session = pendingSignature(row) ? openPageSession(row, challenge) : null;
+      const session = pendingSignature(row) || challenge.action === 'payment' ? openPageSession(row, challenge) : null;
       const verificationProof = session?.verificationProof || createAcceptanceProof(challenge, contractText);
       // A verified code cannot be exchanged twice. Accepted clients receive a tab-scoped signing session.
       await challenge.update({ codeHash: crypto.randomBytes(32).toString('hex') }, { transaction, logging: false });
@@ -130,7 +134,7 @@ router.post('/:token/respond', async (req, res, next) => {
         contractText: quotationContract(row.document), documentHash: version, ipAddress: req.ip,
         userAgent: String(req.get('user-agent') || '').slice(0, 500) };
       await recordResponse(QuotationResponseHistory, row, response, transaction);
-      await row.update({ clientResponse: response }, { transaction, logging: false });
+      await row.update({ clientResponse: response, ...(action === 'requote' ? { shareToken: null } : {}) }, { transaction, logging: false });
       await challenge.update({ consumedAt: new Date() }, { transaction, logging: false });
       await QuotationNotification.create({ id: crypto.randomUUID(), quotationId: row.id, payload: {
           action,
@@ -192,6 +196,11 @@ router.post('/:token/sign', async (req, res, next) => {
     return res.status(result.status).json(result.quotation ? { quotation: result.quotation, ...(result.signingSession ? { signingSession: result.signingSession } : {}) } : { message: result.message });
   } catch (error) { return next(error); }
 });
+
+router.use('/:token/payment-proofs', (req, res, next) => {
+  if (!limitRequests(req)) return res.status(429).json({ message: 'Too many requests. Please try again in 10 minutes.' });
+  return next();
+}, require('./payment-proof.routes'));
 
 router.post('/:token/signed-contract', async (req, res, next) => {
   try {

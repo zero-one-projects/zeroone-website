@@ -1,4 +1,4 @@
-const { defaultPaymentInstructions } = require('./quotation-payment');
+const { defaultPaymentInstructions, paymentSummary } = require('./quotation-payment');
 const { quotationExpiresAt } = require('./quotation-sharing');
 const { responseSummary, documentHash } = require('./quotation-response');
 const { quotationContract } = require('./quotation-contract');
@@ -14,6 +14,7 @@ function serializeQuotation(row, includeShare = false) {
     document,
     paymentInstructions: row.document.clientFlow === 'quotation_only' ? '' : row.document.paymentInstructions?.trim() || defaultPaymentInstructions,
     contractText: row.clientResponse?.action === 'accept' && row.clientResponse.documentHash === documentHash(row.document) ? row.clientResponse.contractText || quotationContract(row.document) : quotationContract(row.document),
+    paymentSummary: row.document.clientFlow === 'quotation_only' ? null : paymentSummary(row.document, row.clientResponse?.contractText || quotationContract(row.document)),
     documentVersion: documentHash(row.document),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

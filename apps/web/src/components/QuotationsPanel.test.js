@@ -20,7 +20,7 @@ test('mixed POS pricing keeps setup and add-ons separate from the subscription',
   expect(screen.getByText('Setup fee · one-time')).toBeInTheDocument();
   expect(screen.getByText('Additional feature · one-time')).toBeInTheDocument();
   expect(screen.getByText('One-time total:')).toBeInTheDocument();
-  expect(screen.getByText('PHP 1,680 / month')).toBeInTheDocument();
+  expect(screen.getByText('₱1,680/month')).toBeInTheDocument();
 });
 
 test('choosing a payment type automatically loads its own saved contract', async () => {
@@ -191,6 +191,8 @@ test('POS monthly Go-Live option combines current and additional subscription ch
   render(<QuotationsPanel token="test-session" />);
   await screen.findByText(/No quotations yet/);
   fireEvent.change(screen.getByLabelText('Quotation type'), { target: { value: 'pos' } });
+  expect(screen.getByLabelText('Project / quotation title')).toHaveValue('Cloud-Based POS System');
+  expect(screen.getByLabelText('Item 1 description')).toHaveValue('');
   fireEvent.click(screen.getByLabelText('Show monthly subscription after Go-Live'));
   fireEvent.change(screen.getByLabelText('Current monthly subscription'), { target: { value: '1699' } });
   fireEvent.change(screen.getByLabelText('Additional monthly charge'), { target: { value: '2000' } });
@@ -201,6 +203,12 @@ test('POS monthly Go-Live option combines current and additional subscription ch
   expect(screen.getByLabelText('Subscription billing')).toBeDisabled();
   fireEvent.change(screen.getByLabelText('Additional monthly charge'), { target: { value: '2500' } });
   expect(screen.getByLabelText('Recurring total')).toHaveTextContent('4,199');
+  fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
+  expect(screen.getByLabelText('Subscription payment commencement')).toHaveValue('The revised monthly subscription will only commence after the official Go-Live of your POS System.');
+  fireEvent.change(screen.getByLabelText('Additional monthly charge'), { target: { value: '0' } });
+  expect(screen.getByLabelText('Subscription payment commencement')).toHaveValue('The monthly subscription will only commence after the official Go-Live of your POS System.');
+  expect(within(preview).getByRole('region', { name: 'Monthly subscription after Go-Live' })).not.toHaveTextContent('revised');
+  fireEvent.change(screen.getByLabelText('Additional monthly charge'), { target: { value: '2500' } });
   fireEvent.click(screen.getByLabelText('Show monthly subscription after Go-Live'));
   expect(within(preview).queryByRole('region', { name: 'Monthly subscription after Go-Live' })).not.toBeInTheDocument();
   expect(screen.getByLabelText('Recurring total')).toHaveTextContent('4,199');
@@ -217,4 +225,53 @@ test('client flow selector hides contract and payment setup and restores it when
   fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
   expect(screen.getByLabelText('Bank / payment instructions')).toHaveValue('Bank details');
   expect(screen.getByLabelText('Contract terms (optional override)')).toHaveValue('Saved terms');
+});
+
+test('requote requires a saved edit and prompts the admin to generate a replacement link', async () => {
+  const { newQuotation } = require('../utils/quotation');
+  window.history.replaceState({}, '', '/admin/quotations?id=24');
+  let row = { id: 24, reference: 'ZO-2026-00024', sharePath: null, document: { ...newQuotation(), title: 'Original project', clientName: 'Client', items: [{ description: 'Service', quantity: 1, unitPrice: 100 }] }, clientResponse: { action: 'requote', current: true, name: 'Client', email: 'client@example.com', note: 'Add online ordering.', respondedAt: '2026-11-03T01:00:00Z' } };
+  global.fetch = jest.fn(async (url, options = {}) => {
+    if (url.endsWith('/counts')) return { ok: true, json: async () => ({ unreadCount: 1, quotations: { 24: 1 } }) };
+    if (url.endsWith('/history')) return { ok: true, json: async () => ({ history: [] }) };
+    if (options.method === 'PUT') row = { ...row, document: JSON.parse(options.body).document, clientResponse: { ...row.clientResponse, current: false } };
+    if (options.method === 'POST') row = { ...row, sharePath: '/quotation/replacement-link' };
+    return { ok: true, json: async () => url.includes('?page=') ? { quotations: [row] } : { quotation: row } };
+  });
+  render(<QuotationsPanel token="admin-token" />);
+  await screen.findByRole('heading', { name: 'Requote requested' });
+  expect(screen.getByRole('button', { name: 'Generate Client Link' })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText('Project / quotation title'), { target: { value: 'Project with online ordering' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+  expect(await screen.findByRole('dialog', { name: 'Generate a new client link?' })).toHaveTextContent('previous link is inactive');
+  expect(global.fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Generate New Link' }));
+  expect(await screen.findByRole('dialog', { name: 'Your client link is ready' })).toBeInTheDocument();
+  expect(screen.getByLabelText('Client quotation link')).toHaveValue(`${window.location.origin}/quotation/replacement-link`);
+  expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/24/share'), expect.objectContaining({ method: 'POST' }));
+  window.history.replaceState({}, '', '/');
+});
+
+
+test('quotation hides zero subscription additions and shows a single monthly total without tax', () => {
+  const doc = { currency: 'PHP', billingPeriod: 'monthly', items: [
+    { description: 'Waived setup', chargeType: 'setup', quantity: 1, unitPrice: 0 },
+    { description: 'Current subscription', chargeType: 'recurring', subscriptionRole: 'current', quantity: 1, unitPrice: 1699 },
+    { description: 'Additional monthly subscription charge', chargeType: 'recurring', subscriptionRole: 'additional', quantity: 1, unitPrice: 0 }
+  ], taxRate: 0, discount: 0 };
+  const view = render(<QuotationDocument document={doc} />);
+  expect(screen.queryByText('Additional monthly subscription charge')).not.toBeInTheDocument();
+  expect(screen.getByText('Waived setup')).toBeInTheDocument();
+  expect(screen.queryByText('Subscription subtotal:')).not.toBeInTheDocument();
+  expect(screen.getByText('Monthly Subscription Total:')).toBeInTheDocument();
+  expect(screen.getByText('Base Monthly Subscription')).toBeInTheDocument();
+  expect(screen.getByText('Prepared For:')).toBeInTheDocument();
+  expect(screen.getByText('Project:')).toBeInTheDocument();
+  expect(screen.getByText('Quotation No.')).toBeInTheDocument();
+  expect(screen.getByText('₱1,699/month')).toBeInTheDocument();
+  view.rerender(<QuotationDocument document={{ ...doc, taxRate: 12, items: doc.items.map(item => item.subscriptionRole === 'additional' ? { ...item, unitPrice: 100 } : item) }} />);
+  expect(screen.getByText('Additional monthly subscription charge')).toBeInTheDocument();
+  expect(screen.getByText('Subscription subtotal:')).toBeInTheDocument();
+  expect(screen.getByText('Subscription tax:')).toBeInTheDocument();
+  expect(screen.getByText('₱2,014.88/month')).toBeInTheDocument();
 });

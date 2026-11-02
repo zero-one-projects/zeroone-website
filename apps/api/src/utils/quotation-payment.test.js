@@ -21,3 +21,13 @@ test('custom quotation payment instructions take precedence', () => {
   const result = serializeQuotation({ id: 2, createdAt: '2026-10-26', document: { paymentInstructions: 'Custom payment instructions' } });
   assert.equal(result.paymentInstructions, 'Custom payment instructions');
 });
+
+test('payment summary separates total, current milestone, and scheduled balance using integer cents', () => {
+  const { paymentSummary } = require('./quotation-payment');
+  assert.deepEqual(paymentSummary({ total: 30000, initialPaymentPercent: 50 }), { contractTotal: 30000, initialPercent: 50, amountDue: 15000, scheduledRemaining: 15000 });
+  assert.deepEqual(paymentSummary({ total: 100.01, initialPaymentPercent: 50 }), { contractTotal: 100.01, initialPercent: 50, amountDue: 50.01, scheduledRemaining: 50 });
+  assert.equal(paymentSummary({ total: 30000, quoteType: 'project' }, '**20% Down Payment**').amountDue, 6000);
+  assert.equal(paymentSummary({ total: 30000, quoteType: 'pos' }).amountDue, null);
+  assert.equal(paymentSummary({ total: 30000, quoteType: 'pos', initialPaymentPercent: 0 }).amountDue, 0);
+  assert.equal(paymentSummary({ total: 30000, initialPaymentPercent: 101 }).amountDue, null);
+});

@@ -101,7 +101,7 @@ function normalizeQuotation(input = {}) {
     monthlySubscription = { currentAmount, additionalAmount, systemName };
     const summary = monthlySubscriptionSummary({ monthlySubscription, taxRate, currency: input.currency, quoteType });
     monthlySubscription.notice = summary.notice;
-    contractDetails.billingCommencement = `The revised monthly subscription will only commence after the official Go-Live of your ${systemName}.`;
+    contractDetails.billingCommencement = `The ${additionalAmount > 0 ? 'revised monthly subscription' : 'monthly subscription'} will only commence after the official Go-Live of your ${systemName}.`;
   }
   return {
     title: text(input.title, 'Project title', 180, true), quoteType, billingPeriod, clientName, clientEmail,

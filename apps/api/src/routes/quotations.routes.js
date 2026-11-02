@@ -3,7 +3,9 @@ const { contractSources } = require('../utils/contract-files');
 const express = require('express');
 const crypto = require('crypto');
 const { Op, literal, where } = require('sequelize');
-const { Quotation, QuotationVerification, QuotationResponseHistory } = require('../models');
+const { Quotation, QuotationVerification, QuotationResponseHistory, QuotationNotification } = require('../models');
+const { documentHash } = require('../utils/quotation-response');
+const { sequelize } = require('../config/database');
 const { responseHistory } = require('../utils/quotation-history');
 const { requestDeletion, confirmDeletion } = require('../utils/quotation-deletion');
 const { sendGraphMail } = require('../utils/quotation-verification-mail');
@@ -56,14 +58,15 @@ function serialize(row) {
 router.post('/:id/share', async (req, res, next) => {
   try {
     if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ message: 'Invalid quotation ID.' });
-    const row = await Quotation.findByPk(req.params.id);
-    if (!row) return res.status(404).json({ message: 'Quotation not found.' });
-    if (quotationExpired(row.document)) return res.status(400).json({ message: 'Update and save the validity date before sharing this expired quotation.' });
-    if (!row.shareToken) {
-      await Quotation.update({ shareToken: crypto.randomBytes(32).toString('hex') }, { where: { id: row.id, shareToken: null } });
-      await row.reload();
-    }
-    return res.json({ quotation: serialize(row) });
+    const result = await sequelize.transaction({ logging: false }, async transaction => {
+      const row = await Quotation.findByPk(req.params.id, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!row) return { status: 404, message: 'Quotation not found.' };
+      if (quotationExpired(row.document)) return { status: 400, message: 'Update and save the validity date before sharing this expired quotation.' };
+      if (row.clientResponse?.action === 'requote' && row.clientResponse.documentHash === documentHash(row.document)) return { status: 409, message: 'Edit and save the requested quotation changes before generating a new client link.' };
+      if (!row.shareToken) await row.update({ shareToken: crypto.randomBytes(32).toString('hex') }, { transaction });
+      return { status: 200, quotation: serialize(row) };
+    });
+    return res.status(result.status).json(result.quotation ? { quotation: result.quotation } : { message: result.message });
   } catch (error) { return next(error); }
 });
 
@@ -97,6 +100,25 @@ router.get('/', async (req, res, next) => {
     const defaultContractTexts = await contractDefaults();
     res.json({ quotations: rows.map(serialize), total: count, page, pageSize: 20, defaultPaymentInstructions, defaultContractText: defaultContractTexts.project, defaultContractTexts, defaultContractFormats: await contractFormats(), defaultContracts: await contractSources() });
   } catch (error) { next(error); }
+});
+
+router.get('/:id/payment-proofs', async (req, res, next) => {
+  try {
+    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ message: 'Invalid quotation ID.' });
+    if (!await Quotation.findByPk(req.params.id)) return res.status(404).json({ message: 'Quotation not found.' });
+    const proofs = await require('../models').QuotationPaymentProof.findAll({ where: { quotationId: req.params.id }, attributes: { exclude: ['data'] }, order: [['createdAt', 'DESC']], logging: false });
+    return res.json({ proofs: proofs.map(require('../utils/payment-proof').proofMetadata) });
+  } catch (error) { return next(error); }
+});
+router.get('/:id/payment-proofs/:proofId', async (req, res, next) => {
+  try {
+    if (!/^\d+$/.test(req.params.id) || !require('../utils/payment-proof').uuid(req.params.proofId)) return res.status(400).json({ message: 'Invalid payment proof.' });
+    if (!await Quotation.findByPk(req.params.id)) return res.status(404).json({ message: 'Quotation not found.' });
+    const proof = await require('../models').QuotationPaymentProof.findOne({ where: { id: req.params.proofId, quotationId: req.params.id }, logging: false });
+    if (!proof) return res.status(404).json({ message: 'Payment proof not found.' });
+    if (crypto.createHash('sha256').update(proof.data).digest('hex') !== proof.sha256) throw new Error('Payment proof integrity check failed.');
+    return res.set({ 'Content-Type': proof.mimeType, 'Content-Disposition': `attachment; filename="${proof.fileName}"`, 'X-Content-Type-Options': 'nosniff' }).send(proof.data);
+  } catch (error) { return next(error); }
 });
 
 router.get('/:id/history', async (req, res, next) => {
@@ -133,10 +155,22 @@ router.put('/:id', async (req, res, next) => {
   try {
     if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ message: 'Invalid quotation ID.' });
     const document = await prepareQuotation(req.body?.document);
-    const row = await Quotation.findByPk(req.params.id);
-    if (!row) return res.status(404).json({ message: 'Quotation not found.' });
-    await row.update({ document });
-    return res.json({ quotation: serialize(row) });
+    const result = await sequelize.transaction({ logging: false }, async transaction => {
+      const row = await Quotation.findByPk(req.params.id, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!row) return { status: 404, message: 'Quotation not found.' };
+      const needsRevision = row.clientResponse?.action === 'requote' && row.clientResponse.documentHash === documentHash(row.document);
+      const notifyRevision = row.clientResponse?.action === 'requote' && documentHash(row.document) !== documentHash(document);
+      await row.update({ document, ...(needsRevision ? { shareToken: null } : {}) }, { transaction });
+      if (notifyRevision) await QuotationNotification.create({ id: crypto.randomUUID(), quotationId: row.id, payload: {
+        action: 'requote_updated', reference: serialize(row).reference, document,
+        clientName: row.clientResponse.name, clientEmail: row.clientResponse.email, note: row.clientResponse.note,
+        updatedBy: req.user.email || 'Administrator', updatedAt: new Date().toISOString(), documentVersion: documentHash(document)
+      } }, { transaction, logging: false });
+      return { status: 200, quotation: serialize(row), notifyRevision };
+
+    });
+    if (result.notifyRevision) queueNotificationDelivery();
+    return res.status(result.status).json(result.quotation ? { quotation: result.quotation } : { message: result.message });
   } catch (error) { return next(error); }
 });
 

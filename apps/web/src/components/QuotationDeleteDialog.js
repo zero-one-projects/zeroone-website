@@ -44,6 +44,7 @@ export default function QuotationDeleteDialog({ token, quotation, quotations, on
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Unable to delete quotation.');
+      window.dispatchEvent(new Event('quotations-deleted'));
       onDeleted(quotations ? selection : quotation);
     } catch (failure) { setError(failure.message); setBusy(false); }
   }

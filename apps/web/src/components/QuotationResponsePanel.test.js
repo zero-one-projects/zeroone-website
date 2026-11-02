@@ -11,7 +11,7 @@ beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
 });
-afterEach(() => { window.sessionStorage.clear(); global.fetch = originalFetch; window.history.replaceState({}, '', '/'); });
+afterEach(() => { jest.restoreAllMocks(); window.sessionStorage.clear(); global.fetch = originalFetch; window.history.replaceState({}, '', '/'); });
 
 test('acceptance offers signing now or later, with signature saved separately', async () => {
   const pending = { ...quotation, clientResponse: { action: 'accept', current: true, signaturePending: true } };
@@ -34,6 +34,8 @@ test('acceptance offers signing now or later, with signature saved separately', 
   expect(JSON.parse(fetch.mock.calls[2][1].body).signature).toBeUndefined();
   fireEvent.click(screen.getByRole('button', { name: 'Sign Contract Now' }));
   expect(await screen.findByTitle('Contract to review')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Print Contract / Save PDF' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Download Signed Contract' })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Agree & Sign Contract' })).toBeDisabled();
   expect(screen.queryByLabelText('Signature method')).not.toBeInTheDocument();
   expect(screen.queryByLabelText('Type your signature')).not.toBeInTheDocument();
@@ -46,7 +48,7 @@ test('acceptance offers signing now or later, with signature saved separately', 
   fireEvent.pointerUp(pad, { pointerId: 1, pointerType: 'mouse' });
   fireEvent.click(screen.getByRole('checkbox', { name: 'I agree to the contract and electronic signature.' }));
   fireEvent.click(screen.getByRole('button', { name: 'Agree & Sign Contract' }));
-  await screen.findByRole('dialog', { name: 'Next step: Payment' });
+  await screen.findByRole('dialog', { name: 'Contract Signed – Payment Details' });
   expect(screen.getByRole('button', { name: 'Download Signed Contract' })).toBeInTheDocument();
   expect(screen.getByText(/Agreement electronically signed/)).toBeInTheDocument();
   expect(fetch).toHaveBeenCalledTimes(4);
@@ -69,6 +71,7 @@ test('email signing link opens the contract and verification without automatical
   global.fetch = jest.fn();
   render(<QuotationResponsePanel quotation={{ ...quotation, reference: 'ZO-2026-00001', contractText: 'Saved agreement for this accepted quote', clientResponse: { action: 'accept', current: true } }} token="link-token" onResponse={jest.fn()} />);
   expect(screen.getByRole('dialog')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Print Contract / Save PDF' })).not.toBeInTheDocument();
   expect(screen.getByText('Saved agreement for this accepted quote')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Send Verification Code' })).toBeInTheDocument();
   expect(fetch).not.toHaveBeenCalled();
@@ -138,12 +141,15 @@ test('verified signing session survives a refresh in the same tab but another ta
 });
 
 test('quotation-only acceptance confirms a separate follow-up without signing or payment', async () => {
+  const closeTab = jest.spyOn(window, 'close').mockImplementation(() => {});
   const quote = { ...quotation, document: { ...quotation.document, clientFlow: 'quotation_only' } };
   const accepted = { ...quote, clientResponse: { action: 'accept', current: true, signaturePending: false } };
   global.fetch = jest.fn(async url => ({ ok: true, json: async () => url.endsWith('/verification') ? { challengeId: 'challenge' } : url.endsWith('/verify') ? { verificationProof: 'proof' } : { quotation: accepted } }));
   function Harness() { const [row, setRow] = useState(quote); return <QuotationResponsePanel quotation={row} token="quote-only" onResponse={setRow} />; }
   render(<Harness />);
-  fireEvent.click(screen.getByRole('button', { name: 'Decide Later' }));
+  fireEvent.click(screen.getByRole('button', { name: 'You Can Decide Later' }));
+  expect(closeTab).not.toHaveBeenCalled();
+  expect(screen.getByRole('status')).toHaveTextContent('You can return to this link before it expires');
   expect(screen.getByRole('status')).toHaveTextContent('No response has been submitted');
   expect(global.fetch).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: 'Accept Quotation' }));
@@ -166,4 +172,49 @@ test('quotation-only accepted links ignore the sign query and keep the follow-up
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Sign Contract Now' })).not.toBeInTheDocument();
   expect(screen.getByText(/another email/)).toBeInTheDocument();
+});
+
+test('requote confirmation warns about expiry, offers a quotation copy and sales contact, and waits for explicit confirmation', async () => {
+  const onResponse = jest.fn();
+  const onPrintQuotation = jest.fn().mockResolvedValue(undefined);
+  global.fetch = jest.fn(async url => ({ ok: true, json: async () => url.endsWith('/verification') ? { challengeId: 'challenge' } : { quotation: { ...quotation, clientResponse: { action: 'requote', current: true } } } }));
+  render(<QuotationResponsePanel quotation={quotation} token="token" onResponse={onResponse} onPrintQuotation={onPrintQuotation} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Request Requote' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Send Verification Code' }));
+  fireEvent.change(await screen.findByLabelText('Verification code'), { target: { value: '123456' } });
+  fireEvent.change(screen.getByLabelText('Your full name'), { target: { value: 'Client' } });
+  fireEvent.change(screen.getByLabelText('What would you like changed or added?'), { target: { value: 'Please add online ordering.' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Verify & Request Requote' }));
+  const dialog = await screen.findByRole('dialog', { name: 'Request a revised quotation?' });
+  expect(dialog).toHaveTextContent('link will no longer be available once your request is sent');
+  expect(screen.getByRole('link', { name: 'sales@zerooneitinc.com' })).toHaveAttribute('href', 'mailto:sales@zerooneitinc.com');
+  expect(screen.getByRole('button', { name: 'Go Back' })).toHaveFocus();
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Print / Save Quotation PDF' }));
+  await waitFor(() => expect(onPrintQuotation).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Go Back' })).toBeEnabled());
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Go Back' }));
+  expect(screen.getByLabelText('Verification code')).toHaveValue('123456');
+  expect(screen.getByLabelText('What would you like changed or added?')).toHaveValue('Please add online ordering.');
+  expect(onResponse).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Verify & Request Requote' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm & Send Request' }));
+  await waitFor(() => expect(onResponse).toHaveBeenCalledTimes(1));
+  expect(global.fetch).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(global.fetch.mock.calls[1][1].body)).toMatchObject({ action: 'requote', code: '123456', name: 'Client', note: 'Please add online ordering.' });
+});
+
+test('closing the requote confirmation returns to the form without submitting the request', async () => {
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ challengeId: 'challenge' }) }));
+  render(<QuotationResponsePanel quotation={quotation} token="token" onResponse={jest.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Request Requote' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Send Verification Code' }));
+  fireEvent.change(await screen.findByLabelText('Verification code'), { target: { value: '123456' } });
+  fireEvent.change(screen.getByLabelText('Your full name'), { target: { value: 'Client' } });
+  fireEvent.change(screen.getByLabelText('What would you like changed or added?'), { target: { value: 'More reports.' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Verify & Request Requote' }));
+  fireEvent(await screen.findByRole('dialog', { name: 'Request a revised quotation?' }), new Event('cancel', { cancelable: true }));
+  expect(screen.getByLabelText('What would you like changed or added?')).toHaveValue('More reports.');
+  expect(global.fetch).toHaveBeenCalledTimes(1);
 });

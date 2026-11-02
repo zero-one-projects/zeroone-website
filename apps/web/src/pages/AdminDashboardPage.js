@@ -1,3 +1,4 @@
+import QuotationNotifications from '../components/QuotationNotifications';
 import BillingPanel from '../components/BillingPanel';
 import ClientRecordsPanel from '../components/ClientRecordsPanel';
 import { useEffect, useRef, useState } from 'react';
@@ -1425,6 +1426,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
         </aside>
 
         <section className="min-w-0 w-full overflow-x-hidden px-5 py-20 sm:px-8 lg:px-10 lg:py-8">
+          <div className="mb-6 flex justify-end"><QuotationNotifications token={token} /></div>
           {page === 'dashboard' ? (
             <div className="w-full max-w-6xl">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Dashboard</p>

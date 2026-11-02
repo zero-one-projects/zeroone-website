@@ -1,0 +1,82 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+
+test('quotation activity preserves responses across edits, isolates admin read receipts, and omits deleted quotations', { skip: process.env.RUN_QUOTATION_ACTIVITY_DB_TESTS !== 'true' }, async () => {
+  require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+  const { sequelize } = require('../config/database');
+  const { Quotation, QuotationResponseHistory, QuotationNotificationRead } = require('../models');
+  const { quotationActivity, quotationActivityCounts, markQuotationActivityRead } = require('./quotation-activity');
+  const { documentHash } = require('./quotation-response');
+  const previousLogging = sequelize.options.logging;
+  sequelize.options.logging = false;
+  const ids = [], historyIds = [];
+  let server;
+  const previousSecret = process.env.JWT_SECRET;
+  process.env.JWT_SECRET = 'quotation-activity-integration-secret';
+  const admin = 4294967200, otherAdmin = 4294967201;
+  try {
+    await QuotationNotificationRead.sync();
+    const app = require('express')();
+    app.use('/notifications', require('../routes/quotation-activity.routes'));
+    server = await new Promise(resolve => { const listener = app.listen(0, '127.0.0.1', () => resolve(listener)); });
+    const base = `http://127.0.0.1:${server.address().port}/notifications`;
+    const jwt = require('jsonwebtoken');
+    const authorization = `Bearer ${jwt.sign({ sub: admin, role: 1 }, process.env.JWT_SECRET)}`;
+    assert.equal((await fetch(base)).status, 401);
+    assert.equal((await fetch(base, { headers: { Authorization: `Bearer ${jwt.sign({ sub: admin, role: 7 }, process.env.JWT_SECRET)}` } })).status, 403);
+    const document = { title: 'Notification test', clientName: 'Notification Test Client', total: 100, currency: 'PHP' };
+    const row = await Quotation.create({ document }); ids.push(row.id);
+    for (const [action, title] of [['accept', 'Original quotation'], ['requote', 'Revised quotation']]) {
+      const snapshot = { ...document, title };
+      const response = { action, document: snapshot, documentHash: documentHash(snapshot), name: 'Test Client', email: 'test@example.com', note: action === 'requote' ? 'Add a report.' : '', respondedAt: new Date().toISOString() };
+      const entry = await QuotationResponseHistory.create({ quotationId: row.id, documentHash: response.documentHash, response }); historyIds.push(entry.id);
+    }
+    let feed = await quotationActivity(admin);
+    const notifications = feed.notifications.filter(item => historyIds.includes(item.id));
+    assert.equal(notifications.length, 2);
+    const counts = await quotationActivityCounts(admin);
+    assert.equal(counts.quotations[row.id], 2);
+    assert.equal(counts.unreadCount, feed.unreadCount);
+    const httpCounts = await fetch(`${base}/counts`, { headers: { Authorization: authorization } });
+    assert.equal(httpCounts.status, 200);
+    assert.equal((await httpCounts.json()).quotations[row.id], 2);
+    assert.deepEqual(notifications.map(item => item.action), ['requote', 'accept']);
+    assert(notifications.every(item => !item.isRead && item.href === `/admin/quotations?id=${row.id}`));
+    assert.equal(notifications[0].note, 'Add a report.');
+    assert.equal(notifications[0].reference, `ZO-${new Date(row.createdAt).getUTCFullYear()}-${String(row.id).padStart(5, '0')}`);
+    assert.equal(notifications[0].email, undefined);
+    const httpFeed = await fetch(base, { headers: { Authorization: authorization } });
+    assert.equal(httpFeed.status, 200); assert.equal(httpFeed.headers.get('cache-control'), 'no-store');
+    assert((await httpFeed.json()).notifications.some(item => item.id === historyIds[0]));
+    assert.equal((await fetch(`${base}/${historyIds[0]}/read`, { method: 'POST' })).status, 401);
+    assert.equal((await fetch(`${base}/${historyIds[0]}/read`, { method: 'POST', headers: { Authorization: authorization } })).status, 200);
+    await markQuotationActivityRead(admin, historyIds[0]);
+    feed = await quotationActivity(admin);
+    assert.equal(feed.notifications.find(item => item.id === historyIds[0]).isRead, true);
+    assert.equal((await quotationActivityCounts(admin)).quotations[row.id], 1);
+    assert.equal((await quotationActivityCounts(otherAdmin)).quotations[row.id], 2);
+    assert.equal(feed.notifications.find(item => item.id === historyIds[1]).isRead, false);
+    assert.equal((await quotationActivity(otherAdmin)).notifications.find(item => item.id === historyIds[0]).isRead, false);
+    await row.update({ document: { ...document, title: 'Later edit' } });
+    assert.equal((await quotationActivity(admin)).notifications.find(item => item.id === historyIds[0]).title, 'Original quotation');
+    await assert.rejects(() => markQuotationActivityRead(admin, '1 OR 1=1'), { statusCode: 400 });
+    assert.equal((await fetch(`${base}/read-all`, { method: 'POST', headers: { Authorization: authorization } })).status, 200);
+    assert.equal((await quotationActivity(admin)).unreadCount, 0);
+    assert.deepEqual(await quotationActivityCounts(admin), { unreadCount: 0, quotations: {} });
+    const nextDocument = { ...document, title: 'New response after marking read' };
+    const next = await QuotationResponseHistory.create({ quotationId: row.id, documentHash: documentHash(nextDocument), response: { action: 'accept', document: nextDocument, respondedAt: new Date().toISOString() } });
+    historyIds.push(next.id);
+    assert.equal((await quotationActivity(admin)).unreadCount, 1);
+    await row.destroy();
+    assert(!(await quotationActivity(admin)).notifications.some(item => historyIds.includes(item.id)));
+    assert.equal((await quotationActivityCounts(admin)).quotations[row.id], undefined);
+  } finally {
+    await QuotationNotificationRead.destroy({ where: { userId: [admin, otherAdmin] } });
+    if (historyIds.length) await QuotationResponseHistory.destroy({ where: { id: historyIds } });
+    if (ids.length) await Quotation.destroy({ where: { id: ids }, force: true });
+    if (server) await new Promise(resolve => server.close(resolve));
+    if (previousSecret === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = previousSecret;
+    sequelize.options.logging = previousLogging;
+    await sequelize.close();
+  }
+});

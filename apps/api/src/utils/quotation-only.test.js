@@ -58,6 +58,7 @@ test('quotation-only API verifies acceptance, records history, queues follow-up 
     const requote = await request('post', '/:token/respond', { challengeId: challenge.id, code: '123456', action: 'requote', name: 'Client', note: 'Please revise the scope.' });
     assert.equal(requote.statusCode, 200); assert.equal(row.clientResponse.action, 'requote');
     assert.equal(jobs.length, 3);
+    assert.equal(row.shareToken, null);
   } finally {
     mock.restoreAll();
     if (previousSecret === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = previousSecret;

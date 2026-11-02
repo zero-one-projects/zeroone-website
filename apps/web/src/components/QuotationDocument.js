@@ -29,27 +29,27 @@ export default function QuotationDocument({ document, reference }) {
         </div>
         <div className="quotation-reference">
           <h2>QUOTATION</h2>
-          {document.quoteType && document.quoteType !== 'project' && <p>{document.quoteType === 'pos' ? 'POS setup & add-ons' : 'Custom subscription'}</p>}
-          <p><strong>QUOTE #</strong> {reference || 'DRAFT'}</p>
+          {document.quoteType && document.quoteType !== 'project' && <p>{document.quoteType === 'pos' ? 'Cloud-Based POS System' : 'Custom subscription'}</p>}
+          <p><strong>Quotation No.</strong> {reference || 'DRAFT'}</p>
           <p><strong>DATE</strong> {formatDate(document.issuedOn)}</p>
           <p className="quotation-expiry">Valid until {formatDate(document.validUntil)}</p>
         </div>
       </header>
 
       <div className="quotation-recipient">
-        <div><p><strong>TO</strong> {document.clientName || 'Client name'}</p>
+        <div><p><strong>Prepared For:</strong> {document.clientName || 'Client name'}</p>
           {document.clientAddress && <p className="quotation-client-detail">{document.clientAddress}</p>}
           {document.clientEmail && <p className="quotation-client-detail">{document.clientEmail}</p>}
         </div>
-        <p className="quotation-purpose"><strong>FOR</strong> {document.title || 'Project title'}</p>
+        <p className="quotation-purpose"><strong>Project:</strong> {document.title || 'Project title'}</p>
       </div>
 
       <table className="quotation-description-table">
         <thead><tr><th>Description</th><th>Amount</th></tr></thead>
-        <tbody>{document.items.map((item, index) => (
+        <tbody>{document.items.map((item, index) => item.chargeType === 'recurring' && item.subscriptionRole === 'additional' && totals.amounts[index] === 0 ? null : (
           <tr key={index}>
             <td>
-              <p className="quotation-item-title">{item.description || 'Item description'}</p>
+              <p className="quotation-item-title">{item.chargeType === 'recurring' && item.subscriptionRole === 'current' && item.description?.trim().toLowerCase() === 'current subscription' ? (document.billingPeriod === 'yearly' ? 'Base Yearly Subscription' : 'Base Monthly Subscription') : item.description || 'Item description'}</p>
               {item.chargeType && item.chargeType !== 'one_time' && <p className="quotation-item-quantity">{item.chargeType === 'recurring' ? `Subscription · ${document.billingPeriod || 'monthly'}` : item.chargeType === 'milestone' ? 'Milestone payment' : item.chargeType === 'setup' ? 'Setup fee · one-time' : 'Additional feature · one-time'}</p>}
               {Number(item.quantity) !== 1 && <p className="quotation-item-quantity">{item.quantity} × {money(Number(item.unitPrice) || 0)}</p>}
               {item.scope?.length > 0 && <ul className="quotation-scope">{item.scope.map((group, groupIndex) => (
@@ -74,7 +74,7 @@ export default function QuotationDocument({ document, reference }) {
           {Number(document.discount) > 0 && <><dt>Discount:</dt><dd>−{money(Number(document.discount))}</dd></>}
           {Number(document.taxRate) > 0 && <><dt>Tax ({document.taxRate}%):</dt><dd>{money(totals.tax)}</dd></>}
           <dt className="quotation-grand-total">{totals.hasRecurring ? 'One-time total:' : 'Total:'}</dt><dd className="quotation-grand-total">{money(totals.total)}</dd>
-          {totals.hasRecurring && <><dt>Subscription subtotal:</dt><dd>{money(totals.recurringSubtotal)}</dd>{Number(document.taxRate) > 0 && <><dt>Subscription tax:</dt><dd>{money(totals.recurringTax)}</dd></>}<dt className="quotation-grand-total">Subscription:</dt><dd className="quotation-grand-total">{money(totals.recurringTotal)} / {document.billingPeriod === 'yearly' ? 'year' : 'month'}</dd></>}
+          {totals.hasRecurring && <>{Number(document.taxRate) > 0 && <><dt>Subscription subtotal:</dt><dd>{money(totals.recurringSubtotal)}</dd><dt>Subscription tax:</dt><dd>{money(totals.recurringTax)}</dd></>}<dt className="quotation-grand-total">{document.billingPeriod === 'yearly' ? 'Yearly Subscription Total:' : 'Monthly Subscription Total:'}</dt><dd className="quotation-grand-total">{document.currency === 'PHP' ? `₱${new Intl.NumberFormat('en-PH', { maximumFractionDigits: 2 }).format(totals.recurringTotal)}` : money(totals.recurringTotal)}/{document.billingPeriod === 'yearly' ? 'year' : 'month'}</dd></>}
         </dl>
       </div>
       <footer className="quotation-document-end">*** NOTHING FOLLOWS ***</footer>

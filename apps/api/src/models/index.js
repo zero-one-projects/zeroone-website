@@ -11,6 +11,8 @@ const User = require('./User');
 const ContractTemplate = require('./ContractTemplate');
 
 module.exports = {
+  QuotationPaymentProof: require('./QuotationPaymentProof'),
+  QuotationNotificationRead: require('./QuotationNotificationRead'),
   Client: require('./Client'),
   BillingDeletionVerification: require('./BillingDeletionVerification'),
   BillingStatement: require('./BillingStatement'),

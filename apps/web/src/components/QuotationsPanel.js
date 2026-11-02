@@ -1,3 +1,7 @@
+import QuotationPaymentProofs from './QuotationPaymentProofs';
+import ConfirmModal from './ConfirmModal';
+import useQuotationResponseCounts from '../hooks/useQuotationResponseCounts';
+import ResponseCountBadge from './ResponseCountBadge';
 import MonthlySubscriptionSummary from './MonthlySubscriptionSummary';
 import { configureMonthlySubscription } from '../utils/quotation';
 import { copyText } from '../utils/copyText';
@@ -20,11 +24,13 @@ const primaryClass = 'admin-brand-surface rounded-lg px-5 py-3 text-sm font-bold
 
 export default function QuotationsPanel({ token, initialTab = 'create' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const responseCounts = useQuotationResponseCounts(token);
   const quotationId = new URLSearchParams(window.location.search).get('id');
   const [opening, setOpening] = useState(Boolean(quotationId));
   const [document, setDocument] = useState(newQuotation);
   const [selected, setSelected] = useState(null);
   const [savedLink, setSavedLink] = useState(null);
+  const [regeneratePrompt, setRegeneratePrompt] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [rows, setRows] = useState([]);
   const [revision, setRevision] = useState(0);
@@ -140,7 +146,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
       if (!items.some((item) => item.chargeType === 'recurring')) items.push({ description: 'Subscription plan', chargeType: 'recurring', quantity: 1, unitPrice: 0 });
       if (items.length > 100) { setNotice({ error: true, message: 'Remove an item to make room for the setup fee and subscription plan before changing types.' }); return; }
     }
-    setDocument((current) => ({ ...current, quoteType: value, ...(value === 'project' ? { monthlySubscription: undefined } : {}), contractSource: defaultContracts[value]?.source || 'default', contractPdf: defaultContracts[value]?.source === 'pdf' ? defaultContracts[value].pdf : undefined, initialPaymentPercent: value === 'project' ? 20 : '', contractStyle: undefined, contractText: defaultContractTexts[value] || (value === 'project' ? defaultContractText : ''), items,
+    setDocument((current) => ({ ...current, quoteType: value, ...(value === 'pos' && !(current.title || '').trim() ? { title: 'Cloud-Based POS System' } : {}), ...(value === 'project' ? { monthlySubscription: undefined } : {}), contractSource: defaultContracts[value]?.source || 'default', contractPdf: defaultContracts[value]?.source === 'pdf' ? defaultContracts[value].pdf : undefined, initialPaymentPercent: value === 'project' ? 20 : '', contractStyle: undefined, contractText: defaultContractTexts[value] || (value === 'project' ? defaultContractText : ''), items,
       ...(items.some((item) => item.chargeType === 'recurring') && !current.contractDetails?.billingCommencement ? { contractDetails: { ...current.contractDetails, billingCommencement: defaultBillingCommencement } } : {})
     }));
     setDirty(true); setNotice(null);
@@ -177,6 +183,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Unable to update client link.');
       setSelected(payload.quotation);
+      if (!revoke) setSavedLink(payload.quotation);
       setRevision((value) => value + 1);
       setNotice({ error: false, message: revoke ? 'Client link revoked.' : 'Client link is ready to copy.' });
     } catch (error) { setNotice({ error: true, message: error.message }); }
@@ -210,6 +217,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
       } else {
         setSelected(payload.quotation);
         setDocument(payload.quotation.document);
+        if (payload.quotation.clientResponse?.action === 'requote' && !payload.quotation.clientResponse.current && !payload.quotation.sharePath) setRegeneratePrompt(true);
       }
       setDirty(false);
       setNotice({ error: false, message: `${payload.quotation.reference} saved successfully.` });
@@ -237,7 +245,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
         const next = event.key === 'Home' ? buttons[0] : event.key === 'End' ? buttons[buttons.length - 1] : buttons[(buttons.indexOf(event.target) + (event.key === 'ArrowRight' ? 1 : buttons.length - 1)) % buttons.length];
         next.click(); next.focus();
       }}>
-        {['create', 'list'].map((tab) => <button key={tab} id={`quotation-tab-${tab}`} type="button" role="tab" aria-selected={activeTab === tab} aria-controls={`quotation-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1} onClick={() => setActiveTab(tab)} className={`rounded-lg px-5 py-3 text-sm font-bold transition ${activeTab === tab ? 'admin-brand-surface shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-[#514568]'}`}>{tab === 'create' ? 'Create Quotation' : 'Quotation List'}</button>)}
+        {['create', 'list'].map((tab) => <button key={tab} aria-label={tab === 'create' ? 'Create Quotation' : 'Quotation List'} id={`quotation-tab-${tab}`} type="button" role="tab" aria-selected={activeTab === tab} aria-controls={`quotation-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1} onClick={() => setActiveTab(tab)} className={`rounded-lg px-5 py-3 text-sm font-bold transition ${activeTab === tab ? 'admin-brand-surface shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-[#514568]'}`}>{tab === 'create' ? 'Create Quotation' : <>Quotation List <ResponseCountBadge count={responseCounts.unreadCount} /></>}</button>)}
       </div>
       {activeTab === 'create' ? <div role="tabpanel" id="quotation-panel-create" aria-labelledby="quotation-tab-create">
       {opening && <p className="quotation-controls mb-4 text-sm text-slate-500" role="status">Opening quotation...</p>}
@@ -249,7 +257,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               <span className="rounded-full bg-[#f4f1f7] px-3 py-1 text-xs font-bold text-[#514568]">{dirty ? 'Unsaved changes' : selected ? 'Saved' : 'Draft'}</span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-sm font-bold text-slate-700">Quotation type<select className={fieldClass} disabled={loading} value={document.quoteType || 'project'} onChange={(event) => changeQuoteType(event.target.value)}><option value="project">One-time payment</option><option value="subscription">Custom subscription</option><option value="pos">POS setup &amp; add-ons</option></select></label>
+              <label className="grid gap-2 text-sm font-bold text-slate-700">Quotation type<select className={fieldClass} disabled={loading} value={document.quoteType || 'project'} onChange={(event) => changeQuoteType(event.target.value)}><option value="project">One-time payment</option><option value="subscription">Custom subscription</option><option value="pos">Cloud-Based POS System</option></select></label>
               {document.quoteType && document.quoteType !== 'project' && <label className="grid gap-2 text-sm font-bold text-slate-700">Subscription billing<select className={fieldClass} disabled={Boolean(document.monthlySubscription)} value={document.billingPeriod || 'monthly'} onChange={(event) => update('billingPeriod', event.target.value)}><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></label>}
             </div>
             {document.quoteType === 'subscription' && <p className="text-sm text-slate-600">This subscription includes a one-time setup fee plus recurring plan charges. Subscription billing starts after the official system go-live date. Enter the setup price once and the subscription price per billing period.</p>}
@@ -398,10 +406,12 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               {selected.clientResponse.action === 'accept' && <p className="mt-3 text-sm font-bold">{selected.clientResponse.signedAt ? 'Contract signed' : selected.clientResponse.signaturePending ? 'Contract pending signature' : 'Quotation only — send the contract, payment details, and terms separately.'}</p>}
               <SignedAgreement signature={selected.clientResponse.signature} document={selected.clientResponse.current ? selected.document : undefined} reference={selected.reference} token={token} quotationId={selected.id} />
             </section>}
+            {selected && <QuotationPaymentProofs token={token} quotationId={selected.id} updatedAt={selected.updatedAt} />}
             {selected && <QuotationHistory token={token} quotationId={selected.id} updatedAt={selected.updatedAt} reference={selected.reference} />}
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4" aria-label="Client sharing">
               <h3 className="text-lg font-bold">Client link</h3>
               <p className="text-sm text-slate-600">Clients can view and print without signing in. Access ends after {document.validUntil || 'the validity date'} at 11:59 PM Manila time. Save validity changes to update the link expiry.</p>
+              {selected?.clientResponse?.action === 'requote' && !selected.sharePath && <p className="text-sm font-bold text-amber-800">{selected.clientResponse.current ? 'The previous link is inactive following the requote request. Edit and save the quotation before generating a new client link.' : 'The revised quotation needs a new client link. Generate it below and share it with the client.'}</p>}
               {selected?.sharePath ? <>
                 <label className="grid gap-2 text-sm font-bold text-slate-700">Shareable quotation link
                   <input className={fieldClass} readOnly value={`${window.location.origin}${selected.sharePath}`} onFocus={(event) => event.target.select()} />
@@ -412,7 +422,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
                   <button className="text-sm font-bold text-rose-700" type="button" onClick={() => changeSharing(true)}>Revoke Link</button>
                 </div>
                 {selected.expiresAt && Date.now() >= Date.parse(selected.expiresAt) && <p className="text-sm text-amber-800">This link has expired. Change and save the validity date to extend access.</p>}
-              </> : <button className={`${secondaryClass} justify-self-start`} type="button" disabled={!selected || dirty} onClick={() => changeSharing()}>{sharing ? 'Generating...' : 'Generate Client Link'}</button>}
+              </> : <button className={`${secondaryClass} justify-self-start`} type="button" disabled={!selected || dirty || sharing || (selected.clientResponse?.action === 'requote' && selected.clientResponse.current)} onClick={() => changeSharing()}>{sharing ? 'Generating...' : 'Generate Client Link'}</button>}
               {(!selected || dirty) && <p className="text-xs text-slate-500">Save the quotation before creating or copying its client link.</p>}
               {window.location.hostname === 'localhost' && <p className="text-xs text-slate-500">Local preview: clients outside this computer can use links once the website and API are hosted online.</p>}
             </section>
@@ -437,10 +447,11 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
       </div>
 
       <QuotationDocument document={document} reference={selected?.reference} />
-      </div> : <div className="quotation-controls" role="tabpanel" id="quotation-panel-list" aria-labelledby="quotation-tab-list"><QuotationListPanel token={token} embedded onDeleted={(row) => {
+      </div> : <div className="quotation-controls" role="tabpanel" id="quotation-panel-list" aria-labelledby="quotation-tab-list"><QuotationListPanel token={token} responseCounts={responseCounts} embedded onDeleted={(row) => {
         setRevision((value) => value + 1);
         if (selected?.id === row.id) { setSelected(null); setDocument(newQuotation()); setDirty(false); }
       }} /></div>}
+      <ConfirmModal isOpen={regeneratePrompt} title="Generate a new client link?" message="The revised quotation is saved. The previous link is inactive. Generate a new link to share the updated quotation with the client." confirmLabel="Generate New Link" cancelLabel="Later" onCancel={() => setRegeneratePrompt(false)} onConfirm={() => { setRegeneratePrompt(false); changeSharing(); }} />
       {savedLink?.sharePath && <QuotationLinkDialog quotation={savedLink} onClose={() => setSavedLink(null)} />}
       {pdfPreview && document.contractPdf && <dialog ref={pdfDialog} aria-label="Quotation PDF contract preview" className="fixed inset-0 m-auto w-[94vw] max-w-5xl rounded-xl border border-slate-200 bg-white p-4 shadow-2xl backdrop:bg-slate-950/60" onCancel={(event) => { event.preventDefault(); setPdfPreview(false); }}><div className="mb-3 flex items-center justify-between gap-3"><h2 className="truncate font-bold">{document.contractPdf.fileName}</h2><button type="button" className={secondaryClass} onClick={() => setPdfPreview(false)}>Close Preview</button></div><PdfContractView token={token} url={`${getApiBaseUrl()}/api/admin/contracts/files/${document.contractPdf.id}`} className="h-[75dvh] w-full rounded border border-slate-200" /></dialog>}
     </div>

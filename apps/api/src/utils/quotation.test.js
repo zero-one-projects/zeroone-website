@@ -116,6 +116,11 @@ test('monthly adjustment snapshots the revised recurring price and mandatory Go-
   assert.match(result.monthlySubscription.notice, /from ₱1,699\.00 to ₱3,699\.00 per month/);
   assert.match(result.monthlySubscription.notice, /only commence after the official Go-Live of your POS System/);
   assert.match(result.contractDetails.billingCommencement, /only commence after the official Go-Live/);
+  assert.match(result.contractDetails.billingCommencement, /revised monthly subscription/);
+  const unchanged = normalizeQuotation({ ...input, monthlySubscription: { ...input.monthlySubscription, additionalAmount: 0 }, items: input.items.map(item => item.subscriptionRole === 'additional' ? { ...item, unitPrice: 0 } : item) });
+  assert.equal(unchanged.recurringTotal, 1699);
+  assert.equal(unchanged.contractDetails.billingCommencement, 'The monthly subscription will only commence after the official Go-Live of your POS System.');
+  assert.doesNotMatch(unchanged.monthlySubscription.notice, /revised|additional monthly charge/);
   assert.equal(result.items[2].subscriptionRole, 'additional');
   assert.deepEqual(normalizeQuotation(JSON.parse(JSON.stringify(result))), result);
   for (const changes of [{ billingPeriod: 'yearly' }, { monthlySubscription: { ...input.monthlySubscription, additionalAmount: -1 } }, { monthlySubscription: { ...input.monthlySubscription, currentAmount: 1 } }, { monthlySubscription: { ...input.monthlySubscription, systemName: '' } }]) assert.throws(() => normalizeQuotation({ ...input, ...changes }));

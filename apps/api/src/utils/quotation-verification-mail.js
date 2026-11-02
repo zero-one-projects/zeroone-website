@@ -82,17 +82,49 @@ function requoteMessage(payload) {
       `Reviewed document version: ${payload.documentVersion}`, '', 'Requested changes:', payload.note, '',
       'Review this request in Admin → Quotation List and prepare a revised quotation.'
     ].join('\n') },
-    toRecipients: [{ emailAddress: { address: 'sales@zerooneitinc.com' } }],
+    toRecipients: ['billing@zerooneitinc.com', 'sales@zerooneitinc.com'].map(address => ({ emailAddress: { address } })),
     replyTo: [{ emailAddress: { address: payload.clientEmail, name: payload.clientName } }]
+  };
+}
+
+function updatedRequoteMessage(payload) {
+  const document = payload.document;
+  const money = value => new Intl.NumberFormat('en-PH', { style: 'currency', currency: document.currency }).format(value);
+  const updatedAt = new Date(payload.updatedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'long', timeStyle: 'short' });
+  return {
+    subject: `Revised quotation saved: ${payload.reference}`,
+    toRecipients: ['billing@zerooneitinc.com', 'sales@zerooneitinc.com'].map(address => ({ emailAddress: { address } })),
+    replyTo: [{ emailAddress: { address: payload.clientEmail, name: payload.clientName } }],
+    body: { contentType: 'Text', content: [
+      'An administrator saved an updated quotation following a client requote request.', '',
+      `Quotation: ${payload.reference}`, `Project: ${document.title}`, `Client / company: ${document.clientName}`,
+      `Requested by: ${payload.clientName}`, `Verified client email: ${payload.clientEmail}`,
+      `Updated by: ${payload.updatedBy}`, `Updated on: ${updatedAt} (Asia/Manila)`,
+      `Issue date: ${document.issuedOn}`, `Valid until: ${document.validUntil}`, '',
+      'Client requested changes:', payload.note, '', 'Updated quotation items:',
+      ...document.items.flatMap((item, index) => [
+        `${index + 1}. ${item.description} — ${item.quantity} × ${money(item.unitPrice)} = ${money(item.amount)} (${item.chargeType})`,
+        ...(item.scope || []).map(group => `${group.title}: ${group.details}`)
+      ]), '',
+      `One-time subtotal: ${money(document.subtotal)}`, `Discount: ${money(document.discount)}`, `Tax: ${money(document.tax)}`,
+      `${document.hasRecurring ? 'Updated one-time charges' : 'Updated quotation total'}: ${money(document.total)}`,
+      ...(document.hasRecurring ? [`Updated recurring subscription: ${recurringChargeText(document)}`] : []),
+      ...(document.timeline ? [`Project timeline: ${document.timeline}`] : []),
+      ...(document.notes ? ['', 'Updated quotation notes:', document.notes] : []), '',
+      `Updated document version: ${payload.documentVersion}`,
+      'Review the saved revision in Admin → Quotation List. Generate a new client link when the revision is ready to share. The previous link remains inactive. This internal update does not send the revision to the client.'
+    ].join('\n') }
   };
 }
 
 async function sendQuotationResponseNotification(payload) {
   let message;
-  if (payload.action === 'client_accept') message = clientAcceptanceMessage(payload);
+  if (payload.action === 'payment_proof') message = await require('./payment-proof').proofMessage(payload.proofId);
+  else if (payload.action === 'client_accept') message = clientAcceptanceMessage(payload);
   else if (payload.action === 'client_signed') message = clientSignedMessage(payload);
   else if (payload.action === 'delete') message = deletionConfirmationMessage(payload);
   else if (payload.action === 'requote') message = requoteMessage(payload);
+  else if (payload.action === 'requote_updated') message = updatedRequoteMessage(payload);
   else if (!payload.action || ['accept', 'signed'].includes(payload.action)) message = acceptanceMessage(payload);
   else throw new Error('Unknown quotation response notification.');
   if (payload.signedContract) {
@@ -102,4 +134,4 @@ async function sendQuotationResponseNotification(payload) {
   return sendGraphMail(message, true);
 }
 
-module.exports = { sendGraphMail, sendQuotationCode, sendAcceptanceConfirmation, sendQuotationResponseNotification, acceptanceMessage, requoteMessage };
+module.exports = { sendGraphMail, sendQuotationCode, sendAcceptanceConfirmation, sendQuotationResponseNotification, acceptanceMessage, requoteMessage, updatedRequoteMessage };

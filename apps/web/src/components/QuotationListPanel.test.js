@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import QuotationNotifications from './QuotationNotifications';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import QuotationListPanel from './QuotationListPanel';
 import QuotationsPanel from './QuotationsPanel';
 import { newQuotation } from '../utils/quotation';
@@ -48,7 +49,7 @@ test('list copies the existing saved link without generating a different token',
   fireEvent.click(await screen.findByRole('button', { name: 'Copy link for ZO-2026-00045' }));
   await screen.findByText('Client link copied for ZO-2026-00045.');
   expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/quotation/original-link`);
-  expect(global.fetch).toHaveBeenCalledTimes(1);
+  expect(global.fetch.mock.calls.filter(([url]) => !url.includes('/quotation-notifications/'))).toHaveLength(1);
 });
 
 test('blocked clipboard access opens a popup for manual copying', async () => {
@@ -99,4 +100,44 @@ test('icon actions support selecting all rows and deleting the group with one em
   await screen.findByText('2 quotations deleted. Client links are no longer available.');
   await screen.findByText('No saved quotations yet. Create your first quotation to get started.');
   expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/bulk-delete'), expect.objectContaining({ method: 'POST', body: JSON.stringify({ ids: [45, 46], challengeId: 'bulk-challenge', code: '123456' }) }));
+});
+
+
+test('red badges show unread responses on the list tab and matching quotation rows and update when read', async () => {
+  let counts = { unreadCount: 3, quotations: { 45: 2, 99: 1 } };
+  global.fetch = jest.fn(async url => ({ ok: true, json: async () => url.endsWith('/counts') ? counts : { quotations: [sample], total: 1 } }));
+  render(<QuotationsPanel token="test-session" initialTab="list" />);
+  expect(await screen.findByRole('status', { name: '3 unread client responses' })).toHaveTextContent('3');
+  expect(await screen.findByRole('status', { name: '2 unread client responses for ZO-2026-00045' })).toHaveTextContent('2');
+  expect(screen.getByRole('status', { name: '3 unread client responses' })).toHaveClass('bg-red-600');
+  counts = { unreadCount: 1, quotations: { 45: 1 } };
+  act(() => window.dispatchEvent(new Event('quotation-notifications-read')));
+  expect(await screen.findByRole('status', { name: '1 unread client response' })).toHaveTextContent('1');
+  expect(await screen.findByRole('status', { name: '1 unread client response for ZO-2026-00045' })).toHaveTextContent('1');
+  counts = { unreadCount: 0, quotations: {} };
+  act(() => window.dispatchEvent(new Event('quotation-notifications-read')));
+  await waitFor(() => expect(screen.queryByRole('status', { name: /unread client response/ })).not.toBeInTheDocument());
+});
+
+
+test('deleting a quotation immediately refreshes the list, tab badge, and notification bell', async () => {
+  let deleted = false;
+  global.fetch = jest.fn(async (url, options = {}) => {
+    if (url.endsWith('/delete-verification')) return { ok: true, json: async () => ({ challengeId: 'delete-code' }) };
+    if (options.method === 'DELETE') { deleted = true; return { ok: true, json: async () => ({ message: 'Deleted' }) }; }
+    if (url.endsWith('/counts')) return { ok: true, json: async () => ({ unreadCount: deleted ? 0 : 1, quotations: deleted ? {} : { 45: 1 } }) };
+    if (url.endsWith('/quotation-notifications')) return { ok: true, json: async () => ({ unreadCount: deleted ? 0 : 1, notifications: deleted ? [] : [{ id: 1, quotationId: 45, reference: sample.reference, clientName: 'Example client', title: 'Business website', action: 'accept', isRead: false, respondedAt: '2026-11-03T01:00:00Z', href: '/admin/quotations?id=45' }] }) };
+    return { ok: true, json: async () => ({ quotations: deleted ? [] : [sample], total: deleted ? 0 : 1 }) };
+  });
+  render(<><QuotationNotifications token="test-session" /><QuotationsPanel token="test-session" initialTab="list" /></>);
+  await screen.findByRole('status', { name: '1 unread client response' });
+  await screen.findByRole('button', { name: 'Notifications, 1 unread' });
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete ZO-2026-00045' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Send Deletion Code' }));
+  fireEvent.change(await screen.findByLabelText('Deletion verification code'), { target: { value: '123456' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm Delete' }));
+  await screen.findByText('No saved quotations yet. Create your first quotation to get started.');
+  await screen.findByRole('button', { name: 'Notifications, 0 unread' });
+  expect(screen.queryByRole('status', { name: /unread client response/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Open ZO-2026-00045' })).not.toBeInTheDocument();
 });

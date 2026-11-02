@@ -1,3 +1,5 @@
+import useQuotationResponseCounts from '../hooks/useQuotationResponseCounts';
+import ResponseCountBadge from './ResponseCountBadge';
 import { copyText } from '../utils/copyText';
 import { useEffect, useRef, useState } from 'react';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
@@ -11,7 +13,9 @@ function ActionIcon({ name }) {
   </svg>;
 }
 
-export default function QuotationListPanel({ token, embedded = false, onDeleted }) {
+export default function QuotationListPanel({ token, embedded = false, onDeleted, responseCounts }) {
+  const liveCounts = useQuotationResponseCounts(token, !responseCounts);
+  const counts = responseCounts || liveCounts;
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -57,7 +61,7 @@ export default function QuotationListPanel({ token, embedded = false, onDeleted 
   return (
     <div className="max-w-[90rem]">
       {embedded ? <p className="text-sm text-slate-600">Browse all saved quotations, check client responses, and copy their links.</p> : <header className="flex flex-wrap items-start justify-between gap-4">
-        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Sales workspace</p><h1 className="mt-3 text-4xl font-bold">Quotation List</h1><p className="mt-3 text-sm text-slate-600">Browse saved quotations, check validity, and open them to edit or share.</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Sales workspace</p><h1 className="mt-3 text-4xl font-bold">Quotation List <ResponseCountBadge count={counts.unreadCount} /></h1><p className="mt-3 text-sm text-slate-600">Browse saved quotations, check validity, and open them to edit or share.</p></div>
         <a className="admin-brand-surface rounded-lg px-5 py-3 text-sm font-bold" href="/admin/quotations">Create Quotation</a>
       </header>}
       {copiedMessage && <p className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800" role="status">{copiedMessage}</p>}
@@ -89,8 +93,8 @@ export default function QuotationListPanel({ token, embedded = false, onDeleted 
                   <td className="whitespace-nowrap px-5 py-4 font-bold">{new Intl.NumberFormat('en-PH', { style: 'currency', currency: row.document.currency }).format(row.document.total)}{row.document.hasRecurring && <p className="mt-1 text-xs font-normal text-slate-600">One-time + {new Intl.NumberFormat('en-PH', { style: 'currency', currency: row.document.currency }).format(row.document.recurringTotal)} / {row.document.billingPeriod === 'yearly' ? 'year' : 'month'}</p>}</td>
                   <td className="px-5 py-4"><p>{row.document.validUntil}</p><span className={`mt-1 inline-block rounded-full px-2 py-1 text-xs ${expired ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-800'}`}>{expired ? 'Expired' : 'Valid'}</span></td>
                   <td className="px-5 py-4 text-slate-600">{row.sharePath ? expired ? 'Expired' : 'Shared' : 'Not shared'}</td>
-                  <td className="px-5 py-4 text-xs font-bold text-[#514568]">{row.clientResponse ? row.clientResponse.current ? row.clientResponse.action === 'accept' ? 'Accepted' : 'Requote requested' : 'Changed since response' : 'Awaiting response'}
-                    {row.clientResponse?.current && row.clientResponse.action === 'accept' && <p className={`mt-2 font-normal ${row.clientResponse.signedAt ? 'text-emerald-700' : 'text-amber-800'}`}>{row.clientResponse.signedAt ? 'Contract signed' : 'Contract pending signature'}</p>}
+                  <td className="px-5 py-4 text-xs font-bold text-[#514568]"><ResponseCountBadge count={counts.quotations[row.id] || 0} reference={row.reference} />{row.clientResponse ? row.clientResponse.current ? row.clientResponse.action === 'accept' ? 'Accepted' : 'Requote requested' : 'Changed since response' : 'Awaiting response'}
+                    {row.clientResponse?.current && row.clientResponse.action === 'accept' && <p className={`mt-2 font-normal ${row.clientResponse.signedAt ? 'text-emerald-700' : 'text-amber-800'}`}>{row.clientResponse.signedAt ? 'Contract signed' : row.document.clientFlow === 'quotation_only' ? 'Contract and payment details to follow' : 'Contract pending signature'}</p>}
                   </td>
                   <td className="px-5 py-4"><div className="flex flex-wrap gap-2">
                     <a className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-[#514568] hover:bg-slate-50" href={`/admin/quotations?id=${row.id}`} title="Open / Edit" aria-label={`Open ${row.reference}`}><ActionIcon name="edit" /></a>

@@ -270,6 +270,8 @@ async function migrate() {
   await require('../models/QuotationVerification').sync();
   await require('../models/QuotationNotification').sync();
   await require('../models/QuotationResponseHistory').sync();
+  await require('../models/QuotationNotificationRead').sync();
+  await require('../models/QuotationPaymentProof').sync();
   await require('../models/ContractFile').sync();
   await require('../models/ContractTemplate').sync();
   const contractColumns = await queryInterface.describeTable('contract_templates');

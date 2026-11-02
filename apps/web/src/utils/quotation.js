@@ -47,12 +47,25 @@ export function configureMonthlySubscription(document, changes = {}) {
   if (!base && recurring.length > 1) {
     const scope = recurring.map((item, index) => ({ title: `Existing subscription service ${index + 1}`, details: [item.description, ...(item.scope || []).map(group => `${group.title}\n${group.details || ''}`)].join('\n\n') }));
     if (scope.length > 30 || scope.some(group => group.details.length > 5000)) throw new Error('The existing recurring scope is too long to combine. Keep the line items and enter the Go-Live terms in Notes / payment terms instead.');
-    base = { description: 'Current subscription', scope };
+    base = { description: 'Base Monthly Subscription', scope };
   }
   const addition = recurring.find(item => item.subscriptionRole === 'additional');
   const items = [...document.items.filter(item => item.chargeType !== 'recurring'),
-    { ...base, description: base?.description || 'Current subscription', chargeType: 'recurring', subscriptionRole: 'current', quantity: 1, unitPrice: config.currentAmount },
+    { ...base, description: base?.description || 'Base Monthly Subscription', chargeType: 'recurring', subscriptionRole: 'current', quantity: 1, unitPrice: config.currentAmount },
     { ...addition, description: addition?.description || 'Additional monthly subscription charge', chargeType: 'recurring', subscriptionRole: 'additional', quantity: 1, unitPrice: config.additionalAmount }];
   if (items.length > 100) throw new Error('Remove a line item to make room for the current subscription and additional monthly charge.');
-  return { ...document, billingPeriod: 'monthly', monthlySubscription: config, items, contractDetails: { ...document.contractDetails, billingCommencement: `The revised monthly subscription will only commence after the official Go-Live of your ${config.systemName || 'System'}.` } };
+  return { ...document, billingPeriod: 'monthly', monthlySubscription: config, items, contractDetails: { ...document.contractDetails, billingCommencement: `The ${Number(config.additionalAmount) > 0 ? 'revised monthly subscription' : 'monthly subscription'} will only commence after the official Go-Live of your ${config.systemName || 'System'}.` } };
+}
+
+
+export function quotationPaymentSummary(quotation) {
+  if (quotation.paymentSummary) return quotation.paymentSummary;
+  const document = quotation.document;
+  const totalCents = Math.round(Number(document.total) * 100);
+  const match = (!document.quoteType || document.quoteType === 'project') ? quotation.contractText?.replace(/\*\*/g, '').match(/\b(\d+(?:\.\d+)?)%\s*(?:[-–—]\s*)?(?:Down Payment|Upfront payment)/i) : null;
+  const raw = document.initialPaymentPercent ?? match?.[1];
+  const value = raw === undefined || raw === null || raw === '' ? null : Number(raw);
+  const initialPercent = value !== null && Number.isFinite(value) && value >= 0 && value <= 100 ? value : null;
+  const dueCents = initialPercent === null ? null : Math.round(totalCents * initialPercent / 100);
+  return { contractTotal: totalCents / 100, initialPercent, amountDue: dueCents === null ? null : dueCents / 100, scheduledRemaining: dueCents === null ? null : (totalCents - dueCents) / 100 };
 }
