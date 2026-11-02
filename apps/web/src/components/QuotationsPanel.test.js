@@ -192,10 +192,16 @@ test('POS monthly Go-Live option combines current and additional subscription ch
   await screen.findByText(/No quotations yet/);
   fireEvent.change(screen.getByLabelText('Quotation type'), { target: { value: 'pos' } });
   expect(screen.getByLabelText('Project / quotation title')).toHaveValue('Cloud-Based POS System');
+  fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
+  expect(screen.getByLabelText('Initial payment (%)')).toHaveValue(100);
+  expect(screen.getByLabelText('Payment due date / terms').value).toContain('payable in full (100%)');
   expect(screen.getByLabelText('Item 1 description')).toHaveValue('');
   fireEvent.click(screen.getByLabelText('Show monthly subscription after Go-Live'));
   fireEvent.change(screen.getByLabelText('Current monthly subscription'), { target: { value: '1699' } });
+  expect(screen.getByLabelText('Item 2 description')).toBeInTheDocument();
+  expect(screen.queryByLabelText('Item 3 description')).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Additional monthly charge'), { target: { value: '2000' } });
+  expect(screen.getByLabelText('Item 3 description')).toHaveValue('Additional monthly subscription charge');
   const preview = screen.getByRole('region', { name: 'Quotation preview' });
   expect(within(preview).getByRole('region', { name: 'Monthly subscription after Go-Live' })).toHaveTextContent('additional monthly charge of ₱2,000.00, adjusting your subscription from ₱1,699.00 to ₱3,699.00 per month');
   expect(within(preview).getByRole('region', { name: 'Monthly subscription after Go-Live' })).toHaveTextContent('only commence after the official Go-Live of your POS System');
@@ -206,6 +212,7 @@ test('POS monthly Go-Live option combines current and additional subscription ch
   fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
   expect(screen.getByLabelText('Subscription payment commencement')).toHaveValue('The revised monthly subscription will only commence after the official Go-Live of your POS System.');
   fireEvent.change(screen.getByLabelText('Additional monthly charge'), { target: { value: '0' } });
+  expect(screen.queryByLabelText('Item 3 description')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Subscription payment commencement')).toHaveValue('The monthly subscription will only commence after the official Go-Live of your POS System.');
   expect(within(preview).getByRole('region', { name: 'Monthly subscription after Go-Live' })).not.toHaveTextContent('revised');
   fireEvent.change(screen.getByLabelText('Additional monthly charge'), { target: { value: '2500' } });

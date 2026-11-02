@@ -178,9 +178,9 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
       <div className="mt-4 flex flex-wrap gap-3">
         <button className="admin-brand-surface rounded-lg px-5 py-3 text-sm font-bold disabled:opacity-50" type="button" disabled={busy} onClick={() => { setAction('accept'); setChallenge(null); setError(''); setMessage(''); }}>Accept Quotation</button>
         <button className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-[#514568] disabled:opacity-50" type="button" disabled={busy} onClick={() => { setAction('requote'); setChallenge(null); setError(''); setMessage(''); }}>Request Requote</button>
-        {quotationOnly && <button className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-600" type="button" onClick={decideLater}>You Can Decide Later</button>}
+        <button className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-600" type="button" onClick={decideLater}>You Can Decide Later</button>
       </div>
-      {quotationOnly && deferred && <p className="mt-4 text-sm text-slate-600" role="status">You can return to this link before it expires to accept or request a requote. No response has been submitted.</p>}
+      {deferred && <p className="mt-4 text-sm text-slate-600" role="status">You can return to this link before it expires to accept or request a requote. No response has been submitted.</p>}
       </>}
       {action && <dialog
         ref={dialogRef}

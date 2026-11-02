@@ -25,3 +25,14 @@ test('a 50 percent down payment on a 30000 contract shows 15000 due separately f
   expect(screen.getByText('Amount Currently Due (50%)').nextElementSibling).toHaveTextContent('15,000.00');
   expect(screen.getByText('Balance Scheduled After This Payment').nextElementSibling).toHaveTextContent('15,000.00');
 });
+
+test('POS payment summary shows full setup due, zero scheduled balance, and separate go-live subscription', () => {
+  const { defaultPosPaymentTerms } = require('../utils/quotation');
+  render(<QuotationPaymentStep quotation={{ ...quotation, document: { quoteType: 'pos', title: 'Cloud-Based POS System', currency: 'PHP', total: 10000, initialPaymentPercent: 100, hasRecurring: true, recurringTotal: 1699, billingPeriod: 'monthly', contractDetails: { paymentTerms: defaultPosPaymentTerms }, items: [{ description: 'Setup', chargeType: 'setup', quantity: 1, unitPrice: 10000 }] } }} />);
+  expect(screen.getByText('Total One-Time Setup Fee').nextElementSibling).toHaveTextContent('10,000.00');
+  expect(screen.getByText('Amount Currently Due (100%)').nextElementSibling).toHaveTextContent('10,000.00');
+  expect(screen.getByText('Remaining Setup Balance After This Payment').nextElementSibling).toHaveTextContent('₱0.00');
+  expect(screen.getByText('Monthly Subscription').nextElementSibling).toHaveTextContent('1,699.00/month');
+  expect(screen.getByText(/Monthly subscription billing will begin upon the official go-live/)).toBeInTheDocument();
+  expect(screen.getByText(/payable in full \(100%\)/)).toHaveTextContent('before the commencement of system setup');
+});

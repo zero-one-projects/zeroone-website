@@ -1,3 +1,5 @@
+export const defaultPosPaymentTerms = 'The one-time POS setup fee is payable in full (100%) upon signing the agreement and before the commencement of system setup and configuration.\n\nThe monthly subscription fee will commence only upon the official Go-Live of the POS system, in accordance with the signed agreement.\n\nPayment is subject to verification and confirmation by Zero One Information Technology Inc.';
+
 export const defaultBillingCommencement = 'After the official system go-live date.';
 
 export function quotationTotals(document) {
@@ -50,9 +52,10 @@ export function configureMonthlySubscription(document, changes = {}) {
     base = { description: 'Base Monthly Subscription', scope };
   }
   const addition = recurring.find(item => item.subscriptionRole === 'additional');
+  const keepAddition = Number(config.additionalAmount) > 0 || Boolean(addition?.scope?.length || (addition?.description?.trim() && addition.description !== 'Additional monthly subscription charge'));
   const items = [...document.items.filter(item => item.chargeType !== 'recurring'),
     { ...base, description: base?.description || 'Base Monthly Subscription', chargeType: 'recurring', subscriptionRole: 'current', quantity: 1, unitPrice: config.currentAmount },
-    { ...addition, description: addition?.description || 'Additional monthly subscription charge', chargeType: 'recurring', subscriptionRole: 'additional', quantity: 1, unitPrice: config.additionalAmount }];
+    ...(keepAddition ? [{ ...addition, description: addition?.description || 'Additional monthly subscription charge', chargeType: 'recurring', subscriptionRole: 'additional', quantity: 1, unitPrice: config.additionalAmount }] : [])];
   if (items.length > 100) throw new Error('Remove a line item to make room for the current subscription and additional monthly charge.');
   return { ...document, billingPeriod: 'monthly', monthlySubscription: config, items, contractDetails: { ...document.contractDetails, billingCommencement: `The ${Number(config.additionalAmount) > 0 ? 'revised monthly subscription' : 'monthly subscription'} will only commence after the official Go-Live of your ${config.systemName || 'System'}.` } };
 }

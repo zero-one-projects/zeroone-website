@@ -1,6 +1,8 @@
 const defaultPaymentInstructions = 'Bank: AUB (ASIA UNITED BANK)\nAccount name: Zero One Information Technology Inc.\nAccount number: 310-11-003883-1';
 
-module.exports = { defaultPaymentInstructions };
+const defaultPosPaymentTerms = 'The one-time POS setup fee is payable in full (100%) upon signing the agreement and before the commencement of system setup and configuration.\n\nThe monthly subscription fee will commence only upon the official Go-Live of the POS system, in accordance with the signed agreement.\n\nPayment is subject to verification and confirmation by Zero One Information Technology Inc.';
+
+module.exports = { defaultPaymentInstructions, defaultPosPaymentTerms };
 
 
 function paymentSummary(document, contractText = '') {

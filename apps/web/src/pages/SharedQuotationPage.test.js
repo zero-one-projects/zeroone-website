@@ -60,8 +60,8 @@ test('successful requote hides the inactive quotation and confirms a replacement
   expect(screen.queryByRole('button', { name: 'Download Quotation' })).not.toBeInTheDocument();
 });
 
-test('decide later hides the quotation and controls and leaves only the message without submitting', async () => {
-  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotation: { document: { ...newQuotation(), clientName: 'Client' }, documentVersion: 'version' }, expiresAt: '2099-01-01T00:00:00Z' }) }));
+test.each(['quotation_only', 'full'])('decide later hides the quotation and controls without submitting in %s mode', async clientFlow => {
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotation: { document: { ...newQuotation(), clientName: 'Client', clientFlow }, documentVersion: 'version' }, expiresAt: '2099-01-01T00:00:00Z' }) }));
   render(<SharedQuotationPage token="client-token" />);
   fireEvent.click(await screen.findByRole('button', { name: 'You Can Decide Later' }));
   expect(screen.getByRole('heading', { name: 'No Response Submitted' })).toBeInTheDocument();

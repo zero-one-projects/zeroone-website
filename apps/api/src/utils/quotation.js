@@ -1,3 +1,4 @@
+const { defaultPosPaymentTerms } = require('./quotation-payment');
 const { monthlySubscriptionSummary } = require('./quotation-pricing');
 const { normalizeContractStyle } = require('./contract-formatting');
 const { quotationContract } = require('./quotation-contract');
@@ -86,7 +87,9 @@ function normalizeQuotation(input = {}) {
   const taxCents = Math.round((subtotalCents - discountCents) * taxRate / 100);
   const recurringTaxCents = Math.round(recurringSubtotalCents * taxRate / 100);
   if (input.contractDetails !== undefined && (!input.contractDetails || typeof input.contractDetails !== 'object' || Array.isArray(input.contractDetails))) invalid('Contract details must be an object.');
+  const initialPaymentPercent = input.initialPaymentPercent !== undefined && input.initialPaymentPercent !== '' && input.initialPaymentPercent !== null ? number(input.initialPaymentPercent, 'Initial payment percentage', 100) : quoteType === 'pos' ? 100 : undefined;
   const contractDetails = Object.fromEntries(['agreementDate', 'authorizedRepresentative', 'clientPosition', 'providerRepresentative', 'providerPosition', 'branches', 'effectiveDate', 'minimumPeriod', 'billingCommencement', 'paymentTerms', 'gracePeriod', 'terminationTerms', 'initialBillingTerms'].map((key) => [key, text(input.contractDetails?.[key], 'Contract details', key === 'paymentTerms' || key === 'terminationTerms' ? 2000 : 500)]));
+  if (quoteType === 'pos' && initialPaymentPercent === 100 && !contractDetails.paymentTerms) contractDetails.paymentTerms = billingPeriod === 'yearly' ? defaultPosPaymentTerms.replace('monthly subscription fee', 'yearly subscription fee') : defaultPosPaymentTerms;
   if (items.some((item) => item.chargeType === 'recurring') && !contractDetails.billingCommencement) contractDetails.billingCommencement = defaultBillingCommencement;
   let monthlySubscription;
   if (input.monthlySubscription != null) {
@@ -97,7 +100,9 @@ function normalizeQuotation(input = {}) {
     const systemName = text(config.systemName, 'System name', 180, true);
     if (currentAmount + additionalAmount <= 0 || Math.round(currentAmount * 100) + Math.round(additionalAmount * 100) !== recurringSubtotalCents) invalid('Current subscription plus the additional monthly charge must match the recurring line items.');
     const components = items.filter(item => item.chargeType === 'recurring');
-    if (components.length !== 2 || components.filter(item => item.subscriptionRole === 'current' && item.quantity === 1 && item.unitPrice === currentAmount).length !== 1 || components.filter(item => item.subscriptionRole === 'additional' && item.quantity === 1 && item.unitPrice === additionalAmount).length !== 1) invalid('Use the monthly subscription fields to set the current and additional recurring charges.');
+    const current = components.filter(item => item.subscriptionRole === 'current');
+    const additional = components.filter(item => item.subscriptionRole === 'additional');
+    if (current.length !== 1 || current[0].quantity !== 1 || current[0].unitPrice !== currentAmount || additional.length > 1 || (additionalAmount > 0 && additional.length !== 1) || additional.some(item => item.quantity !== 1 || item.unitPrice !== additionalAmount) || components.length !== current.length + additional.length) invalid('Use the monthly subscription fields to set the current and additional recurring charges.');
     monthlySubscription = { currentAmount, additionalAmount, systemName };
     const summary = monthlySubscriptionSummary({ monthlySubscription, taxRate, currency: input.currency, quoteType });
     monthlySubscription.notice = summary.notice;
@@ -111,7 +116,7 @@ function normalizeQuotation(input = {}) {
     discount: discountCents / 100, taxRate,
     notes: text(input.notes, 'Notes and terms', 10000),
     ...(input.paymentInstructions !== undefined ? { paymentInstructions: text(input.paymentInstructions, 'Payment instructions', 5000) } : {}),
-    ...(input.initialPaymentPercent !== undefined && input.initialPaymentPercent !== '' && input.initialPaymentPercent !== null ? { initialPaymentPercent: number(input.initialPaymentPercent, 'Initial payment percentage', 100) } : {}),
+    ...(initialPaymentPercent !== undefined ? { initialPaymentPercent } : {}),
     contractText,
     ...(input.contractSource !== undefined ? { contractSource } : {}),
     ...(contractPdf ? { contractPdf } : {}),

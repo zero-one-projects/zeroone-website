@@ -119,6 +119,10 @@ test('monthly adjustment snapshots the revised recurring price and mandatory Go-
   assert.match(result.contractDetails.billingCommencement, /revised monthly subscription/);
   const unchanged = normalizeQuotation({ ...input, monthlySubscription: { ...input.monthlySubscription, additionalAmount: 0 }, items: input.items.map(item => item.subscriptionRole === 'additional' ? { ...item, unitPrice: 0 } : item) });
   assert.equal(unchanged.recurringTotal, 1699);
+  const twoItems = { ...unchanged, items: unchanged.items.filter(item => item.subscriptionRole !== 'additional') };
+  assert.equal(normalizeQuotation(twoItems).items.length, 2);
+  assert.equal(normalizeQuotation(twoItems).recurringTotal, 1699);
+  assert.throws(() => normalizeQuotation({ ...twoItems, monthlySubscription: { ...twoItems.monthlySubscription, additionalAmount: 2000 } }), { statusCode: 400 });
   assert.equal(unchanged.contractDetails.billingCommencement, 'The monthly subscription will only commence after the official Go-Live of your POS System.');
   assert.doesNotMatch(unchanged.monthlySubscription.notice, /revised|additional monthly charge/);
   assert.equal(result.items[2].subscriptionRole, 'additional');
@@ -139,4 +143,27 @@ test('quotation-only subscriptions save without contract terms and validate the 
   assert.throws(() => normalizeQuotation({ ...input, clientFlow: 'full' }), { statusCode: 400 });
   assert.throws(() => normalizeQuotation({ ...input, clientFlow: 'unknown' }), { statusCode: 400 });
   assert.equal(normalizeQuotation(sample()).clientFlow, undefined);
+});
+
+test('new POS quotations default to full setup payment and go-live subscription terms while preserving agreed overrides', () => {
+  const input = sample({ quoteType: 'pos', discount: 0, taxRate: 0, items: [
+    { description: 'Setup', chargeType: 'setup', quantity: 1, unitPrice: 10000 },
+    { description: 'Monthly subscription', chargeType: 'recurring', quantity: 1, unitPrice: 1699 }
+  ] });
+  const q = normalizeQuotation(input);
+  assert.equal(q.initialPaymentPercent, 100);
+  assert.match(q.contractDetails.paymentTerms, /payable in full \(100%\)/);
+  assert.match(q.contractDetails.paymentTerms, /before the commencement of system setup/);
+  assert.match(q.contractDetails.paymentTerms, /official Go-Live/);
+  const summary = require('./quotation-payment').paymentSummary(q);
+  assert.equal(summary.contractTotal, 10000); assert.equal(summary.amountDue, 10000); assert.equal(summary.scheduledRemaining, 0);
+  assert.equal(q.recurringTotal, 1699);
+  const custom = normalizeQuotation({ ...input, initialPaymentPercent: 50, contractDetails: { paymentTerms: '50% upon signing; 50% after setup.' } });
+  assert.equal(custom.initialPaymentPercent, 50);
+  assert.equal(custom.contractDetails.paymentTerms, '50% upon signing; 50% after setup.');
+  assert.equal(require('./quotation-payment').paymentSummary(custom).amountDue, 5000);
+  // Displaying an existing signed document never injects new payment terms or percentages.
+  const legacy = { quoteType: 'pos', total: 10000 };
+  assert.equal(require('./quotation-payment').paymentSummary(legacy).amountDue, null);
+  assert.equal(legacy.initialPaymentPercent, undefined);
 });

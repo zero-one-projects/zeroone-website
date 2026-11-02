@@ -9,7 +9,7 @@ import PdfContractView from './PdfContractView';
 import ContractRichText from './ContractRichText';
 import { useEffect, useRef, useState } from 'react';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
-import { newQuotation, quotationTotals, defaultBillingCommencement } from '../utils/quotation';
+import { newQuotation, quotationTotals, defaultBillingCommencement, defaultPosPaymentTerms } from '../utils/quotation';
 import QuotationDocument from './QuotationDocument';
 import QuotationLinkDialog from './QuotationLinkDialog';
 import QuotationListPanel from './QuotationListPanel';
@@ -146,8 +146,11 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
       if (!items.some((item) => item.chargeType === 'recurring')) items.push({ description: 'Subscription plan', chargeType: 'recurring', quantity: 1, unitPrice: 0 });
       if (items.length > 100) { setNotice({ error: true, message: 'Remove an item to make room for the setup fee and subscription plan before changing types.' }); return; }
     }
-    setDocument((current) => ({ ...current, quoteType: value, ...(value === 'pos' && !(current.title || '').trim() ? { title: 'Cloud-Based POS System' } : {}), ...(value === 'project' ? { monthlySubscription: undefined } : {}), contractSource: defaultContracts[value]?.source || 'default', contractPdf: defaultContracts[value]?.source === 'pdf' ? defaultContracts[value].pdf : undefined, initialPaymentPercent: value === 'project' ? 20 : '', contractStyle: undefined, contractText: defaultContractTexts[value] || (value === 'project' ? defaultContractText : ''), items,
-      ...(items.some((item) => item.chargeType === 'recurring') && !current.contractDetails?.billingCommencement ? { contractDetails: { ...current.contractDetails, billingCommencement: defaultBillingCommencement } } : {})
+    setDocument((current) => ({ ...current, quoteType: value, ...(value === 'pos' && !(current.title || '').trim() ? { title: 'Cloud-Based POS System' } : {}), ...(value === 'project' ? { monthlySubscription: undefined } : {}), contractSource: defaultContracts[value]?.source || 'default', contractPdf: defaultContracts[value]?.source === 'pdf' ? defaultContracts[value].pdf : undefined, initialPaymentPercent: value === 'project' ? 20 : value === 'pos' ? 100 : '', contractStyle: undefined, contractText: defaultContractTexts[value] || (value === 'project' ? defaultContractText : ''), items,
+      contractDetails: { ...current.contractDetails,
+        ...(value === 'pos' && !current.contractDetails?.paymentTerms?.trim() ? { paymentTerms: current.billingPeriod === 'yearly' ? defaultPosPaymentTerms.replace('monthly subscription fee', 'yearly subscription fee') : defaultPosPaymentTerms } : {}),
+        ...(items.some(item => item.chargeType === 'recurring') && !current.contractDetails?.billingCommencement ? { billingCommencement: defaultBillingCommencement } : {})
+      }
     }));
     setDirty(true); setNotice(null);
   }
@@ -355,7 +358,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
                   <option value="quotation_only">Quotation only — send contract and payment details later</option>
                 </select>
               </label>
-              <p className="text-sm text-slate-600">{document.clientFlow === 'quotation_only' ? 'Clients can accept, request a requote, or decide later. After acceptance, the page and confirmation email explain that the contract, payment details, and terms will follow in another email. Send that follow-up separately when ready.' : 'After accepting, clients can sign the contract now or later, then view the payment instructions.'}</p>
+              <p className="text-sm text-slate-600">{document.clientFlow === 'quotation_only' ? 'Clients can accept, request a requote, or decide later. After acceptance, the page and confirmation email explain that the contract, payment details, and terms will follow in another email. Send that follow-up separately when ready.' : 'Clients can accept, request a requote, or decide later. After accepting, they can sign the contract now or later, then view the payment instructions.'}</p>
             </section>
             {document.clientFlow !== 'quotation_only' && <>
             <section className="grid gap-3 rounded-lg border border-slate-200 p-4" aria-label="Payment configuration">
