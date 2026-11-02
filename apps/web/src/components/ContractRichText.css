@@ -1,0 +1,29 @@
+.contract-reading-area { min-width: 0; }
+.contract-terms { min-width: 0; color: #202027; }
+.contract-terms .contract-clause + .contract-clause { margin-top: 22px; }
+.contract-terms .contract-clause > h2 {
+  margin: 0 0 10px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e0ec;
+  line-height: 1.4;
+  letter-spacing: .01em;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+.contract-terms .contract-body-paragraph {
+  margin: 0 0 12px;
+  line-height: 1.65;
+  text-align: left;
+  orphans: 3;
+  widows: 3;
+}
+.contract-terms .contract-clause-list { margin: 4px 0 14px; padding: 0 0 0 5px; list-style: none; line-height: 1.7; }
+.contract-terms .contract-clause-list li { display: flex; align-items: baseline; gap: 10px; margin: 0 0 7px; break-inside: avoid; }
+.contract-terms .contract-list-marker { flex: 0 0 18px; color: inherit; text-align: right; }
+.contract-terms .contract-clause-list li > span:last-child { min-width: 0; }
+.contract-terms .contract-clause > div:last-child > :last-child { margin-bottom: 0; }
+@media print {
+  .contract-terms .contract-body-paragraph { line-height: 1.55; }
+  .contract-terms .contract-clause + .contract-clause { margin-top: 18px; }
+  .contract-terms .contract-clause > h2 { padding-top: 12px; margin-bottom: 10px; }
+}

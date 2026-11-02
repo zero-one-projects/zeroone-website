@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 754 178" role="img" aria-labelledby="title">
+  <title id="title">ZeroOne Information Technology Inc.</title>
+  <defs>
+    <linearGradient id="brand" x1="310" y1="50" x2="710" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00c8f3"/>
+      <stop offset=".28" stop-color="#1864ff"/>
+      <stop offset=".62" stop-color="#6723ed"/>
+      <stop offset="1" stop-color="#7905df"/>
+    </linearGradient>
+    <linearGradient id="rule" x1="46" y1="174" x2="708" y2="174" gradientUnits="userSpaceOnUse"><stop stop-color="#10c5ec"/><stop offset=".5" stop-color="#405bfa"/><stop offset="1" stop-color="#8d22ec"/></linearGradient>
+  </defs>
+  <text x="40" y="122" fill="#030813" font-family="Arial, Helvetica, sans-serif" font-size="112" font-weight="700" letter-spacing="5">ZER</text>
+  <path d="M421 83C398 53 385 49 370 49C348 49 332 65 332 84C332 104 348 120 370 120C393 120 408 96 427 76C445 56 457 49 473 49C495 49 511 65 511 84C511 104 495 120 473 120C453 120 441 106 421 83Z" fill="none" stroke="url(#brand)" stroke-width="16"/>
+  <text x="352" y="99" fill="#090c14" font-family="Arial, Helvetica, sans-serif" font-size="43" font-weight="700">&lt;</text>
+  <text x="461" y="99" fill="#090c14" font-family="Arial, Helvetica, sans-serif" font-size="43" font-weight="700">1</text>
+  <text x="531" y="122" fill="url(#brand)" font-family="Arial, Helvetica, sans-serif" font-size="112" font-weight="700" letter-spacing="2">NE</text>
+  <text x="46" y="157" fill="#25262c" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" letter-spacing="5.4" textLength="661" lengthAdjust="spacing">INFORMATION TECHNOLOGY INC.</text>
+  <path d="M46 174H708" stroke="url(#rule)" stroke-width="3"/>
+</svg>

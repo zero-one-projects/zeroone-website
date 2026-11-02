@@ -1,0 +1,93 @@
+.contract-format-card {
+  container-type: inline-size;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e2deea;
+  border-radius: 14px;
+  background: #fff;
+}
+.contract-format-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #ece9f1;
+  background: #faf9fc;
+}
+.contract-format-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.contract-format-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  height: 38px;
+  border: 1px solid #e5dfee;
+  border-radius: 10px;
+  background: #f0ecf5;
+  color: #514568;
+}
+.contract-format-heading h3 { margin: 0; color: #202027; font-size: 15px; font-weight: 700; line-height: 1.5; }
+.contract-format-heading p { margin: 2px 0 0; color: #728096; font-size: 12px; line-height: 1.5; }
+.contract-format-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid #e2deea;
+  border-radius: 8px;
+  background: #fff;
+  color: #655775;
+  font-size: 12px;
+  font-weight: 600;
+}
+.contract-format-reset:hover:not(:disabled) { background: #f0ecf5; }
+.contract-format-reset:disabled { opacity: .45; cursor: default; }
+.contract-format-fields { display: grid; gap: 16px; min-width: 0; padding: 20px; }
+.contract-format-field { display: grid; gap: 7px; min-width: 0; color: #475569; font-size: 12px; font-weight: 600; }
+.contract-format-tools { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 14px; }
+.contract-format-control, .contract-format-color, .contract-format-bold {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  border: 1px solid #dfe4ed;
+  border-radius: 9px;
+  background: #fff;
+  color: #253047;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+}
+.contract-format-control { padding: 0 12px; text-overflow: ellipsis; }
+.contract-format-section .contract-format-control { background: #f8fafc; }
+.contract-format-color { display: flex; align-items: center; gap: 9px; padding: 0 10px; }
+.contract-format-color input { flex: 0 0 26px; width: 26px; height: 26px; min-width: 0; padding: 0; border: 0; border-radius: 5px; background: transparent; cursor: pointer; }
+.contract-format-color input::-webkit-color-swatch-wrapper { padding: 0; }
+.contract-format-color input::-webkit-color-swatch { border: 1px solid rgb(0 0 0 / 10%); border-radius: 5px; }
+.contract-format-color input::-moz-color-swatch { border: 1px solid rgb(0 0 0 / 10%); border-radius: 5px; }
+.contract-format-color > span { color: #647084; font-size: 12px; font-variant-numeric: tabular-nums; }
+.contract-format-bold { display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0 10px; cursor: pointer; }
+.contract-format-bold strong { font-family: Georgia, serif; font-size: 20px; }
+.contract-format-bold span { font-size: 13px; font-weight: 600; }
+.contract-format-bold[aria-pressed='true'] { border-color: #b6a6ca; background: #f1edf7; color: #514568; }
+.contract-format-bold:hover:not(:disabled) { border-color: #817391; }
+.contract-format-card :is(button, input, select):focus-visible { outline: 2px solid #9b86b3; outline-offset: 2px; }
+.contract-format-card :is(button, input, select):disabled { cursor: default; opacity: .5; }
+.contract-format-note { display: flex; align-items: flex-start; gap: 7px; margin: 0; padding: 0 20px 18px; color: #728096; font-size: 11px; line-height: 1.6; }
+.contract-format-note svg { flex: 0 0 14px; margin-top: 2px; }
+@container (min-width: 600px) {
+  .contract-format-tools { grid-template-columns: minmax(0, 1.6fr) minmax(0, .8fr) minmax(0, 1fr) minmax(0, .9fr); }
+}
+@container (max-width: 330px) {
+  .contract-format-header, .contract-format-fields { padding: 14px; }
+  .contract-format-heading { gap: 8px; }
+  .contract-format-note { padding: 0 14px 14px; }
+  .contract-format-tools { gap: 12px; }
+  .contract-format-color { gap: 5px; padding: 0 7px; }
+  .contract-format-color > span { font-size: 11px; }
+}

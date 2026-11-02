@@ -8,12 +8,12 @@ const router = express.Router();
 function serializeConfig(config) {
   if (!config) {
     return {
-      tenantId: '',
-      clientId: '',
+      tenantId: process.env.MS_TENANT_ID || '',
+      clientId: process.env.MS_CLIENT_ID || '',
       senderEmail: process.env.MS_SENDER_EMAIL || '',
       recipientEmail: process.env.MS_RECIPIENT_EMAIL || 'info@zerooneitinc.com',
       secretExpiresAt: '',
-      hasClientSecret: false
+      hasClientSecret: Boolean(process.env.MS_CLIENT_SECRET)
     };
   }
 
@@ -66,7 +66,8 @@ router.put('/', async (req, res, next) => {
       order: [['id', 'ASC']]
     });
 
-    if (!clientSecret && !existingConfig?.clientSecret) {
+    const savedSecret = existingConfig?.clientSecret || process.env.MS_CLIENT_SECRET;
+    if (!clientSecret && !savedSecret) {
       return res.status(400).json({
         message: 'Client secret is required the first time you save mail config.'
       });
@@ -75,7 +76,7 @@ router.put('/', async (req, res, next) => {
     const nextValues = {
       tenantId,
       clientId,
-      clientSecret: clientSecret || existingConfig.clientSecret,
+      clientSecret: clientSecret || savedSecret,
       senderEmail,
       recipientEmail,
       secretExpiresAt: secretExpiresAt ? new Date(`${secretExpiresAt}T00:00:00.000Z`) : null

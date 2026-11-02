@@ -59,6 +59,7 @@ async function startServer() {
 
   app.listen(port, () => {
     console.log(`ZeroOne API server listening on port ${port}`);
+    if (isDatabaseConnected) require('./utils/quotation-notifications').startQuotationNotificationWorker();
     if (!isDatabaseConnected) {
       console.log('Set DB credentials in apps/api/.env to enable database-backed features.');
     }

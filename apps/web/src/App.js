@@ -3,6 +3,8 @@ import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import SharedQuotationPage from './pages/SharedQuotationPage';
+import VerificationCodePage from './pages/VerificationCodePage';
 import { getApiBaseUrl } from './utils/apiBaseUrl';
 
 const apiBaseUrl = getApiBaseUrl();
@@ -15,6 +17,14 @@ let lastTrackedVisit = {
 function getRouteFromLocation() {
   const { hash, pathname } = window.location;
   const hasAdminToken = Boolean(window.localStorage.getItem('zerooneAdminToken'));
+
+  if (pathname === '/verification-code') {
+    return { page: 'verification-code', codeFragment: hash, anchor: '' };
+  }
+
+  if (pathname.startsWith('/quotation/')) {
+    return { page: 'shared-quotation', token: pathname.slice('/quotation/'.length), anchor: '' };
+  }
 
   if (pathname === '/about-us') {
     return {
@@ -43,6 +53,43 @@ function getRouteFromLocation() {
       page: 'admin-dashboard',
       anchor: ''
     };
+  }
+
+  if (pathname === '/admin/quotation-list') {
+    if (!hasAdminToken) {
+      window.history.replaceState({}, '', '/admin/login');
+      return { page: 'admin-login', anchor: '' };
+    }
+    return { page: 'admin-quotation-list', anchor: '' };
+  }
+
+  if (pathname === '/admin/clients/add') {
+    if (!hasAdminToken) { window.history.replaceState({}, '', '/admin/login'); return { page: 'admin-login', anchor: '' }; }
+    return { page: 'admin-add-client', anchor: '' };
+  }
+
+  if (pathname === '/admin/clients') {
+    if (!hasAdminToken) { window.history.replaceState({}, '', '/admin/login'); return { page: 'admin-login', anchor: '' }; }
+    return { page: 'admin-clients', anchor: '' };
+  }
+
+  if (pathname === '/admin/billing' || (pathname === '/admin/quotations' && new URLSearchParams(window.location.search).get('tab') === 'billing')) {
+    if (!hasAdminToken) { window.history.replaceState({}, '', '/admin/login'); return { page: 'admin-login', anchor: '' }; }
+    if (pathname !== '/admin/billing') window.history.replaceState({}, '', '/admin/billing');
+    return { page: 'admin-billing', anchor: '' };
+  }
+
+  if (pathname === '/admin/contracts') {
+    if (!hasAdminToken) { window.history.replaceState({}, '', '/admin/login'); return { page: 'admin-login', anchor: '' }; }
+    return { page: 'admin-contracts', anchor: '' };
+  }
+
+  if (pathname === '/admin/quotations') {
+    if (!hasAdminToken) {
+      window.history.replaceState({}, '', '/admin/login');
+      return { page: 'admin-login', anchor: '' };
+    }
+    return { page: 'admin-quotations', anchor: '' };
   }
 
   if (pathname === '/admin/mail-config') {
@@ -162,12 +209,34 @@ function App() {
   }, [route.page, route.anchor]);
 
   const page = useMemo(() => {
+    if (route.page === 'verification-code') {
+      return <VerificationCodePage key={route.codeFragment} fragment={route.codeFragment} />;
+    }
+    if (route.page === 'shared-quotation') {
+      return <SharedQuotationPage token={route.token} />;
+    }
     if (route.page === 'admin-login') {
       return <AdminLoginPage />;
     }
 
     if (route.page === 'admin-dashboard') {
       return <AdminDashboardPage page="dashboard" />;
+    }
+
+    if (route.page === 'admin-quotation-list') {
+      return <AdminDashboardPage page="quotation-list" />;
+    }
+
+    if (route.page === 'admin-add-client') return <AdminDashboardPage page="add-client" />;
+
+    if (route.page === 'admin-clients') return <AdminDashboardPage page="clients" />;
+
+    if (route.page === 'admin-billing') return <AdminDashboardPage page="billing" />;
+
+    if (route.page === 'admin-contracts') return <AdminDashboardPage page="contracts" />;
+
+    if (route.page === 'admin-quotations') {
+      return <AdminDashboardPage page="quotations" />;
     }
 
     if (route.page === 'admin-mail-config') {
@@ -187,7 +256,7 @@ function App() {
     }
 
     return <LandingPage />;
-  }, [route.page]);
+  }, [route.page, route.token, route.codeFragment]);
 
   return page;
 }

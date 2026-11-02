@@ -1,0 +1,108 @@
+.admin-theme {
+  color-scheme: light;
+  font-family: var(--font-site, 'Manrope', 'Avenir Next', 'Segoe UI', sans-serif);
+  --admin-gradient: linear-gradient(110deg, #3d374f 0%, #26293c 48%, #181c28 100%);
+}
+
+.admin-brand-surface {
+  background-color: #26293c;
+  background-image: var(--admin-gradient, linear-gradient(110deg, #3d374f 0%, #26293c 48%, #181c28 100%));
+  color: #fff;
+}
+
+.admin-theme aside.admin-brand-surface {
+  background-image: linear-gradient(155deg, #3d374f 0%, #26293c 48%, #181c28 100%);
+}
+
+.admin-theme.admin-login {
+  color-scheme: dark;
+  background:
+    linear-gradient(110deg, rgb(10 11 18 / 80%), rgb(15 17 27 / 55%)),
+    url('./assets/landing/zeroone-body-panels.png') right center / cover no-repeat,
+    #101116;
+  isolation: isolate;
+}
+
+.admin-login-feature {
+  background-color: #26293c;
+  background-image: linear-gradient(180deg, #3d374f 0%, #26293c 48%, #181c28 100%);
+}
+
+.admin-login-panel {
+  isolation: isolate;
+}
+
+.admin-login-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(165deg, #d7c9f912, transparent 28%, #00000030 80%),
+    radial-gradient(ellipse at 8% 0%, #9b7ae028, transparent 60%),
+    radial-gradient(ellipse at 100% 40%, #5c9fd71c, transparent 65%),
+    linear-gradient(135deg, #242333, #151b29 50%, #181521);
+  border: 1px solid;
+  border-color: #c6b5ff45 #77769e2e #04050b #a5a0ce38;
+  border-radius: 0 0 clamp(24px, 4vw, 56px) clamp(24px, 4vw, 56px);
+  box-shadow:
+    inset 2px 0 2px #c1cafa0d,
+    inset 0 -3px 5px #00000080,
+    0 6px 0 #080a12,
+    0 7px 0 #8c81b526,
+    0 14px 18px -4px #000000b3,
+    0 32px 40px -8px #00000099,
+    0 60px 90px -16px #00000080;
+}
+
+.admin-login-logo {
+  margin-bottom: 24px;
+}
+
+.admin-login-logo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 1;
+  object-fit: cover;
+  mix-blend-mode: screen;
+}
+
+.admin-login input:-webkit-autofill {
+  -webkit-text-fill-color: #f1f5f9;
+  -webkit-box-shadow: 0 0 0 1000px #242631 inset;
+  caret-color: #f1f5f9;
+}
+
+.admin-theme h1,
+.admin-theme h2,
+.admin-theme h3 {
+  font-family: var(--font-site, 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif);
+  letter-spacing: -0.035em;
+}
+
+.admin-theme .admin-nav-active {
+  box-shadow: inset 3px 0 0 #d6c9e5, 0 4px 16px rgb(0 0 0 / 8%);
+}
+
+.admin-theme :is(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid #9b86b3;
+  outline-offset: 3px;
+}
+
+.admin-theme :is(button, label).admin-brand-surface {
+  transition: filter 180ms ease, transform 180ms ease;
+}
+
+.admin-theme :is(button, label).admin-brand-surface:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-theme *,
+  .admin-theme *::before,
+  .admin-theme *::after {
+    transition: none;
+    animation: none;
+  }
+}

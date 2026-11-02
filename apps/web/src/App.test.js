@@ -183,3 +183,62 @@ test('layered previews preserve the supplied front and background screenshots', 
   expect(pos.querySelector('.landing-browser-preview--right img'))
     .toHaveAttribute('src', expect.stringContaining('zeroone-pos-reports'));
 });
+
+test('client record sidebar route opens its two payment types for an authenticated admin', async () => {
+  const previousFetch = global.fetch;
+  localStorage.setItem('zerooneAdminToken', 'client-route-test');
+  window.history.pushState({}, '', '/admin/clients');
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ clients: [], total: 0 }) }));
+  try {
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: 'Client Record' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clients' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: 'Client Records' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Add Client' })).toHaveAttribute('href', '/admin/clients/add');
+    expect(screen.getByRole('tab', { name: 'Custom Subscriptions' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Custom One-time Payment' })).toBeInTheDocument();
+    expect(await screen.findByText(/No custom subscription client records found/)).toBeInTheDocument();
+  } finally { global.fetch = previousFetch; localStorage.removeItem('zerooneAdminToken'); }
+});
+
+test.each(['/admin/billing', '/admin/quotations?tab=billing'])('opens standalone billing from %s', async (path) => {
+  localStorage.setItem('zerooneAdminToken', 'test-session');
+  const previousFetch = global.fetch;
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ subscriptions: [], statements: [], total: 0 }) }));
+  window.history.replaceState({}, '', path);
+  try {
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: 'Billing', level: 1 })).toBeInTheDocument();
+    await screen.findByText('No billing statements found.');
+    expect(screen.getByRole('link', { name: 'Billing' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Billing' })).toHaveAttribute('href', '/admin/billing');
+    expect(screen.getByRole('button', { name: 'Sales & Contract' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByRole('tab', { name: 'Billing' })).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe('/admin/billing');
+  } finally {
+    localStorage.removeItem('zerooneAdminToken');
+    global.fetch = previousFetch;
+  }
+});
+
+test('Clients submenu opens Add Client and returns to Client Records after cancel', async () => {
+  const previousFetch = global.fetch;
+  HTMLDialogElement.prototype.showModal = jest.fn(function () { this.setAttribute('open', ''); });
+  HTMLDialogElement.prototype.close = jest.fn(function () { this.removeAttribute('open'); });
+  localStorage.setItem('zerooneAdminToken', 'client-menu-test');
+  window.history.replaceState({}, '', '/admin/clients/add');
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ clients: [], total: 0 }) }));
+  try {
+    render(<App />);
+    expect(await screen.findByRole('dialog', { name: 'Add Client' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Add Client' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByLabelText('Payment type')).toHaveValue('subscription');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(window.location.pathname).toBe('/admin/clients');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Client Records' })).toHaveAttribute('aria-current', 'page');
+    fireEvent.click(screen.getByRole('button', { name: 'Clients' }));
+    expect(screen.getByRole('button', { name: 'Clients' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('link', { name: 'Add Client' })).not.toBeInTheDocument();
+  } finally { global.fetch = previousFetch; localStorage.removeItem('zerooneAdminToken'); }
+});

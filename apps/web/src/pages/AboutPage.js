@@ -9,6 +9,7 @@ import CardSection from '../components/CardSection';
 import Seo, { defaultSiteUrl, toAbsoluteUrl } from '../components/Seo';
 import TeamSection from '../components/TeamSection';
 import TextSection from '../components/TextSection';
+import { getVisibleAboutSections } from '../content/aboutSections';
 import { companyProfile } from '../content/companyProfile';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
 import useScrollReveal from '../hooks/useScrollReveal';
@@ -195,7 +196,7 @@ function App() {
   const pageProfile = {
     ...mergedProfile,
     // Keep these sections saved while hiding them from the public page.
-    sections: mergedProfile.sections.filter((section) => !['business-partner', 'vision', 'mission'].includes(section.id))
+    sections: getVisibleAboutSections(mergedProfile.sections)
   };
   const footerCapabilities = [
     { label: 'Custom Software', href: companyProfileServicesUrl },
@@ -337,7 +338,7 @@ function App() {
               <div className="about-column">
                 <TextSection
                   id={section.id}
-                  title="Who We Are"
+                  title={section.title}
                   revealHeading={false}
                   paragraphs={section.paragraphs}
                   noWrapper={true}

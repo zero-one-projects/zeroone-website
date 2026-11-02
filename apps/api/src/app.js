@@ -15,6 +15,8 @@ const contactRoutes = require('./routes/contact.routes');
 const healthRoutes = require('./routes/health.routes');
 const mailConfigRoutes = require('./routes/mail-config.routes');
 
+const quotationRoutes = require('./routes/quotations.routes');
+
 const app = express();
 
 app.set('trust proxy', true);
@@ -27,8 +29,11 @@ app.use(
   })
 );
 app.use(cors());
-app.use(express.json());
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(express.json({ limit: '512kb' }));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev', {
+  // Client link tokens are credentials; omit their URLs from access logs.
+  skip: (req) => req.originalUrl.startsWith('/api/quotations/') || req.originalUrl.startsWith('/api/billing/')
+}));
 app.use('/api/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
@@ -42,6 +47,12 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/admin/chat-knowledge', chatKnowledgeRoutes);
 app.use('/api/admin/mail-config', mailConfigRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/admin/quotations', quotationRoutes);
+app.use('/api/admin/clients', require('./routes/client-records.routes'));
+app.use('/api/billing', require('./routes/public-billing.routes'));
+app.use('/api/admin/billing', require('./routes/billing.routes'));
+app.use('/api/admin/contracts', require('./routes/contracts.routes'));
+app.use('/api/quotations', require('./routes/public-quotations.routes'));
 
 app.use((req, res) => {
   res.status(404).json({

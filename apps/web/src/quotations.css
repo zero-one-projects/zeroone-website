@@ -1,0 +1,100 @@
+.quotation-paper {
+  --quote-accent: #514568;
+  --quote-heading: #26293c;
+  --quote-line: #c9c1d4;
+  margin-top: 32px;
+  padding: 58px 40px 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: #202020;
+  font-family: 'Century Gothic', 'Avenir Next', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.quotation-letterhead { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: start; }
+.quotation-brand { display: flex; align-items: center; gap: 10px; min-height: 60px; margin-bottom: 16px; }
+.quotation-logo { display: block; width: 180px; max-width: 100%; height: 60px; object-fit: cover; object-position: center; }
+.quotation-company-name { color: #555; font-size: 16px; font-weight: 700; }
+.quotation-reference { text-align: right; padding-top: 8px; }
+.admin-theme .quotation-reference h2 { margin: 0 0 10px; color: var(--quote-heading); font-family: inherit; font-size: clamp(25px, 3vw, 42px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.quotation-reference strong, .quotation-recipient strong { color: var(--quote-accent); font-weight: 700; }
+.quotation-expiry { margin-top: 6px; color: #666; font-size: 11px; }
+.quotation-recipient { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; margin: 30px 0 42px; }
+.quotation-client-detail { margin-top: 4px; white-space: pre-wrap; font-size: 12px; }
+.quotation-purpose { text-align: right; }
+.quotation-description-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.quotation-description-table th { padding: 8px 0 18px; border-top: 1px solid var(--quote-line); border-bottom: 2px solid var(--quote-line); color: var(--quote-accent); font-style: italic; text-align: left; font-weight: 700; font-size: 16px; }
+.quotation-description-table th:first-child { width: 76%; }
+.quotation-description-table th:last-child { width: 24%; text-align: right; }
+.quotation-description-table td { vertical-align: top; padding: 10px 0 16px; }
+.quotation-description-table tr + tr td { border-top: 1px solid #e8e3ed; }
+.quotation-description-table td:first-child { padding-right: 18px; }
+.quotation-item-title { font-weight: 700; color: #4d4d4d; white-space: pre-wrap; }
+.quotation-item-amount { text-align: right; color: #39344d; font-weight: 700; font-style: italic; font-variant-numeric: tabular-nums; }
+.quotation-item-quantity { margin-top: 4px; font-size: 11px; color: #666; }
+.quotation-scope { margin: 22px 0 0; padding: 0; list-style: none; }
+.quotation-scope li { margin-top: 4px; }
+.quotation-scope-title::before { content: '• '; }
+.quotation-scope-title { white-space: pre-wrap; }
+.quotation-scope-details { color: #6b617a; font-size: 0.78em; white-space: pre-wrap; line-height: 1.3; }
+.quotation-terms { margin-top: 20px; white-space: pre-wrap; }
+.admin-theme .quotation-terms h3 { font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: normal; }
+.quotation-terms p { margin-top: 6px; font-size: 12px; }
+.quotation-summary { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-top: 20px; padding-bottom: 4px; }
+.quotation-timeline { color: #555; font-style: italic; white-space: pre-wrap; }
+.quotation-summary dl { display: grid; grid-template-columns: auto auto; gap: 4px 28px; min-width: 30%; font-size: 12px; }
+.quotation-summary dd { text-align: right; font-variant-numeric: tabular-nums; }
+.quotation-grand-total { padding-top: 4px; color: #39344d; font-style: italic; font-size: 16px; font-weight: 700; }
+.quotation-document-end { border-block: 1px solid var(--quote-line); padding: 9px 0; text-align: center; font-style: italic; color: #555; }
+
+@media screen and (max-width: 640px) {
+  .quotation-paper { padding: 28px 18px; font-size: 12px; }
+  .quotation-letterhead, .quotation-recipient { grid-template-columns: 1fr; gap: 20px; }
+  .quotation-reference, .quotation-purpose { text-align: left; }
+  .quotation-company-name { font-size: 14px; }
+  .quotation-recipient { margin-bottom: 24px; }
+  .quotation-summary { align-items: stretch; flex-direction: column; }
+  .quotation-summary dl { align-self: end; }
+  .quotation-description-table th { font-size: 13px; }
+  .quotation-description-table th:first-child { width: 66%; }
+  .quotation-description-table th:last-child { width: 34%; }
+}
+
+@media print {
+  @page { size: A4; margin: 16mm 12mm; }
+  html:has(.quotation-paper) { background: #fff !important; color-scheme: light; }
+  body:has(.quotation-paper), body:has(.quotation-paper) #root,
+  .admin-theme:has(.quotation-paper) { background: #fff !important; min-height: 0; height: auto; }
+  body:has(.quotation-paper) * { visibility: hidden; }
+  .quotation-paper, .quotation-paper * { visibility: visible !important; }
+  .admin-theme:has(.quotation-paper) > button,
+  .admin-theme:has(.quotation-paper) > div > aside,
+  .quotation-controls { display: none !important; }
+  .admin-theme:has(.quotation-paper) > div { display: block; min-height: 0; }
+  .admin-theme:has(.quotation-paper) > div > section { padding: 0; overflow: visible; }
+  .quotation-paper { position: static; width: 100%; margin: 0; padding: 4mm 0 0; border: 0; border-radius: 0; box-shadow: none; font-size: 10.5pt; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .shared-quotation-page { padding: 0; }
+  .shared-quotation-page > div { max-width: none; }
+  .quotation-letterhead, .quotation-recipient, .quotation-summary, .quotation-document-end { break-inside: avoid; }
+  .quotation-brand { min-height: 13mm; margin-bottom: 4mm; }
+  .quotation-logo { width: 36mm; height: 13mm; }
+  .quotation-company-name { font-size: 11pt; }
+  .admin-theme .quotation-reference h2 { font-size: 29pt; }
+  .quotation-reference { padding-top: 3mm; }
+  .quotation-expiry { font-size: 8pt; }
+  .quotation-recipient { margin: 9mm 0 12mm; }
+  .quotation-client-detail { font-size: 9pt; }
+  .quotation-description-table thead { display: table-header-group; }
+  .quotation-description-table th { font-size: 11pt; }
+  .quotation-description-table td { padding-block: 3mm 4mm; }
+  .quotation-item-title { break-after: avoid; }
+  .quotation-scope { margin-top: 7mm; }
+  .quotation-scope li { break-inside: avoid; }
+  .quotation-scope-details { font-size: 8pt; }
+  .quotation-summary { margin-top: 6mm; }
+  .quotation-summary dl { font-size: 9pt; }
+  .quotation-grand-total { font-size: 11pt; }
+  .quotation-terms p, .admin-theme .quotation-terms h3 { font-size: 9pt; }
+}

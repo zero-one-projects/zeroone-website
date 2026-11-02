@@ -34,7 +34,7 @@ function ConfirmModal({
             {cancelLabel}
           </button>
           <button
-            className="h-11 rounded-md bg-[#07152b] px-4 text-sm font-bold text-white transition hover:bg-blue-950"
+            className="h-11 rounded-md admin-brand-surface px-4 text-sm font-bold text-white transition hover:bg-blue-950"
             type="button"
             onClick={onConfirm}
           >

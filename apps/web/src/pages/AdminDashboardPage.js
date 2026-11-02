@@ -1,4 +1,10 @@
+import BillingPanel from '../components/BillingPanel';
+import ClientRecordsPanel from '../components/ClientRecordsPanel';
 import { useEffect, useRef, useState } from 'react';
+import QuotationsPanel from '../components/QuotationsPanel';
+import ContractsPanel from '../components/ContractsPanel';
+import ProcessContentEditor from '../components/ProcessContentEditor';
+import { getVisibleAboutSections } from '../content/aboutSections';
 import ConfirmModal from '../components/ConfirmModal';
 import LoadingOverlay from '../components/LoadingOverlay';
 import Pagination from '../components/Pagination';
@@ -6,6 +12,7 @@ import Seo from '../components/Seo';
 import Toast from '../components/Toast';
 import { companyProfile } from '../content/companyProfile';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
+import '../admin-theme.css';
 
 const apiBaseUrl = getApiBaseUrl();
 
@@ -125,36 +132,30 @@ function getEditableSections(overrides = []) {
     {
       id: 'stats',
       type: 'metrics',
-      title: 'Hero Expertise Cards',
+      title: 'Expertise Cards',
       items: overrideMap.get('stats')?.items || companyProfile.stats
     },
     {
       id: 'projectCounters',
       type: 'metrics',
-      title: 'Hero Number Cards',
+      title: 'Company Numbers',
       items: overrideMap.get('projectCounters')?.items || companyProfile.projectCounters
     }
   ];
 
   return [
+    ...getVisibleAboutSections(companyProfile.sections).filter((section) => section.id === 'about').map((section) => mergeEditableSection(section, overrideMap.get(section.id))),
     ...metricSections,
-    ...companyProfile.sections.map((section) => mergeEditableSection(section, overrideMap.get(section.id)))
+    ...getVisibleAboutSections(companyProfile.sections).filter((section) => section.id !== 'about').map((section) => mergeEditableSection(section, overrideMap.get(section.id)))
   ];
 }
 
 function getDefaultContentSectionId(sections = []) {
-  return sections.some((section) => section.id === 'stats') ? 'stats' : sections[0]?.id || '';
+  return sections[0]?.id || '';
 }
 
 function linesToText(lines = []) {
   return Array.isArray(lines) ? lines.join('\n') : '';
-}
-
-function textToLines(value) {
-  return value
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
 }
 
 function safeJsonParse(value, fallback) {
@@ -194,6 +195,21 @@ function getAdminPageMeta(page) {
       title: 'Content Management',
       canonicalPath: '/admin/content'
     };
+  }
+
+  if (page === 'quotation-list') {
+    return { title: 'Quotation List', canonicalPath: '/admin/quotation-list' };
+  }
+
+  if (page === 'add-client') return { title: 'Add Client', canonicalPath: '/admin/clients/add' };
+
+  if (page === 'clients') return { title: 'Client Record', canonicalPath: '/admin/clients' };
+  if (page === 'billing') return { title: 'Billing', canonicalPath: '/admin/billing' };
+
+  if (page === 'contracts') return { title: 'Contracts', canonicalPath: '/admin/contracts' };
+
+  if (page === 'quotations') {
+    return { title: 'Quotations', canonicalPath: '/admin/quotations' };
   }
 
   if (page === 'knowledge-base') {
@@ -369,6 +385,17 @@ function AdminDashboardPage({ page = 'dashboard' }) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isClientsMenuOpen, setIsClientsMenuOpen] = useState(() => ['clients', 'add-client'].includes(page));
+  useEffect(() => { if (['clients', 'add-client'].includes(page)) setIsClientsMenuOpen(true); }, [page]);
+  const [isSalesMenuOpen, setIsSalesMenuOpen] = useState(() =>
+    ['quotations', 'quotation-list', 'contracts', 'billing'].includes(page)
+  );
+
+  useEffect(() => {
+    if (['quotations', 'quotation-list', 'contracts', 'billing'].includes(page)) {
+      setIsSalesMenuOpen(true);
+    }
+  }, [page]);
   const [status, setStatus] = useState({
     type: 'idle',
     message: ''
@@ -711,7 +738,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
 
     updateActiveSection((section) => ({
       ...section,
-      [name]: name === 'paragraphs' ? textToLines(value) : value
+      [name]: name === 'paragraphs' ? value.split('\n') : value
     }));
   }
 
@@ -801,6 +828,16 @@ function AdminDashboardPage({ page = 'dashboard' }) {
       id: sectionToSave.id,
       type: sectionToSave.type
     });
+
+    if (Array.isArray(content.paragraphs)) {
+      content.paragraphs = content.paragraphs.map((line) => line.trim()).filter(Boolean);
+    }
+    if (Array.isArray(content.cards)) {
+      content.cards = content.cards.map((card) => ({
+        ...card,
+        ...(Array.isArray(card.tags) ? { tags: card.tags.map((tag) => tag.trim()).filter(Boolean) } : {})
+      }));
+    }
 
     const response = await fetch(`${apiBaseUrl}/api/about-content/admin/${sectionToSave.id}`, {
       method: 'PUT',
@@ -1146,7 +1183,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
+    <main className="admin-theme min-h-screen bg-white text-slate-950">
       <Seo
         title={`${adminPageMeta.title} | ZeroOne IT Inc. Admin`}
         description="Private ZeroOne IT Inc. administrator workspace."
@@ -1158,7 +1195,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
         message={getAdminLoadingMessage(page, uploadingMemberKey, status.message)}
       />
       <button
-        className="fixed left-4 top-4 z-50 grid h-11 w-11 place-items-center rounded-xl border border-slate-200/20 bg-[#07152b] text-white shadow-2xl shadow-slate-950/30 lg:hidden"
+        className="fixed left-4 top-4 z-50 grid h-11 w-11 place-items-center rounded-xl border border-slate-200/20 admin-brand-surface text-white shadow-2xl shadow-slate-950/30 lg:hidden"
         type="button"
         onClick={() => setIsSidebarOpen((current) => !current)}
         aria-label={isSidebarOpen ? 'Close admin menu' : 'Open admin menu'}
@@ -1186,33 +1223,33 @@ function AdminDashboardPage({ page = 'dashboard' }) {
 
       <div className="min-h-screen lg:grid lg:grid-cols-[14.5rem_1fr]">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 flex w-[min(18rem,82vw)] -translate-x-full flex-col border-r border-slate-900/10 bg-[#07152b] px-4 py-4 pt-20 text-white shadow-2xl shadow-slate-950/40 transition-transform duration-200 ease-out lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:min-h-screen lg:w-auto lg:translate-x-0 lg:pt-4 lg:shadow-none ${
+          className={`fixed inset-y-0 left-0 z-40 flex w-[min(18rem,82vw)] -translate-x-full flex-col border-r border-slate-900/10 admin-brand-surface px-4 py-4 pt-20 text-white shadow-2xl shadow-slate-950/40 transition-transform duration-200 ease-out lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:min-h-screen lg:w-auto lg:translate-x-0 lg:pt-4 lg:shadow-none ${
             isSidebarOpen ? 'translate-x-0' : ''
           }`}
         >
           <a className="flex items-center gap-3" href="/">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-xs font-black text-[#07152b] shadow-lg shadow-black/20">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-xs font-black text-[#39344d] shadow-lg shadow-black/20">
               01
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-black">ZeroOne IT Inc.</span>
-              <span className="block text-xs font-semibold text-blue-200/70">Admin Workspace</span>
+              <span className="block text-xs font-semibold text-white/70">Admin Workspace</span>
             </span>
           </a>
 
-          <nav className="mt-8 grid gap-6" aria-label="Admin navigation">
+          <nav className="mt-8 grid gap-6 overflow-y-auto" aria-label="Admin navigation">
             <section className="grid gap-2">
-              <p className="px-3 text-xs font-black uppercase tracking-[0.24em] text-blue-200/55">Main</p>
+              <p className="px-3 text-xs font-black uppercase tracking-[0.24em] text-white/50">Main</p>
               <a
                 className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-black shadow-lg shadow-black/10 transition ${
                   page === 'dashboard'
-                    ? 'border-blue-200/15 bg-blue-500/10 text-white'
-                    : 'border-transparent text-blue-100/75 hover:bg-white/10 hover:text-white'
+                    ? 'admin-nav-active border-white/20 bg-white/10 text-white'
+                    : 'border-transparent text-white/75 hover:bg-white/10 hover:text-white'
                 }`}
                 href="/admin/dashboard"
                 onClick={() => setIsSidebarOpen(false)}
               >
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-300/15 text-blue-100" aria-hidden="true">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 text-white/90" aria-hidden="true">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M4.75 5.75A1.75 1.75 0 0 1 6.5 4h3.25v6.25h-5v-4.5ZM14.25 4h3.25a1.75 1.75 0 0 1 1.75 1.75v3.25h-5V4ZM4.75 14.75h5V20H6.5a1.75 1.75 0 0 1-1.75-1.75v-3.5ZM14.25 13.5h5v4.75A1.75 1.75 0 0 1 17.5 20h-3.25v-6.5Z"
@@ -1224,19 +1261,19 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                 </span>
                 Dashboard
                 {page === 'dashboard' ? (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-200" aria-hidden="true" />
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true" />
                 ) : null}
               </a>
               <a
                 className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-black shadow-lg shadow-black/10 transition ${
                   page === 'content'
-                    ? 'border-blue-200/15 bg-blue-500/10 text-white'
-                    : 'border-transparent text-blue-100/75 hover:bg-white/10 hover:text-white'
+                    ? 'admin-nav-active border-white/20 bg-white/10 text-white'
+                    : 'border-transparent text-white/75 hover:bg-white/10 hover:text-white'
                 }`}
                 href="/admin/content"
                 onClick={() => setIsSidebarOpen(false)}
               >
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-300/15 text-blue-100" aria-hidden="true">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 text-white/90" aria-hidden="true">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M5 4.75h14A1.25 1.25 0 0 1 20.25 6v12A1.25 1.25 0 0 1 19 19.25H5A1.25 1.25 0 0 1 3.75 18V6A1.25 1.25 0 0 1 5 4.75Z"
@@ -1248,19 +1285,19 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                 </span>
                 Content
                 {page === 'content' ? (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-200" aria-hidden="true" />
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true" />
                 ) : null}
               </a>
               <a
                 className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-black shadow-lg shadow-black/10 transition ${
                   page === 'knowledge-base'
-                    ? 'border-blue-200/15 bg-blue-500/10 text-white'
-                    : 'border-transparent text-blue-100/75 hover:bg-white/10 hover:text-white'
+                    ? 'admin-nav-active border-white/20 bg-white/10 text-white'
+                    : 'border-transparent text-white/75 hover:bg-white/10 hover:text-white'
                 }`}
                 href="/admin/knowledge-base"
                 onClick={() => setIsSidebarOpen(false)}
               >
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-300/15 text-blue-100" aria-hidden="true">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 text-white/90" aria-hidden="true">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M5 5.75A2.75 2.75 0 0 1 7.75 3h8.5A2.75 2.75 0 0 1 19 5.75v6.5A2.75 2.75 0 0 1 16.25 15H11l-4.25 4v-4A2.75 2.75 0 0 1 4 12.25v-6.5Z"
@@ -1273,19 +1310,28 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                 </span>
                 Chat KB
                 {page === 'knowledge-base' ? (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-200" aria-hidden="true" />
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true" />
                 ) : null}
               </a>
+              <section className="grid gap-2" aria-label="Clients">
+                <button type="button" className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-black transition ${['clients', 'add-client'].includes(page) ? 'admin-nav-active border-white/20 bg-white/10 text-white' : 'border-transparent text-white/75 hover:bg-white/10 hover:text-white'}`} aria-expanded={isClientsMenuOpen} aria-controls="admin-clients-links" onClick={() => setIsClientsMenuOpen(current => !current)}>
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 text-white/90" aria-hidden="true"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20v-3a5 5 0 0 1 10 0v3M16 5h5M16 9h5M16 13h5M16 17h5"/></svg></span>Clients
+                  <svg className={`ml-auto h-4 w-4 shrink-0 transition-transform ${isClientsMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+                <div id="admin-clients-links" className={isClientsMenuOpen ? 'ml-7 grid gap-1 border-l border-white/15 pl-3' : 'hidden'} hidden={!isClientsMenuOpen}>
+                  {[['add-client', 'Add Client', '/admin/clients/add'], ['clients', 'Client Records', '/admin/clients']].map(([value, label, href]) => <a key={value} href={href} onClick={() => setIsSidebarOpen(false)} aria-current={page === value ? 'page' : undefined} className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-bold transition ${page === value ? 'admin-nav-active border-white/20 bg-white/10 text-white' : 'border-transparent text-white/75 hover:bg-white/10 hover:text-white'}`}>{label}{page === value && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true" />}</a>)}
+                </div>
+              </section>
               <a
                 className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-black shadow-lg shadow-black/10 transition ${
                   page === 'mail-config'
-                    ? 'border-blue-200/15 bg-blue-500/10 text-white'
-                    : 'border-transparent text-blue-100/75 hover:bg-white/10 hover:text-white'
+                    ? 'admin-nav-active border-white/20 bg-white/10 text-white'
+                    : 'border-transparent text-white/75 hover:bg-white/10 hover:text-white'
                 }`}
                 href="/admin/mail-config"
                 onClick={() => setIsSidebarOpen(false)}
               >
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-300/15 text-blue-100" aria-hidden="true">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 text-white/90" aria-hidden="true">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-9Z"
@@ -1297,9 +1343,29 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                 </span>
                 Mail Config
                 {page === 'mail-config' ? (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-200" aria-hidden="true" />
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true" />
                 ) : null}
               </a>
+            </section>
+            <section className="grid gap-2" aria-labelledby="admin-sales-contract-heading">
+              <button
+                id="admin-sales-contract-heading"
+                className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-black transition ${['quotations', 'quotation-list', 'contracts', 'billing'].includes(page) ? 'admin-nav-active border-white/20 bg-white/10 text-white' : 'border-transparent text-white/75 hover:bg-white/10 hover:text-white'}`}
+                type="button"
+                aria-expanded={isSalesMenuOpen}
+                aria-controls="admin-sales-contract-links"
+                onClick={() => setIsSalesMenuOpen(current => !current)}
+              >
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 text-white/90" aria-hidden="true"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h9l3 3v15H5V3h2M9 8h6M9 12h6M9 17l2-2 2 2 3-3" /></svg></span>
+                Sales &amp; Contract
+                <svg className={`ml-auto h-4 w-4 shrink-0 transition-transform ${isSalesMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
+              <div id="admin-sales-contract-links" className={isSalesMenuOpen ? 'ml-7 grid gap-1 border-l border-white/15 pl-3' : 'hidden'} hidden={!isSalesMenuOpen}>
+                {[['quotations', 'Quotations', '/admin/quotations'], ['contracts', 'Contracts', '/admin/contracts'], ['billing', 'Billing', '/admin/billing']].map(([value, label, href]) => {
+                  const active = page === value || (value === 'quotations' && page === 'quotation-list');
+                  return <a key={value} href={href} onClick={() => setIsSidebarOpen(false)} aria-current={active ? 'page' : undefined} className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-bold transition ${active ? 'admin-nav-active border-white/20 bg-white/10 text-white' : 'border-transparent text-white/75 hover:bg-white/10 hover:text-white'}`}>{label}{active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true" />}</a>;
+                })}
+              </div>
             </section>
           </nav>
 
@@ -1342,16 +1408,16 @@ function AdminDashboardPage({ page = 'dashboard' }) {
               onClick={() => setIsProfileMenuOpen((current) => !current)}
               aria-expanded={isProfileMenuOpen}
             >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white text-sm font-black text-[#07152b]">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white text-sm font-black text-[#39344d]">
                 {adminInitial}
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-sm font-black">{adminName}</span>
-                <span className="block truncate text-xs font-semibold text-blue-200/70">
+                <span className="block truncate text-xs font-semibold text-white/70">
                   {storedUser?.roleName || 'Admin'}
                 </span>
               </span>
-              <span className="ml-auto text-blue-200/70" aria-hidden="true">
+              <span className="ml-auto text-white/70" aria-hidden="true">
                 {isProfileMenuOpen ? '⌄' : '⌃'}
               </span>
             </button>
@@ -1428,7 +1494,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                           <td className="px-5 py-4">{visit.device || 'Unknown'}</td>
                           <td className="px-5 py-4">{visit.browser || 'Unknown'}</td>
                           <td className="px-5 py-4">
-                            <span className="inline-flex max-w-[14rem] truncate rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">
+                            <span className="inline-flex max-w-[14rem] truncate rounded-full bg-[#f4f1f7] px-3 py-1 text-xs font-bold text-[#514568]">
                               {visit.path || '/'}
                             </span>
                           </td>
@@ -1461,9 +1527,10 @@ function AdminDashboardPage({ page = 'dashboard' }) {
             <div className="max-w-[88rem]">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Website Content</p>
               <h1 className="mt-3 text-4xl font-black tracking-normal text-slate-950">Content Management</h1>
+              <a className="mt-3 inline-flex text-sm font-bold text-[#514568] underline underline-offset-4" href="/about-us" target="_blank" rel="noreferrer">View public page ↗</a>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
                 Edit About Us page copy section by section. The public page keeps its existing layout and images while
-                these text changes are loaded from the database.
+                saved changes appear on the public page. Process steps are edited under Who We Are.
               </p>
 
               <div className="mt-8 grid gap-5 lg:grid-cols-[16rem_1fr]">
@@ -1473,7 +1540,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                       key={section.id}
                       className={`rounded-md px-3 py-3 text-left text-sm font-black transition ${
                         section.id === activeSectionId
-                          ? 'bg-[#07152b] text-white'
+                          ? 'admin-brand-surface text-white'
                           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
                       }`}
                       type="button"
@@ -1491,7 +1558,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">{activeSection.id}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#5a5073]">{activeSection.id}</p>
                         <h2 className="mt-1 text-2xl font-black text-slate-950">{activeSection.title}</h2>
                       </div>
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-slate-500">
@@ -1499,21 +1566,21 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                       </span>
                     </div>
 
-                    <label className="grid gap-2">
+                    {activeSection.type !== 'metrics' ? <label className="grid gap-2">
                       <span className="text-sm font-bold text-slate-800">Section Title</span>
                       <input
-                        className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                        className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                         name="title"
                         value={activeSection.title || ''}
                         onChange={handleSectionFieldChange}
                       />
-                    </label>
+                    </label> : null}
 
                     {Array.isArray(activeSection.paragraphs) ? (
                       <label className="grid gap-2">
                         <span className="text-sm font-bold text-slate-800">Paragraphs</span>
                         <textarea
-                          className="min-h-36 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                          className="min-h-36 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                           name="paragraphs"
                           value={linesToText(activeSection.paragraphs)}
                           onChange={handleSectionFieldChange}
@@ -1526,7 +1593,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                       <label className="grid gap-2">
                         <span className="text-sm font-bold text-slate-800">Intro</span>
                         <textarea
-                          className="min-h-24 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                          className="min-h-24 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                           name="intro"
                           value={activeSection.intro || ''}
                           onChange={handleSectionFieldChange}
@@ -1538,12 +1605,25 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                       <label className="grid gap-2">
                         <span className="text-sm font-bold text-slate-800">Outro</span>
                         <textarea
-                          className="min-h-20 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                          className="min-h-20 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                           name="outro"
                           value={activeSection.outro || ''}
                           onChange={handleSectionFieldChange}
                         />
                       </label>
+                    ) : null}
+
+                    {activeSection.highlightStatement?.problemSection?.solutionSection ? (
+                      <ProcessContentEditor
+                        process={activeSection.highlightStatement.problemSection.solutionSection}
+                        onChange={(process) => updateActiveSection((section) => ({
+                          ...section,
+                          highlightStatement: {
+                            ...section.highlightStatement,
+                            problemSection: { ...section.highlightStatement.problemSection, solutionSection: process }
+                          }
+                        }))}
+                      />
                     ) : null}
 
                     {Array.isArray(activeSection.cards) ? (
@@ -1552,17 +1632,26 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                         {activeSection.cards.map((card, index) => (
                           <div key={`${activeSection.id}-card-${index}`} className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
                             <input
-                              className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-950 outline-none focus:border-blue-400"
+                              className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-950 outline-none focus:border-[#817391]"
                               value={card.title || ''}
                               onChange={(event) => handleCardChange(index, 'title', event.target.value)}
                               placeholder="Card title"
                             />
                             <textarea
-                              className="min-h-24 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-950 outline-none focus:border-blue-400"
+                              className="min-h-24 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-950 outline-none focus:border-[#817391]"
                               value={card.description || ''}
                               onChange={(event) => handleCardChange(index, 'description', event.target.value)}
                               placeholder="Card description"
                             />
+                            <label className="grid gap-2 text-sm font-bold text-slate-800">
+                              Capability tags
+                              <textarea
+                                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-950"
+                                value={(card.tags || []).join('\n')}
+                                onChange={(event) => handleCardChange(index, 'tags', event.target.value.split('\n'))}
+                                placeholder="One tag per line"
+                              />
+                            </label>
                           </div>
                         ))}
                       </div>
@@ -1574,13 +1663,13 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                         {activeSection.items.map((item, index) => (
                           <div key={`${activeSection.id}-metric-${index}`} className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-[1fr_1fr]">
                             <input
-                              className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-950 outline-none focus:border-blue-400"
+                              className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-950 outline-none focus:border-[#817391]"
                               value={item.value || ''}
                               onChange={(event) => handleMetricChange(index, 'value', event.target.value)}
                               placeholder="Value"
                             />
                             <input
-                              className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:border-blue-400"
+                              className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#817391]"
                               value={item.label || ''}
                               onChange={(event) => handleMetricChange(index, 'label', event.target.value)}
                               placeholder="Label"
@@ -1597,7 +1686,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                             {activeSection.id === 'business-partner' ? 'Strategic Partners' : 'Members'}
                           </p>
                           <button
-                            className="h-10 rounded-md border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.12em] text-slate-700 shadow-sm transition hover:border-blue-300 hover:text-blue-800"
+                            className="h-10 rounded-md border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.12em] text-slate-700 shadow-sm transition hover:border-[#b9adc7] hover:text-[#514568]"
                             type="button"
                             onClick={handleAddMember}
                           >
@@ -1631,7 +1720,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                                 );
                               })()}
                               <div className="grid gap-1">
-                                <label className="inline-flex h-10 cursor-pointer items-center rounded-md bg-[#07152b] px-4 text-xs font-black uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-blue-950">
+                                <label className="inline-flex h-10 cursor-pointer items-center rounded-md admin-brand-surface px-4 text-xs font-black uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-blue-950">
                                   {uploadingMemberKey === `${activeSectionId}-${index}` ? 'Uploading...' : 'Upload Photo'}
                                   <input
                                     className="sr-only"
@@ -1659,13 +1748,13 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                               </button>
                             </div>
                             <input
-                              className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-950 outline-none focus:border-blue-400"
+                              className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-950 outline-none focus:border-[#817391]"
                               value={member.name || ''}
                               onChange={(event) => handleMemberChange(index, 'name', event.target.value)}
                               placeholder="Member name"
                             />
                             <textarea
-                              className="min-h-24 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-950 outline-none focus:border-blue-400"
+                              className="min-h-24 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-950 outline-none focus:border-[#817391]"
                               value={member.role || ''}
                               onChange={(event) => handleMemberChange(index, 'role', event.target.value)}
                               placeholder="Member role"
@@ -1675,21 +1764,24 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                       </div>
                     ) : null}
 
-                    <label className="grid gap-2">
+                    <details className="rounded-lg border border-slate-200 p-4">
+                    <summary className="cursor-pointer text-sm font-bold text-slate-600">Advanced settings</summary>
+                    <label className="mt-4 grid gap-2">
                       <span className="text-sm font-bold text-slate-800">Advanced Section JSON</span>
                       <textarea
-                        className="min-h-56 rounded-md border border-slate-200 bg-slate-950 px-4 py-3 font-mono text-xs leading-5 text-slate-100 outline-none focus:border-blue-400"
+                        className="min-h-56 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-xs leading-5 text-slate-800 outline-none focus:border-[#817391]"
                         value={advancedJson}
                         onChange={(event) => setAdvancedJson(event.target.value)}
                         spellCheck="false"
                       />
                       <span className="text-xs font-semibold text-slate-500">
-                        Use this for nested About Us copy such as challenge lists and process steps.
+                        Edit the full saved section only when you need fields outside the form.
                       </span>
                     </label>
 
+                    </details>
                     <button
-                      className="h-12 rounded-md bg-[#07152b] px-5 text-sm font-black text-white shadow-lg shadow-slate-300/80 transition hover:bg-blue-950 disabled:cursor-wait disabled:opacity-60"
+                      className="h-12 rounded-md admin-brand-surface px-5 text-sm font-black text-white shadow-lg shadow-slate-300/80 transition hover:bg-blue-950 disabled:cursor-wait disabled:opacity-60"
                       type="submit"
                       disabled={status.type === 'loading'}
                     >
@@ -1717,7 +1809,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#5a5073]">
                         {knowledgeDraft.id ? 'Editing Entry' : 'New Entry'}
                       </p>
                       <h2 className="mt-1 text-2xl font-black text-slate-950">
@@ -1738,7 +1830,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                   <label className="grid gap-2">
                     <span className="text-sm font-bold text-slate-800">Question / FAQ Label</span>
                     <input
-                      className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                      className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                       name="question"
                       value={knowledgeDraft.question}
                       onChange={handleKnowledgeDraftChange}
@@ -1750,7 +1842,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                   <label className="grid gap-2">
                     <span className="text-sm font-bold text-slate-800">Answer</span>
                     <textarea
-                      className="min-h-44 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                      className="min-h-44 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                       name="answer"
                       value={knowledgeDraft.answer}
                       onChange={handleKnowledgeDraftChange}
@@ -1765,7 +1857,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                   <label className="grid gap-2">
                     <span className="text-sm font-bold text-slate-800">Keywords</span>
                     <textarea
-                      className="min-h-24 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                      className="min-h-24 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                       name="keywords"
                       value={knowledgeDraft.keywords}
                       onChange={handleKnowledgeDraftChange}
@@ -1802,8 +1894,8 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                       </span>
                     </label>
 
-                    <div className="rounded-md border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold leading-5 text-slate-700">
-                      <span className="block font-black uppercase tracking-[0.12em] text-blue-800">Priority Guide</span>
+                    <div className="rounded-md border border-[#e6e0ec] bg-[#f4f1f7] px-4 py-3 text-xs font-semibold leading-5 text-slate-700">
+                      <span className="block font-black uppercase tracking-[0.12em] text-[#514568]">Priority Guide</span>
                       <span className="mt-2 flex flex-wrap gap-2">
                         <span className="rounded-full bg-emerald-100 px-2.5 py-1 font-black text-emerald-800">
                           10 Important
@@ -1822,7 +1914,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="flex min-h-12 items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-4">
                       <input
-                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 rounded border-slate-300 text-[#5a5073] focus:ring-[#817391]"
                         name="isActive"
                         type="checkbox"
                         checked={knowledgeDraft.isActive}
@@ -1833,7 +1925,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
 
                     <label className="flex min-h-12 items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-4">
                       <input
-                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 rounded border-slate-300 text-[#5a5073] focus:ring-[#817391]"
                         name="showInFaq"
                         type="checkbox"
                         checked={knowledgeDraft.showInFaq}
@@ -1844,7 +1936,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                   </div>
 
                   <button
-                    className="h-12 rounded-md bg-[#07152b] px-5 text-sm font-black text-white shadow-lg shadow-slate-300/80 transition hover:bg-blue-950 disabled:cursor-wait disabled:opacity-60"
+                    className="h-12 rounded-md admin-brand-surface px-5 text-sm font-black text-white shadow-lg shadow-slate-300/80 transition hover:bg-blue-950 disabled:cursor-wait disabled:opacity-60"
                     type="submit"
                     disabled={status.type === 'loading'}
                   >
@@ -1870,7 +1962,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                       <article
                         className={`rounded-lg border p-3 ${
                           entry.id === knowledgeDraft.id
-                            ? 'border-blue-300 bg-blue-50'
+                            ? 'border-[#b9adc7] bg-[#f4f1f7]'
                             : 'border-slate-200 bg-slate-50'
                         }`}
                         key={entry.id}
@@ -1897,7 +1989,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                               className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] ${
                                 entry.showInFaq === false
                                   ? 'bg-slate-200 text-slate-600'
-                                  : 'bg-blue-100 text-blue-800'
+                                  : 'bg-blue-100 text-[#514568]'
                               }`}
                             >
                               {entry.showInFaq === false ? 'No FAQ' : 'FAQ'}
@@ -1907,7 +1999,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                         <p className="mt-3 line-clamp-3 text-xs leading-5 text-slate-600">{entry.answer}</p>
                         <div className="mt-3 flex gap-2">
                           <button
-                            className="h-9 flex-1 rounded-md border border-slate-200 bg-white text-xs font-black uppercase tracking-[0.1em] text-slate-700 transition hover:border-blue-300 hover:text-blue-800"
+                            className="h-9 flex-1 rounded-md border border-slate-200 bg-white text-xs font-black uppercase tracking-[0.1em] text-slate-700 transition hover:border-[#b9adc7] hover:text-[#514568]"
                             type="button"
                             onClick={() => handleEditKnowledge(entry)}
                           >
@@ -1941,6 +2033,8 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                 </aside>
               </div>
             </div>
+          ) : page === 'billing' ? <div><header className="mb-8"><p className="text-xs font-bold uppercase tracking-widest text-slate-500">Sales workspace</p><h1 className="mt-3 text-4xl font-bold">Billing</h1></header><BillingPanel token={token} /></div> : ['clients', 'add-client'].includes(page) ? <ClientRecordsPanel token={token} initialAdd={page === 'add-client'} /> : page === 'contracts' ? <ContractsPanel token={token} /> : ['quotations', 'quotation-list'].includes(page) ? (
+            <QuotationsPanel token={token} initialTab={page === 'quotation-list' ? 'list' : 'create'} />
           ) : (
           <div className="max-w-5xl">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Microsoft Graph</p>
@@ -1962,7 +2056,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
             >
               <span>{expiryStatus.message}</span>
               <a
-                className="ml-2 inline-flex font-black text-blue-800 underline underline-offset-4 transition hover:text-blue-950"
+                className="ml-2 inline-flex font-black text-[#514568] underline underline-offset-4 transition hover:text-blue-950"
                 href={entraClientSecretUrl}
                 target="_blank"
                 rel="noreferrer"
@@ -1978,7 +2072,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
               <label className="grid gap-2">
                 <span className="text-sm font-bold text-slate-800">Tenant ID</span>
                 <input
-                  className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                  className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                   name="tenantId"
                   value={config.tenantId}
                   onChange={handleChange}
@@ -1989,7 +2083,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
               <label className="grid gap-2">
                 <span className="text-sm font-bold text-slate-800">Client ID</span>
                 <input
-                  className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                  className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                   name="clientId"
                   value={config.clientId}
                   onChange={handleChange}
@@ -2002,7 +2096,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                   Client Secret {config.hasClientSecret ? '(leave blank to keep saved secret)' : ''}
                 </span>
                 <input
-                  className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                  className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                   name="clientSecret"
                   value={config.clientSecret}
                   onChange={handleChange}
@@ -2016,7 +2110,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                 <label className="grid gap-2">
                   <span className="text-sm font-bold text-slate-800">Sender Email</span>
                   <input
-                    className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                    className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                     name="senderEmail"
                     value={config.senderEmail}
                     onChange={handleChange}
@@ -2028,7 +2122,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
                 <label className="grid gap-2">
                   <span className="text-sm font-bold text-slate-800">Recipient Email</span>
                   <input
-                    className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                    className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                     name="recipientEmail"
                     value={config.recipientEmail}
                     onChange={handleChange}
@@ -2041,7 +2135,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
               <label className="grid gap-2">
                 <span className="text-sm font-bold text-slate-800">Client Secret Expiration Date</span>
                 <input
-                  className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-blue-400 focus:bg-white"
+                  className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm text-slate-950 outline-none focus:border-[#817391] focus:bg-white"
                   name="secretExpiresAt"
                   value={config.secretExpiresAt}
                   onChange={handleChange}
@@ -2050,7 +2144,7 @@ function AdminDashboardPage({ page = 'dashboard' }) {
               </label>
 
               <button
-                className="h-12 rounded-md bg-[#07152b] px-5 text-sm font-black text-white shadow-lg shadow-slate-300/80 transition hover:bg-blue-950 disabled:cursor-wait disabled:opacity-60"
+                className="h-12 rounded-md admin-brand-surface px-5 text-sm font-black text-white shadow-lg shadow-slate-300/80 transition hover:bg-blue-950 disabled:cursor-wait disabled:opacity-60"
                 type="submit"
                 disabled={status.type === 'loading'}
               >

@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import Seo from '../components/Seo';
+import loginLogo from '../assets/company/zeroone-dark-logo.png';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
+import '../admin-theme.css';
 
 const apiBaseUrl = getApiBaseUrl();
 
 function AdminLoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
   const [formState, setFormState] = useState({
     email: '',
     password: ''
@@ -47,7 +50,9 @@ function AdminLoginPage() {
 
       window.localStorage.setItem('zerooneAdminToken', payload.token);
       window.localStorage.setItem('zerooneAdminUser', JSON.stringify(payload.user));
-      window.history.pushState({}, '', '/admin/dashboard');
+      const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+      const destination = returnTo === '/admin/contracts' ? returnTo : '/admin/dashboard';
+      window.history.pushState({}, '', destination);
       window.dispatchEvent(new PopStateEvent('popstate'));
       setSubmitState({
         status: 'success',
@@ -62,7 +67,7 @@ function AdminLoginPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#050816] text-white">
+    <main className="admin-theme admin-login min-h-screen overflow-hidden text-white">
       <Seo
         title="Admin Login | ZeroOne IT Inc."
         description="Private ZeroOne IT Inc. administrator login."
@@ -70,15 +75,11 @@ function AdminLoginPage() {
         noindex
       />
       <section className="relative mx-auto grid min-h-screen w-full max-w-7xl items-center gap-10 px-5 py-10 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-10">
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute left-[-12rem] top-[-10rem] h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
-          <div className="absolute bottom-[-14rem] right-[-10rem] h-[30rem] w-[30rem] rounded-full bg-violet-600/20 blur-3xl" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-300/40 to-transparent" />
-        </div>
+
 
         <div className="hidden lg:block">
-          <div className="inline-flex h-12 items-center gap-3 rounded-full border border-blue-200/15 bg-white/[0.04] px-4 text-sm font-semibold text-blue-100 shadow-2xl shadow-blue-950/20 backdrop-blur">
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-blue-500 text-xs font-black">
+          <div className="admin-login-feature inline-flex h-12 items-center gap-3 rounded-full border border-white/15 px-4 text-sm font-semibold text-violet-100 shadow-2xl shadow-blue-950/20 backdrop-blur">
+            <span className="grid h-7 w-7 place-items-center rounded-full admin-brand-surface text-xs font-black text-white">
               01
             </span>
             ZeroOne IT Inc.
@@ -92,9 +93,9 @@ function AdminLoginPage() {
           </p>
 
           <div className="mt-10 grid max-w-xl grid-cols-2 gap-4">
-            {['Secure access', 'Role based', 'JWT sessions', 'MySQL users'].map((item) => (
+            {['Website content', 'Visitor insights', 'Knowledge base', 'Mail settings'].map((item) => (
               <div
-                className="rounded-lg border border-blue-200/10 bg-white/[0.035] p-4 text-sm font-semibold text-slate-200 backdrop-blur"
+                className="admin-login-feature rounded-lg border border-white/15 p-4 text-sm font-semibold text-slate-200"
                 key={item}
               >
                 {item}
@@ -105,30 +106,31 @@ function AdminLoginPage() {
 
         <div className="mx-auto w-full max-w-[29rem]">
           <div className="mb-7 flex items-center justify-between lg:hidden">
-            <a className="text-sm font-bold text-blue-100" href="/">
+            <a className="text-sm font-bold text-violet-100" href="/">
               ZeroOne
             </a>
-            <span className="rounded-full border border-blue-200/15 px-3 py-1 text-xs font-semibold text-slate-300">
+            <span className="rounded-full border border-white/15 px-3 py-1 text-xs font-semibold text-slate-300">
               Admin
             </span>
           </div>
 
           <form
-            className="relative overflow-hidden rounded-lg border border-blue-200/15 bg-slate-950/75 p-6 shadow-[0_32px_100px_rgba(2,8,23,0.55)] backdrop-blur-xl sm:p-8"
+            className="admin-login-panel relative p-6 sm:p-8"
             onSubmit={handleSubmit}
           >
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-300 to-violet-500" />
-
+            <div className="admin-login-logo">
+              <img src={loginLogo} alt="ZeroOne Information Technology Inc." />
+            </div>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-300">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-200">
                   Secure Portal
                 </p>
                 <h2 className="mt-3 text-3xl font-bold leading-tight text-white sm:text-4xl">
                   Welcome Back
                 </h2>
               </div>
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-blue-200/15 bg-blue-500/10 text-sm font-black text-blue-100">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-white/15 bg-white/5 text-sm font-black text-violet-100">
                 01
               </div>
             </div>
@@ -137,7 +139,7 @@ function AdminLoginPage() {
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-200">Email</span>
                 <input
-                  className="h-[52px] w-full rounded-lg border border-blue-200/15 bg-white/[0.06] px-4 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-blue-300 focus:bg-white/[0.09] focus:ring-4 focus:ring-blue-500/15"
+                  className="h-[52px] w-full rounded-lg border border-white/15 bg-white/5 px-4 text-base text-white outline-none transition placeholder:text-slate-400 focus:border-[#817391] focus:bg-white/10 focus:ring-4 focus:ring-[#817391]/15"
                   type="email"
                   name="email"
                   value={formState.email}
@@ -148,23 +150,35 @@ function AdminLoginPage() {
                 />
               </label>
 
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-slate-200">Password</span>
-                <input
-                  className="h-[52px] w-full rounded-lg border border-blue-200/15 bg-white/[0.06] px-4 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-blue-300 focus:bg-white/[0.09] focus:ring-4 focus:ring-blue-500/15"
-                  type="password"
-                  name="password"
-                  value={formState.password}
-                  onChange={handleChange}
-                  autoComplete="current-password"
-                  placeholder="Enter your password"
-                  required
-                />
-              </label>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-200" htmlFor="admin-password">Password</label>
+                <div className="relative">
+                  <input
+                    id="admin-password"
+                    className="h-[52px] w-full rounded-lg border border-white/15 bg-white/5 pl-4 pr-20 text-base text-white outline-none transition placeholder:text-slate-400 focus:border-[#817391] focus:bg-white/10 focus:ring-4 focus:ring-[#817391]/15"
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    value={formState.password}
+                    onChange={handleChange}
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    required
+                  />
+                  <button
+                    className="absolute inset-y-0 right-2 my-auto h-10 rounded px-3 text-sm font-semibold text-violet-100 transition hover:text-white"
+                    type="button"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-controls="admin-password"
+                    onClick={() => setShowPassword((current) => !current)}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <button
-              className="mt-7 flex h-[52px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-cyan-400 font-bold text-slate-950 shadow-lg shadow-blue-950/40 transition hover:-translate-y-0.5 hover:from-blue-400 hover:to-cyan-300 disabled:translate-y-0 disabled:cursor-wait disabled:opacity-70"
+              className="mt-7 flex h-[52px] w-full items-center justify-center rounded-lg admin-brand-surface font-bold text-white shadow-lg shadow-black/30 transition hover:-translate-y-0.5 hover:brightness-110 disabled:translate-y-0 disabled:cursor-wait disabled:opacity-70"
               type="submit"
               disabled={submitState.status === 'submitting'}
             >
