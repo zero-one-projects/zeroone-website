@@ -89,7 +89,7 @@ export default function SharedQuotationPage({ token }) {
             <p className="mt-5 text-sm leading-7 sm:text-base">We look forward to working with you!</p>
           </div>
         </section>}
-        {requoteRequested && <section className="mt-8 rounded-xl border border-emerald-200 bg-white p-6" role="status"><h2 className="text-xl font-bold text-emerald-900">Requote requested</h2><p className="mt-3 text-sm leading-6 text-slate-700">Your requested changes have been sent to Zero One. This quotation link is now inactive. Zero One will review your request and share a new link for the updated quotation.</p></section>}
+        {requoteRequested && <section className="mt-8 rounded-xl border border-emerald-200 bg-white p-6" role="status"><h2 className="text-xl font-bold text-emerald-900">Revision requested</h2><p className="mt-3 text-sm leading-6 text-slate-700">Your requested changes have been sent to Zero One. This quotation link is now inactive. Zero One will review your request and share a new link for the updated quotation.</p></section>}
         {quotation && <QuotationDocument document={quotation.document} reference={quotation.reference} />}
         {quotation && <QuotationResponsePanel key={quotation.documentVersion} quotation={quotation} token={token} onResponse={handleResponse} onPrintQuotation={print} onDecideLater={() => { setDecidedLater(true); setQuotation(null); setExpiresAt(null); }} />}
       </div>

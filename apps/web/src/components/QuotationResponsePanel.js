@@ -160,7 +160,7 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
   return (
     <section className="quotation-controls mt-6 rounded-xl border border-slate-200 bg-white p-5 sm:p-6" aria-label="Respond to quotation">
       {response?.current ? <>
-        <h2 className="text-lg font-bold text-emerald-900">{response.action === 'accept' ? 'Quotation accepted' : 'Requote requested'}</h2>
+        <h2 className="text-lg font-bold text-emerald-900">{response.action === 'accept' ? 'Quotation accepted' : 'Revision requested'}</h2>
         <p className="mt-2 text-sm text-emerald-800">Your verified response has been recorded. {response.action === 'requote' ? 'Zero One will review the changes you requested. This link is now inactive; a new link will be shared for the updated quotation.' : 'Thank you for confirming this quotation.'}</p>
         {!quotationOnly && response.signedAt && <><p className="mt-2 text-sm text-emerald-800">Agreement electronically signed on {new Date(response.signedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} (Manila).</p><button type="button" className="admin-brand-surface mt-4 rounded-lg px-5 py-3 text-sm font-bold" onClick={() => { setAction('payment'); setError(''); }}>Continue to Payment</button></>}
         {quotationOnly && response.action === 'accept' && <p className="mt-4 text-sm text-slate-600">{followUpMessage}</p>}
@@ -174,13 +174,13 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
         </div>}
       </> : <>
       <h2 className="text-lg font-bold">Respond to this quotation</h2>
-      <p className="mt-2 text-sm text-slate-600">Sign in with a verification code sent to your company email or Gmail address before confirming your response.</p>
+      <p className="mt-2 text-sm text-slate-600">Verify your email address using the code sent to your inbox before confirming your response.</p>
       <div className="mt-4 flex flex-wrap gap-3">
         <button className="admin-brand-surface rounded-lg px-5 py-3 text-sm font-bold disabled:opacity-50" type="button" disabled={busy} onClick={() => { setAction('accept'); setChallenge(null); setError(''); setMessage(''); }}>Accept Quotation</button>
-        <button className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-[#514568] disabled:opacity-50" type="button" disabled={busy} onClick={() => { setAction('requote'); setChallenge(null); setError(''); setMessage(''); }}>Request Requote</button>
-        <button className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-600" type="button" onClick={decideLater}>You Can Decide Later</button>
+        <button className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-[#514568] disabled:opacity-50" type="button" disabled={busy} onClick={() => { setAction('requote'); setChallenge(null); setError(''); setMessage(''); }}>Request a Revision</button>
+        <button className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-600" type="button" onClick={decideLater}>Decide Later</button>
       </div>
-      {deferred && <p className="mt-4 text-sm text-slate-600" role="status">You can return to this link before it expires to accept or request a requote. No response has been submitted.</p>}
+      {deferred && <p className="mt-4 text-sm text-slate-600" role="status">You can return to this link before it expires to accept or request a revision. No response has been submitted.</p>}
       </>}
       {action && <dialog
         ref={dialogRef}
@@ -190,12 +190,12 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[#6b617a]">{confirmRequote ? 'Quotation revision' : action === 'confirmed' ? 'Quotation accepted' : isPayment ? 'Contract signed' : isAcceptancePrompt ? 'Quotation accepted' : isSigning ? 'Sign contract' : action === 'accept' ? 'Accept quotation' : 'Request requote'}</p>
-            <h2 className="mt-2 text-2xl font-bold" id={dialogTitleId}>{confirmRequote ? 'Request a revised quotation?' : action === 'confirmed' ? 'Thank you for accepting' : isPayment ? 'Contract Signed – Payment Details' : isAcceptancePrompt ? 'Ready to sign your contract?' : verified ? isSigning ? 'Review and sign agreement' : 'Confirm quotation acceptance' : challenge ? 'Verify your email' : 'Sign in to respond'}</h2>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#6b617a]">{confirmRequote ? 'Quotation revision' : action === 'confirmed' ? 'Quotation accepted' : isPayment ? 'Contract signed' : isAcceptancePrompt ? 'Quotation accepted' : isSigning ? 'Sign contract' : action === 'accept' ? 'Accept quotation' : 'Request a revision'}</p>
+            <h2 className="mt-2 text-2xl font-bold" id={dialogTitleId}>{confirmRequote ? 'Request a revised quotation?' : action === 'confirmed' ? 'Thank you for accepting' : isPayment ? 'Contract Signed – Payment Details' : isAcceptancePrompt ? 'Ready to sign your contract?' : verified ? isSigning ? 'Review and sign agreement' : 'Confirm quotation acceptance' : challenge ? 'Verify your email' : 'Verify your email address'}</h2>
           </div>
           <button className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-xl text-slate-600 hover:bg-slate-50 disabled:opacity-40" type="button" disabled={busy || printingQuotation} aria-label="Close response popup" onClick={closeDialog}>×</button>
         </div>
-        {confirmRequote ? <section aria-label="Requote confirmation">
+        {confirmRequote ? <section aria-label="Revision confirmation">
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
             <p className="font-bold">This link will no longer be available once your request is sent.</p>
             <p className="mt-2">You can download a copy of this quotation for your records before proceeding. Zero One will review your requested changes and send you a new link to the updated quotation.</p>
@@ -227,12 +227,12 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
         </section>}
         <form onSubmit={!challenge ? sendCode : action !== 'requote' && !verified ? verifyEmail : submit}>
         <fieldset disabled={busy} className="grid gap-4 rounded-lg bg-slate-50 p-4 disabled:opacity-60">
-          <legend className="px-2 text-sm font-bold">{verified ? isSigning ? 'Sign and agree' : 'Confirm acceptance' : challenge ? 'Verify your email' : 'Sign in to respond'}</legend>
+          <legend className="px-2 text-sm font-bold">{verified ? isSigning ? 'Sign and agree' : 'Confirm acceptance' : challenge ? 'Verify your email' : 'Verify your email address'}</legend>
           <p className="text-sm text-slate-600">You are choosing to <strong>{isSigning ? 'sign the contract for your accepted quotation' : action === 'accept' ? 'accept this quotation' : 'request a revised quotation'}</strong>.</p>
           <label className="grid gap-2 text-sm font-bold text-slate-700">Company email or Gmail
             <input className={field} type="email" autoComplete="email" required maxLength={180} value={email} readOnly={Boolean(challenge)} onChange={(event) => setEmail(event.target.value)} />
           </label>
-          {action === 'requote' && <p className="text-sm text-slate-600">Submitting a requote request will deactivate this link. Zero One will review your requested changes and share a new link for the updated quotation.</p>}
+          {action === 'requote' && <p className="text-sm text-slate-600">Submitting a revision request will deactivate this link. Zero One will review your requested changes and share a new link for the updated quotation.</p>}
           {challenge && <>
             {(action === 'requote' || verified) && <>
             <label className="grid gap-2 text-sm font-bold text-slate-700">Your full name
@@ -262,7 +262,7 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
             <p className="text-xs text-slate-500">{isSigning && verified ? 'Your verified session stays active while this page is open, until the quotation link expires. This signature applies to the contract version shown.' : 'Confirm only after reviewing the quotation. The verification code expires in 10 minutes.'}</p>
           </>}
           <div className="flex flex-wrap gap-3">
-            <button className="admin-brand-surface rounded-lg px-5 py-3 text-sm font-bold disabled:opacity-40" type="submit" disabled={Boolean(verified) && isSigning && (!agreed || !strokes.length)}>{busy ? 'Please wait...' : verified ? isSigning ? 'Agree & Sign Contract' : 'Confirm Acceptance' : challenge ? action !== 'requote' ? 'Verify & Continue' : 'Verify & Request Requote' : 'Send Verification Code'}</button>
+            <button className="admin-brand-surface rounded-lg px-5 py-3 text-sm font-bold disabled:opacity-40" type="submit" disabled={Boolean(verified) && isSigning && (!agreed || !strokes.length)}>{busy ? 'Please wait...' : verified ? isSigning ? 'Agree & Sign Contract' : 'Confirm Acceptance' : challenge ? action !== 'requote' ? 'Verify & Continue' : 'Verify & Request a Revision' : 'Send Verification Code'}</button>
             {!challenge && <button className="text-sm font-bold text-slate-600" type="button" onClick={closeDialog}>Cancel</button>}
           </div>
         </fieldset>

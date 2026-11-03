@@ -47,14 +47,14 @@ test('successful requote hides the inactive quotation and confirms a replacement
   const quotation = { reference: 'ZO-2026-00024', documentVersion: 'version', document: { ...newQuotation(), title: 'Project', clientName: 'Client', clientEmail: 'client@example.com' } };
   global.fetch = jest.fn(async (url, options = {}) => ({ ok: true, json: async () => options.method === 'POST' ? url.endsWith('/verification') ? { challengeId: 'challenge', message: 'Verification code sent.' } : { quotation: { ...quotation, clientResponse: { action: 'requote', current: true } } } : { quotation, expiresAt: '2099-01-01T00:00:00Z' } }));
   render(<SharedQuotationPage token="requote-token" />);
-  fireEvent.click(await screen.findByRole('button', { name: 'Request Requote' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Request a Revision' }));
   fireEvent.click(screen.getByRole('button', { name: 'Send Verification Code' }));
   fireEvent.change(await screen.findByLabelText('Verification code'), { target: { value: '123456' } });
   fireEvent.change(screen.getByLabelText('What would you like changed or added?'), { target: { value: 'Add online ordering.' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Verify & Request Requote' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Verify & Request a Revision' }));
   expect(await screen.findByRole('dialog', { name: 'Request a revised quotation?' })).toHaveTextContent('link will no longer be available');
   fireEvent.click(screen.getByRole('button', { name: 'Confirm & Send Request' }));
-  expect(await screen.findByRole('heading', { name: 'Requote requested' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Revision requested' })).toBeInTheDocument();
   expect(screen.getByRole('status')).toHaveTextContent('This quotation link is now inactive');
   expect(screen.queryByRole('region', { name: 'Quotation preview' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Download Quotation' })).not.toBeInTheDocument();
@@ -63,7 +63,7 @@ test('successful requote hides the inactive quotation and confirms a replacement
 test.each(['quotation_only', 'full'])('decide later hides the quotation and controls without submitting in %s mode', async clientFlow => {
   global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotation: { document: { ...newQuotation(), clientName: 'Client', clientFlow }, documentVersion: 'version' }, expiresAt: '2099-01-01T00:00:00Z' }) }));
   render(<SharedQuotationPage token="client-token" />);
-  fireEvent.click(await screen.findByRole('button', { name: 'You Can Decide Later' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Decide Later' }));
   expect(screen.getByRole('heading', { name: 'No Response Submitted' })).toBeInTheDocument();
   expect(screen.getByRole('status')).toHaveTextContent('You may return to this page anytime before the quotation expires');
   expect(screen.getByRole('link', { name: 'sales@zerooneitinc.com' })).toHaveAttribute('href', 'mailto:sales@zerooneitinc.com');
