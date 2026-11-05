@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import SharedBillingPage from './pages/SharedBillingPage';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
+import SupportPage from './pages/SupportPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import SharedQuotationPage from './pages/SharedQuotationPage';
@@ -18,6 +19,8 @@ let lastTrackedVisit = {
 function getRouteFromLocation() {
   const { hash, pathname } = window.location;
   const hasAdminToken = Boolean(window.localStorage.getItem('zerooneAdminToken'));
+
+  if (pathname === '/support') return { page: 'support', anchor: '' };
 
   if (pathname === '/verification-code') {
     return { page: 'verification-code', codeFragment: hash, anchor: '' };
@@ -185,7 +188,7 @@ function App() {
   }, [route]);
 
   useEffect(() => {
-    if (!['landing', 'about'].includes(route.page)) {
+    if (!['landing', 'about', 'support'].includes(route.page)) {
       return;
     }
 
@@ -212,6 +215,7 @@ function App() {
   }, [route.page, route.anchor]);
 
   const page = useMemo(() => {
+    if (route.page === 'support') return <SupportPage />;
     if (route.page === 'verification-code') {
       return <VerificationCodePage key={route.codeFragment} fragment={route.codeFragment} />;
     }

@@ -5,6 +5,18 @@ beforeEach(() => {
   window.history.pushState({}, '', '/');
 });
 
+test('support navigation leads to a dedicated coming soon page', () => {
+  const landing = render(<App />);
+  expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute('href', '/support');
+  landing.unmount();
+
+  window.history.pushState({}, '', '/support');
+  render(<App />);
+  expect(screen.getByRole('heading', { name: /coming soon/i })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /contact our team/i })).toHaveAttribute('href', '/#contact');
+  expect(screen.getByRole('link', { name: /back to home/i })).toHaveAttribute('href', '/');
+});
+
 test('renders landing hero heading by default', () => {
   render(<App />);
 

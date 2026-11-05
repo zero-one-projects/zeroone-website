@@ -311,7 +311,8 @@ function App() {
     { id: 'home', label: 'Home', href: '/' },
     { id: 'services', label: 'Services', href: companyProfileServicesUrl },
     { id: 'about', label: 'About Us', href: aboutRoute },
-    { id: 'contact', label: 'Contact', href: '/#contact' }
+    { id: 'support', label: 'Support', href: '/support' },
+    { id: 'contact', label: 'Contact Us', href: '/#contact' }
   ];
 
   const renderSections = () => {

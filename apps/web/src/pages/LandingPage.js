@@ -38,7 +38,8 @@ const landingNavigation = [
   { id: "home", label: "Home", href: "/" },
   { id: "services", label: "Services", href: companyProfileServicesUrl },
   { id: "about", label: "About Us", href: "/about-us" },
-  { id: "contact", label: "Contact", href: "/#contact" },
+  { id: "support", label: "Support", href: "/support" },
+  { id: "contact", label: "Contact Us", href: "/#contact" },
 ];
 const homeTitle = "ZeroOne IT Inc. | Custom Software, Web Platforms and AI Automation";
 const homeDescription =
