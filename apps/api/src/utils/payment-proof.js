@@ -34,7 +34,8 @@ async function validateProofFile(file) {
 function proofMetadata(proof) {
   return { id: proof.id, amountPaid: Number(proof.amountPaid), currency: proof.snapshot.document.currency, paidOn: proof.paidOn,
     transactionReference: proof.transactionReference, note: proof.note, fileName: proof.fileName, clientName: proof.snapshot.clientName,
-    clientEmail: proof.clientEmail, documentHash: proof.documentHash, submittedAt: proof.createdAt, status: 'pending_verification' };
+    clientEmail: proof.clientEmail, documentHash: proof.documentHash, submittedAt: proof.createdAt, status: proof.verification?.status || 'pending_verification',
+    verification: proof.verification ? { status: proof.verification.status, name: proof.verification.name, reviewedAt: proof.verification.reviewedAt, confirmedAmount: proof.verification.confirmedAmount, note: proof.verification.note } : null };
 }
 async function proofMessage(proofId) {
   const proof = await require('../models').QuotationPaymentProof.findByPk(proofId, { logging: false });

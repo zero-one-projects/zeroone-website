@@ -1,3 +1,5 @@
+export const defaultHardwareTerms = 'ZeroOne will purchase and supply the hardware listed in the approved quotation for the Client. Hardware specifications, quantities, prices, delivery arrangements, and applicable supplier or manufacturer warranties shall be confirmed in writing before purchase.\n\nHardware charges are payable in full before ZeroOne places the order. Hardware costs are included in the quoted one-time charges and are separate from the recurring subscription fee.';
+
 export const defaultPosPaymentTerms = 'The one-time POS setup fee is payable in full (100%) upon signing the agreement and before the commencement of system setup and configuration.\n\nThe monthly subscription fee will commence only upon the official Go-Live of the POS system, in accordance with the signed agreement.\n\nPayment is subject to verification and confirmation by Zero One Information Technology Inc.';
 
 export const defaultBillingCommencement = 'After the official system go-live date.';
@@ -43,7 +45,8 @@ export function monthlySubscriptionSummary(document) {
 
 export function configureMonthlySubscription(document, changes = {}) {
   const recurring = document.items.filter(item => item.chargeType === 'recurring');
-  const config = { currentAmount: quotationTotals(document).recurringSubtotal, additionalAmount: 0, systemName: document.quoteType === 'pos' ? 'POS System' : document.quoteType === 'sync_court' ? 'Sync Court' : 'System', ...document.monthlySubscription, ...changes };
+  const initialPos = document.quoteType === 'pos' && document.posPurpose === 'new';
+  const config = { currentAmount: initialPos ? 0 : quotationTotals(document).recurringSubtotal, additionalAmount: initialPos ? quotationTotals(document).recurringSubtotal : 0, systemName: document.quoteType === 'pos' ? 'POS System' : document.quoteType === 'sync_court' ? 'Sync Court' : 'System', ...document.monthlySubscription, ...changes };
   let base = recurring.find(item => item.subscriptionRole === 'current');
   if (!base && recurring.length === 1) base = recurring[0];
   if (!base && recurring.length > 1) {
@@ -57,7 +60,7 @@ export function configureMonthlySubscription(document, changes = {}) {
     { ...base, description: base?.description || 'Base Monthly Subscription', chargeType: 'recurring', subscriptionRole: 'current', quantity: 1, unitPrice: config.currentAmount },
     ...(keepAddition ? [{ ...addition, description: addition?.description || 'Additional monthly subscription charge', chargeType: 'recurring', subscriptionRole: 'additional', quantity: 1, unitPrice: config.additionalAmount }] : [])];
   if (items.length > 100) throw new Error('Remove a line item to make room for the current subscription and additional monthly charge.');
-  return { ...document, billingPeriod: 'monthly', monthlySubscription: config, items, contractDetails: { ...document.contractDetails, billingCommencement: `The ${Number(config.additionalAmount) > 0 ? 'revised monthly subscription' : 'monthly subscription'} will only commence after the official Go-Live of your ${config.systemName || 'System'}.` } };
+  return { ...document, billingPeriod: 'monthly', monthlySubscription: config, items, contractDetails: { ...document.contractDetails, billingCommencement: document.posPurpose === 'upgrade' ? `The new permanent monthly subscription takes effect after client approval and electronic signing, from ${document.contractDetails?.effectiveDate || 'the agreed upgrade effective date'}.` : `The ${Number(config.additionalAmount) > 0 ? 'revised monthly subscription' : 'monthly subscription'} will only commence after the official Go-Live of your ${config.systemName || 'System'}.` } };
 }
 
 

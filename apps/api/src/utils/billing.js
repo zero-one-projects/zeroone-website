@@ -1,15 +1,22 @@
 const { documentHash } = require('./quotation-response');
 const { defaultPaymentInstructions } = require('./quotation-payment');
+const usdPaymentInstructions = 'Account type: Dollar Savings Account\nBank: AUB (Asia United Bank)\nAccount name: Zero One Information Technology Inc.\nAccount number: 310-19-000104-1\nSwift code: AUBKPHMM';
+function billingPaymentInstructions(currency, instructions) {
+  const saved = instructions?.trim();
+  if (currency === 'USD' && (!saved || saved === defaultPaymentInstructions)) return usdPaymentInstructions;
+  return saved || defaultPaymentInstructions;
+}
 const fail = message => { throw Object.assign(new Error(message), { statusCode: 400 }); };
 function date(value, label) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(value)) || new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) !== value) fail(`Choose a valid ${label}.`);
   return value;
 }
 function subscriptionDocument(quotation) {
+  if (quotation.document?.acceptancePolicy && quotation.contractState?.status !== 'finalized') fail('ZeroOne confirmation is required before billing this POS subscription.');
   const response = quotation.clientResponse;
   if (response?.action !== 'accept' || !response.signature?.signedAt || response.documentHash !== documentHash(quotation.document)) fail('Select a subscription with a current accepted quotation and signed contract.');
   const document = response.document || quotation.document;
-  if (!['subscription', 'sync_court'].includes(document.quoteType) || (document.billingPeriod || 'monthly') !== 'monthly' || !document.items?.some(item => item.chargeType === 'recurring')) fail('Select a custom subscription with monthly recurring charges.');
+  if (!['subscription', 'sync_court', 'pos'].includes(document.quoteType) || ['upgrade', 'customization'].includes(document.posPurpose) || (document.billingPeriod || 'monthly') !== 'monthly' || !document.items?.some(item => item.chargeType === 'recurring')) fail('Select a custom subscription or original POS subscription with monthly recurring charges.');
   return document;
 }
 function applyBillingDeduction(input, total) {
@@ -26,8 +33,8 @@ function isNonVatBilling(document) {
   return document.taxTreatment ? document.taxTreatment === 'non_vat' : Number(document.taxRate || 0) === 0 && Number(document.tax || 0) === 0;
 }
 const nonVatBillingNote = 'Non-VAT registered. This billing statement is issued for payment notification purposes only and is not a BIR-registered Sales Invoice. A duly authorized Sales Invoice will be issued in accordance with applicable BIR requirements.';
-function createBillingDocument(quotation, input) {
-  const source = subscriptionDocument(quotation);
+function createBillingDocument(quotation, input, signedPosRate) {
+  const source = signedPosRate ? signedPosRate.document : subscriptionDocument(quotation);
   const period = input?.period;
   if (typeof period !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(period) || period.startsWith('0000')) fail('Choose a valid billing month.');
   const issuedOn = date(input.issuedOn, 'issue date');
@@ -46,9 +53,9 @@ function createBillingDocument(quotation, input) {
   if (!Number.isFinite(total) || total <= 0) fail('This subscription must have a positive monthly charge.');
   const quoteReference = `ZO-${new Date(quotation.createdAt).getUTCFullYear()}-${String(quotation.id).padStart(5, '0')}`;
   return { clientName: source.clientName, clientEmail: source.clientEmail || '', clientAddress: source.clientAddress || '', title: source.title,
-    quotationReference: quoteReference, quotationVersion: documentHash(quotation.document), currency: source.currency || 'PHP', period, issuedOn, dueOn, goLiveOn,
+    quotationReference: quoteReference, quotationVersion: signedPosRate?.documentHash || documentHash(quotation.document), ...(signedPosRate ? { rateQuotationId: signedPosRate.quotationId, rateQuotationReference: signedPosRate.reference, rateEffectiveOn: signedPosRate.effectiveOn, rateSignedAt: signedPosRate.signedAt } : {}), currency: source.currency || 'PHP', period, issuedOn, dueOn, goLiveOn,
     items, subtotal: cents / 100, taxRate, tax: taxCents / 100, total, taxTreatment: taxRate > 0 ? 'vat' : 'non_vat', ...applyBillingDeduction(input, total), notes: (input.notes || '').trim(),
-    paymentInstructions: source.paymentInstructions?.trim() || defaultPaymentInstructions };
+    paymentInstructions: billingPaymentInstructions(source.currency, source.paymentInstructions) };
 }
 function createManualBillingDocument(input) {
   const text = (key, max, required = false) => {
@@ -82,9 +89,9 @@ function createManualBillingDocument(input) {
   if (!Number.isSafeInteger(cents + taxCents) || cents <= 0 || cents + taxCents > 100000000000) fail('Enter a positive total up to 1 billion.');
   return { kind: 'manual', clientName, clientCompany: text('clientCompany', 180), clientEmail: text('clientEmail', 180), clientAddress: text('clientAddress', 1000), title,
     currency, period, issuedOn, dueOn, items, subtotal: cents / 100, taxRate, tax: taxCents / 100, total: (cents + taxCents) / 100, taxTreatment, ...applyBillingDeduction(input, (cents + taxCents) / 100),
-    notes: text('notes', 5000), paymentInstructions: text('paymentInstructions', 5000) || defaultPaymentInstructions };
+    notes: text('notes', 5000), paymentInstructions: billingPaymentInstructions(currency, text('paymentInstructions', 5000)) };
 }
 function serializeBill(row) {
   const createdOn = new Date(row.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
-  return { id: row.id, quotationId: row.quotationId, reference: `BILL-${createdOn.slice(0, 4)}-Z01-${createdOn.replaceAll('-', '')}-${row.id}`, period: row.period, document: row.document, createdAt: row.createdAt, emailSentAt: row.emailSentAt || null, emailSentTo: row.emailSentTo || null, sharePath: row.shareToken ? `/api/billing/${row.shareToken}/pdf` : null }; }
-module.exports = { subscriptionDocument, createBillingDocument, createManualBillingDocument, serializeBill, isNonVatBilling, nonVatBillingNote };
+  return { id: row.id, quotationId: row.quotationId, reference: `BILL-${createdOn.slice(0, 4)}-Z01-${createdOn.replaceAll('-', '')}-${row.id}`, period: row.period, document: { ...row.document, paymentInstructions: billingPaymentInstructions(row.document.currency, row.document.paymentInstructions) }, createdAt: row.createdAt, emailSentAt: row.emailSentAt || null, emailSentTo: row.emailSentTo || null, sharePath: row.shareToken ? `/api/billing/${row.shareToken}/pdf` : null }; }
+module.exports = { billingPaymentInstructions, usdPaymentInstructions, subscriptionDocument, createBillingDocument, createManualBillingDocument, serializeBill, isNonVatBilling, nonVatBillingNote };

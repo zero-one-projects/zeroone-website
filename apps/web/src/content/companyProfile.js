@@ -1,9 +1,11 @@
 import alKhalidPalahuddinImage from '../assets/team/Khalid.jpg';
+import companyIdentity from './companyIdentity.json';
 import alrizaPalahuddinImage from '../assets/team/riza-portrait.png';
 import hassanImage from '../assets/team/Hassan.png';
 import paulJohnPeligroImage from '../assets/team/pj.png';
 
 export const companyProfile = {
+  identity: companyIdentity,
   brand: {
     eyebrow: 'ZeroOne | Information Technology Inc.',
     name: 'ZeroOne IT Inc.'

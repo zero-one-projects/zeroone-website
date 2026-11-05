@@ -33,9 +33,9 @@ async function validatePdf(file) {
   return { data, sha256: crypto.createHash('sha256').update(data).digest('hex'), byteLength: data.length, pageCount: pdf.getPageCount(),
     fileName: file.originalname.replace(/[\x00-\x1f\x7f/\\]/g, '_').slice(-180) };
 }
-async function getContractFile(metadata, withData = false) {
+async function getContractFile(metadata, withData = false, options = {}) {
   if (!metadata?.id || !/^[a-f0-9-]{36}$/i.test(metadata.id)) throw fail('Select an uploaded PDF contract.');
-  const file = await ContractFile.findByPk(metadata.id, { ...(withData ? {} : { attributes: fileAttributes }), logging: false });
+  const file = await ContractFile.findByPk(metadata.id, { ...(withData ? {} : { attributes: fileAttributes }), ...options, logging: false });
   if (!file || (metadata.sha256 && metadata.sha256 !== file.sha256)) throw fail('This contract PDF is unavailable or has changed.');
   if (withData && crypto.createHash('sha256').update(file.data).digest('hex') !== file.sha256) throw fail('This contract PDF is unavailable or has changed.');
   return file;

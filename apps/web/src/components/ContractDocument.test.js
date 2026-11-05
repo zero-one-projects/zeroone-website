@@ -20,6 +20,25 @@ test('signed contract renders the recorded electronic signature with its saved t
   expect(screen.getByText('Terms actually signed')).toBeInTheDocument();
     expect(screen.getAllByText('Client Signer').length).toBeGreaterThanOrEqual(2);
   expect(screen.queryByText('Client-specific agreement terms.')).not.toBeInTheDocument();
+  expect(screen.getAllByText('Electronic Signature')).toHaveLength(1);
+  expect(screen.getAllByText('I consent to this signature.')).toHaveLength(1);
+  expect(screen.queryByText('FOR THE PROVIDER')).not.toBeInTheDocument();
+});
+
+test.each(['project', 'pos', 'subscription', 'sync_court'])('%s contract has one client acceptance area and identifies its provider', (quoteType) => {
+  render(<ContractDocument document={{ ...document, quoteType }} />);
+  expect(screen.getAllByRole('region', { name: 'Client acceptance' })).toHaveLength(1);
+  expect(screen.getAllByText('Electronic Signature')).toHaveLength(1);
+  expect(screen.getByRole('heading', { name: 'SERVICE PROVIDER' }).parentElement).toHaveTextContent('Zero One Information Technology Inc.');
+  expect(screen.queryByText('FOR THE PROVIDER')).not.toBeInTheDocument();
+});
+
+test('signing review retains all terms and payment details without a duplicate signature area', () => {
+  render(<ContractDocument document={document} signingReview />);
+  expect(screen.getByText('Client-specific agreement terms.')).toBeInTheDocument();
+  expect(screen.getByText('Pay on the agreed invoice date')).toBeInTheDocument();
+  expect(screen.queryByText('Electronic Signature')).not.toBeInTheDocument();
+  expect(screen.queryByRole('region', { name: 'Client acceptance' })).not.toBeInTheDocument();
 });
 
 test('template preview leaves quotation-specific amounts and billing frequency blank', () => {
@@ -27,7 +46,7 @@ test('template preview leaves quotation-specific amounts and billing frequency b
   expect(screen.getByText(/Template preview. Client details/)).toBeInTheDocument();
   expect(screen.queryByText(/PHP 0/)).not.toBeInTheDocument();
   expect(screen.getByRole('cell', { name: 'Total Recurring Subscription' }).nextElementSibling).toBeEmptyDOMElement();
-  expect(screen.getByRole('cell', { name: 'Agreement Date' }).nextElementSibling).toBeEmptyDOMElement();
+  expect(screen.getByRole('cell', { name: 'Quotation Reference' }).nextElementSibling).toBeEmptyDOMElement();
   expect(screen.queryByText('Monthly')).not.toBeInTheDocument();
   expect(screen.getByRole('region', { name: 'Parties to the agreement' })).not.toHaveTextContent('____');
   expect(screen.getByText('This agreement is entered into by and between:')).toBeInTheDocument();
@@ -38,7 +57,7 @@ test('formatted contract text uses saved font, color, weight and individual titl
   render(<ContractDocument document={{ ...document, quoteType: 'project', contractStyle }} reference="FORMAT TEST" />);
   expect(screen.queryByRole('heading', { name: 'PROJECT ORDER FORM & PAYMENT AGREEMENT' })).not.toBeInTheDocument();
   expect(screen.queryByRole('heading', { name: '2. APPROVED FEATURES & SERVICES' })).not.toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'ACCEPTANCE & SIGNATURES' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'CLIENT ACCEPTANCE' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: '1. SERVICE SCOPE' })).toHaveStyle({ fontFamily: 'Helvetica', fontSize: '20pt', fontWeight: '400', color: '#173abc' });
 });
 
@@ -47,7 +66,7 @@ test('agreement body groups parties and clauses, renders lists, and keeps the ex
   expect(screen.getByRole('region', { name: 'Parties to the agreement' })).toHaveTextContent('Example Client');
   expect(screen.getByRole('list')).toHaveTextContent('Setup fee before implementation');
   expect(screen.getAllByRole('listitem')).toHaveLength(2);
-  expect(screen.getByRole('heading', { name: 'ACCEPTANCE & SIGNATURES' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'CLIENT ACCEPTANCE' })).toBeInTheDocument();
   expect(container.querySelector('.contract-letterhead')).toHaveTextContent('Contact number: 0919-079-7137');
   expect(container.querySelector('.contract-footer')).toHaveTextContent('info@zerooneitinc.com');
 });
@@ -60,4 +79,11 @@ test('contract emphasis preserves safe text and renders the three milestones as 
   expect(screen.getAllByRole('listitem')).toHaveLength(3);
   expect(screen.getByText('<script>alert(1)</script>')).toBeInTheDocument();
   expect(container.querySelector('script')).toBeNull();
+});
+
+test('the agreed signing-date sentence replaces the blank-date introduction', () => {
+  const agreementIntroduction = 'This POS System Subscription & Service Agreement (“Agreement”) is entered into on the date of the Client\'s electronic signature (“Effective Date”) by and between:';
+  render(<ContractDocument document={{ ...document, contractDetails: { agreementDateRule: 'signing', agreementIntroduction } }} signingReview />);
+  expect(screen.getByRole('region', { name: 'Parties to the agreement' })).toHaveTextContent(agreementIntroduction);
+  expect(screen.getByRole('region', { name: 'Parties to the agreement' })).not.toHaveTextContent('____');
 });

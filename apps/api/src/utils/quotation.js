@@ -1,3 +1,4 @@
+const { defaultHardwareTerms } = require('./quotation-hardware');
 const { defaultPosPaymentTerms } = require('./quotation-payment');
 const { monthlySubscriptionSummary } = require('./quotation-pricing');
 const { normalizeContractStyle } = require('./contract-formatting');
@@ -68,7 +69,7 @@ function normalizeQuotation(input = {}) {
     if (!quantity) invalid('Quantity must be at least 0.001.');
     const unitPrice = Math.round(number(item.unitPrice, 'Unit price', 100000000) * 100) / 100;
     const chargeType = item.chargeType || 'one_time';
-    if (!['one_time', 'setup', 'addon', 'milestone', 'recurring'].includes(chargeType)) invalid('Choose a valid charge type for each item.');
+    if (!['one_time', 'setup', 'addon', 'hardware', 'milestone', 'recurring'].includes(chargeType)) invalid('Choose a valid charge type for each item.');
     if (quoteType === 'project' && chargeType === 'recurring') invalid('Choose subscription or POS to include recurring charges.');
     if (item.scope !== undefined && (!Array.isArray(item.scope) || item.scope.length > 30)) invalid('Use at most 30 scope sections per item.');
     const scope = (item.scope || []).map((group) => {
@@ -89,6 +90,16 @@ function normalizeQuotation(input = {}) {
   if (input.contractDetails !== undefined && (!input.contractDetails || typeof input.contractDetails !== 'object' || Array.isArray(input.contractDetails))) invalid('Contract details must be an object.');
   const initialPaymentPercent = input.initialPaymentPercent !== undefined && input.initialPaymentPercent !== '' && input.initialPaymentPercent !== null ? number(input.initialPaymentPercent, 'Initial payment percentage', 100) : ['pos', 'sync_court'].includes(quoteType) ? 100 : undefined;
   const contractDetails = Object.fromEntries(['agreementDate', 'authorizedRepresentative', 'clientPosition', 'providerRepresentative', 'providerPosition', 'branches', 'effectiveDate', 'minimumPeriod', 'billingCommencement', 'paymentTerms', 'gracePeriod', 'terminationTerms', 'initialBillingTerms'].map((key) => [key, text(input.contractDetails?.[key], 'Contract details', key === 'paymentTerms' || key === 'terminationTerms' ? 2000 : 500)]));
+  if (quoteType === 'pos' && clientFlow !== 'quotation_only') {
+    const rule = input.contractDetails?.agreementDateRule || 'fixed';
+    if (!['fixed', 'signing'].includes(rule)) invalid('Choose an agreed effective-date rule.');
+    contractDetails.agreementDateRule = rule;
+    contractDetails.agreementDate = rule === 'signing' ? '' : date(contractDetails.agreementDate || issuedOn, 'Agreement date');
+    if (rule === 'signing') contractDetails.agreementIntroduction = require('./contract-autofill').signingIntroduction;
+  }
+  if (input.contractDetails?.hardwareTerms !== undefined || items.some(item => item.chargeType === 'hardware')) {
+    contractDetails.hardwareTerms = text(input.contractDetails?.hardwareTerms ?? defaultHardwareTerms, 'Hardware procurement and payment terms', 2000);
+  }
   if (quoteType === 'pos' && initialPaymentPercent === 100 && !contractDetails.paymentTerms) contractDetails.paymentTerms = billingPeriod === 'yearly' ? defaultPosPaymentTerms.replace('monthly subscription fee', 'yearly subscription fee') : defaultPosPaymentTerms;
   if (items.some((item) => item.chargeType === 'recurring') && !contractDetails.billingCommencement) contractDetails.billingCommencement = defaultBillingCommencement;
   let monthlySubscription;
@@ -104,11 +115,11 @@ function normalizeQuotation(input = {}) {
     const additional = components.filter(item => item.subscriptionRole === 'additional');
     if (current.length !== 1 || current[0].quantity !== 1 || current[0].unitPrice !== currentAmount || additional.length > 1 || (additionalAmount > 0 && additional.length !== 1) || additional.some(item => item.quantity !== 1 || item.unitPrice !== additionalAmount) || components.length !== current.length + additional.length) invalid('Use the monthly subscription fields to set the current and additional recurring charges.');
     monthlySubscription = { currentAmount, additionalAmount, systemName };
-    const summary = monthlySubscriptionSummary({ monthlySubscription, taxRate, currency: input.currency, quoteType });
+    const summary = monthlySubscriptionSummary({ monthlySubscription, taxRate, currency: input.currency, quoteType, posPurpose: input.posPurpose, contractDetails });
     monthlySubscription.notice = summary.notice;
-    contractDetails.billingCommencement = `The ${additionalAmount > 0 ? 'revised monthly subscription' : 'monthly subscription'} will only commence after the official Go-Live of your ${systemName}.`;
+    contractDetails.billingCommencement = input.posPurpose === 'upgrade' ? `The new permanent monthly subscription takes effect after client approval and electronic signing, from ${contractDetails.effectiveDate || 'the agreed upgrade effective date'}.` : `The ${additionalAmount > 0 ? 'revised monthly subscription' : 'monthly subscription'} will only commence after the official Go-Live of your ${systemName}.`;
   }
-  return {
+  const document = {
     title: text(input.title, 'Project title', 180, true), quoteType, billingPeriod, clientName, clientEmail,
     ...(input.clientFlow !== undefined ? { clientFlow } : {}),
     clientAddress: text(input.clientAddress, 'Client address', 1000),
@@ -122,6 +133,8 @@ function normalizeQuotation(input = {}) {
     ...(contractPdf ? { contractPdf } : {}),
     ...(input.contractStyle != null ? { contractStyle: normalizeContractStyle(input.contractStyle) } : {}),
     contractDetails,
+    ...(quoteType === 'pos' && clientFlow !== 'quotation_only' ? { providerProfile: { ...require('../../../web/src/content/companyIdentity.json') } } : {}),
+    ...(quoteType === 'pos' && clientFlow !== 'quotation_only' ? { acceptancePolicy: { ...require('./contract-acceptance').acceptancePolicy } } : {}),
     ...(monthlySubscription ? { monthlySubscription } : {}),
     timeline: text(input.timeline, 'Project timeline', 180),
     subtotal: subtotalCents / 100, tax: taxCents / 100,
@@ -130,6 +143,7 @@ function normalizeQuotation(input = {}) {
     recurringSubtotal: recurringSubtotalCents / 100, recurringTax: recurringTaxCents / 100,
     recurringTotal: (recurringSubtotalCents + recurringTaxCents) / 100
   };
+  return { ...document, ...require('./pos-upgrade').normalizePosPurpose(input, document) };
 }
 
 module.exports = { normalizeQuotation };

@@ -41,6 +41,13 @@ test('acceptance offers signing now or later, with signature saved separately', 
   expect(screen.queryByLabelText('Type your signature')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Your full name')).toHaveValue('Client Name');
   expect(screen.getByLabelText('Your full name')).toHaveAttribute('readonly');
+  const acceptance = screen.getByRole('region', { name: 'Client acceptance' });
+  expect(acceptance).toHaveTextContent('Zero One Information Technology Inc.');
+  expect(acceptance).toHaveTextContent('Authorized Representative');
+  expect(acceptance).toHaveTextContent('Recorded automatically when you submit your signature.');
+  expect(acceptance).toContainElement(screen.getByLabelText('Your full name'));
+  expect(acceptance).toContainElement(screen.getByRole('checkbox', { name: 'I agree to the contract and electronic signature.' }));
+  expect(screen.getAllByLabelText('Draw your signature')).toHaveLength(1);
   const pad = screen.getByLabelText('Draw your signature');
   pad.getBoundingClientRect = () => ({ left: 0, top: 0, width: 600, height: 180 });
   fireEvent.pointerDown(pad, { pointerId: 1, pointerType: 'mouse', button: 0, clientX: 60, clientY: 36 });
@@ -217,4 +224,14 @@ test('closing the requote confirmation returns to the form without submitting th
   fireEvent(await screen.findByRole('dialog', { name: 'Request a revised quotation?' }), new Event('cancel', { cancelable: true }));
   expect(screen.getByLabelText('What would you like changed or added?')).toHaveValue('More reports.');
   expect(global.fetch).toHaveBeenCalledTimes(1);
+});
+
+test('POS clients can review the complete agreement before confirming quotation acceptance', () => {
+  global.fetch = jest.fn();
+  render(<QuotationResponsePanel quotation={{ ...quotation, reference: 'POS-REVIEW', contractText: 'Approved POS terms', document: { ...quotation.document, quoteType: 'pos', clientFlow: 'full', clientName: 'Example Client', clientAddress: 'Client business address', issuedOn: '2026-11-05', items: [], currency: 'PHP' } }} token="pos-link" onResponse={jest.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Accept Quotation' }));
+  expect(screen.getByRole('region', { name: 'Contract preview' })).toHaveTextContent('Review the complete agreement');
+  expect(screen.getByTitle('Contract to review')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Send Verification Code' })).toBeInTheDocument();
+  expect(global.fetch).not.toHaveBeenCalled();
 });

@@ -48,6 +48,7 @@ app.use('/api/admin/chat-knowledge', chatKnowledgeRoutes);
 app.use('/api/admin/mail-config', mailConfigRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/admin/quotations', quotationRoutes);
+app.use('/api/admin/quotations', require('./routes/payment-verification.routes'));
 app.use('/api/admin/quotation-notifications', require('./routes/quotation-activity.routes'));
 app.use('/api/admin/clients', require('./routes/client-records.routes'));
 app.use('/api/billing', require('./routes/public-billing.routes'));

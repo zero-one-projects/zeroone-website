@@ -19,6 +19,26 @@ const router = express.Router();
 router.use(requireAuth, requireRole([roles.ADMIN, roles.SUPERADMIN]));
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
+router.get('/pos-subscriptions', async (req, res, next) => {
+  try { return res.json({ subscriptions: await require('../utils/pos-subscriptions').listPosSubscriptions() }); } catch (error) { return next(error); }
+});
+
+router.post('/:id/confirm-contract', async (req, res, next) => {
+  try {
+    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ message: 'Choose a saved quotation.' });
+    const quotation = await sequelize.transaction({ logging: false }, async transaction => {
+      const row = await Quotation.findByPk(req.params.id, { transaction, lock: transaction.LOCK.UPDATE, logging: false });
+      if (!row) throw Object.assign(new Error('Quotation not found.'), { statusCode: 404 });
+      if (req.body?.documentVersion !== documentHash(row.document)) throw Object.assign(new Error('The agreement changed. Review the saved version before confirming acceptance.'), { statusCode: 409 });
+      const lifecycle = require('../utils/contract-acceptance');
+      await lifecycle.confirmProvider(row, await lifecycle.authorizedActor(req, transaction), transaction, { reviewedClientPdfSha256: req.body?.reviewedClientPdfSha256 });
+      return serialize(row);
+    });
+    queueNotificationDelivery();
+    return res.json({ quotation, message: 'Agreement confirmed.' });
+  } catch (error) { return next(error); }
+});
+
 router.post('/bulk-delete-verification', async (req, res, next) => {
   try {
     if (!Array.isArray(req.body?.ids)) return res.status(400).json({ message: 'Select the quotations to delete.' });
@@ -62,6 +82,7 @@ router.post('/:id/share', async (req, res, next) => {
       const row = await Quotation.findByPk(req.params.id, { transaction, lock: transaction.LOCK.UPDATE });
       if (!row) return { status: 404, message: 'Quotation not found.' };
       if (quotationExpired(row.document)) return { status: 400, message: 'Update and save the validity date before sharing this expired quotation.' };
+      require('../utils/contract-autofill').assertContractReady(row.document);
       if (row.clientResponse?.action === 'requote' && row.clientResponse.documentHash === documentHash(row.document)) return { status: 409, message: 'Edit and save the requested quotation changes before generating a new client link.' };
       if (!row.shareToken) await row.update({ shareToken: crypto.randomBytes(32).toString('hex') }, { transaction });
       return { status: 200, quotation: serialize(row) };
@@ -110,6 +131,26 @@ router.get('/:id/payment-proofs', async (req, res, next) => {
     return res.json({ proofs: proofs.map(require('../utils/payment-proof').proofMetadata) });
   } catch (error) { return next(error); }
 });
+router.post('/:id/payment-proofs/:proofId/verify', async (req, res, next) => {
+  try {
+    if (!/^\d+$/.test(req.params.id) || !require('../utils/payment-proof').uuid(req.params.proofId)) return res.status(400).json({ message: 'Choose a recorded payment proof.' });
+    const status = req.body?.status;
+    const note = typeof req.body?.note === 'string' ? req.body.note.trim() : '';
+    const amount = status === 'verified' ? Number(req.body?.confirmedAmount) : 0;
+    if (!['verified', 'rejected'].includes(status) || note.length > 1000 || (status === 'rejected' && !note) || (status === 'verified' && (!Number.isFinite(amount) || amount <= 0 || amount > 99999999.99))) return res.status(400).json({ message: 'Enter a confirmed amount, or reject the proof with a review note.' });
+    const proof = await sequelize.transaction({ logging: false }, async transaction => {
+      const row = await require('../models').QuotationPaymentProof.findOne({ where: { id: req.params.proofId, quotationId: req.params.id }, transaction, lock: transaction.LOCK.UPDATE, logging: false });
+      if (!row) throw Object.assign(new Error('Payment proof not found.'), { statusCode: 404 });
+      if (row.verification) throw Object.assign(new Error('This payment proof already has a recorded review.'), { statusCode: 409 });
+      if (req.body.documentHash !== row.documentHash) throw Object.assign(new Error('The proof version changed. Refresh and review it again.'), { statusCode: 409 });
+      if (crypto.createHash('sha256').update(row.data).digest('hex') !== row.sha256) throw new Error('Payment proof integrity check failed.');
+      const actor = await require('../utils/contract-acceptance').authorizedActor(req, transaction);
+      await row.update({ verification: { ...actor, action: 'payment_proof_review', status, confirmedAmount: Math.round(amount * 100) / 100, note, reviewedAt: new Date().toISOString(), documentHash: row.documentHash, proofSha256: row.sha256 } }, { transaction, logging: false });
+      return require('../utils/payment-proof').proofMetadata(row);
+    });
+    return res.json({ proof, message: status === 'verified' ? 'Payment verification recorded.' : 'Payment proof rejection recorded.' });
+  } catch (error) { return next(error); }
+});
 router.get('/:id/payment-proofs/:proofId', async (req, res, next) => {
   try {
     if (!/^\d+$/.test(req.params.id) || !require('../utils/payment-proof').uuid(req.params.proofId)) return res.status(400).json({ message: 'Invalid payment proof.' });
@@ -143,8 +184,11 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
+    const document = await prepareQuotation(req.body?.document);
+    const baseReference = await require('../utils/pos-subscriptions').validateLinkedSubscription(document);
+    if (baseReference) document.baseQuotationReference = baseReference;
     const row = await Quotation.create({
-      document: await prepareQuotation(req.body?.document),
+      document,
       shareToken: crypto.randomBytes(32).toString('hex')
     });
     res.status(201).json({ quotation: serialize(row) });
@@ -155,12 +199,15 @@ router.put('/:id', async (req, res, next) => {
   try {
     if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ message: 'Invalid quotation ID.' });
     const document = await prepareQuotation(req.body?.document);
+    const baseReference = await require('../utils/pos-subscriptions').validateLinkedSubscription(document, undefined, Number(req.params.id));
+    if (baseReference) document.baseQuotationReference = baseReference;
     const result = await sequelize.transaction({ logging: false }, async transaction => {
       const row = await Quotation.findByPk(req.params.id, { transaction, lock: transaction.LOCK.UPDATE });
       if (!row) return { status: 404, message: 'Quotation not found.' };
+      if (require('../utils/contract-acceptance').locked(row)) return { status: 409, message: 'This signed agreement is locked. Create a separate quotation or upgrade addendum for changes.' };
       const needsRevision = row.clientResponse?.action === 'requote' && row.clientResponse.documentHash === documentHash(row.document);
       const notifyRevision = row.clientResponse?.action === 'requote' && documentHash(row.document) !== documentHash(document);
-      await row.update({ document, ...(needsRevision ? { shareToken: null } : {}) }, { transaction });
+      await row.update({ document, ...(documentHash(row.document) !== documentHash(document) ? { contractState: null } : {}), ...(needsRevision ? { shareToken: null } : {}) }, { transaction });
       if (notifyRevision) await QuotationNotification.create({ id: crypto.randomUUID(), quotationId: row.id, payload: {
         action: 'requote_updated', reference: serialize(row).reference, document,
         clientName: row.clientResponse.name, clientEmail: row.clientResponse.email, note: row.clientResponse.note,

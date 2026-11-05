@@ -23,5 +23,5 @@ async function openContractWindow(document, reference, signature, { autoPrint, t
   } catch { popup.close(); throw new Error('The contract logo could not load. Refresh before printing.'); }
 }
 
-export function printContract(document, reference, signature, options = {}) { if (document.contractSource === 'pdf') return openContractPdf(document, signature, options); return openContractWindow(document, reference, signature, { autoPrint: true }); }
+export function printContract(document, reference, signature, options = {}) { if (document.contractSource === 'pdf' || (signature && options.adminToken && options.quotationId)) return openContractPdf(document, signature, options); return openContractWindow(document, reference, signature, { autoPrint: true }); }
 export function openContractPreview(document, reference, options = {}) { return openContractWindow(document, reference, null, { ...options, autoPrint: false }); }

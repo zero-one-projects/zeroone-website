@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import SharedBillingPage from './pages/SharedBillingPage';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -21,6 +22,8 @@ function getRouteFromLocation() {
   if (pathname === '/verification-code') {
     return { page: 'verification-code', codeFragment: hash, anchor: '' };
   }
+
+  if (/^\/billing\/[a-f0-9]{64}$/.test(pathname)) return { page: 'shared-billing', token: pathname.slice('/billing/'.length), anchor: '' };
 
   if (pathname.startsWith('/quotation/')) {
     return { page: 'shared-quotation', token: pathname.slice('/quotation/'.length), anchor: '' };
@@ -212,6 +215,7 @@ function App() {
     if (route.page === 'verification-code') {
       return <VerificationCodePage key={route.codeFragment} fragment={route.codeFragment} />;
     }
+    if (route.page === 'shared-billing') return <SharedBillingPage key={route.token} token={route.token} />;
     if (route.page === 'shared-quotation') {
       return <SharedQuotationPage token={route.token} />;
     }

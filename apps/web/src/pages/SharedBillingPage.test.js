@@ -1,0 +1,35 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import SharedBillingPage from './SharedBillingPage';
+const originalFetch = global.fetch;
+afterEach(() => { global.fetch = originalFetch; jest.restoreAllMocks(); });
+test('client can copy USD account details and open the billing PDF', async () => {
+  HTMLDialogElement.prototype.showModal = jest.fn(function () { this.setAttribute('open', ''); });
+  HTMLDialogElement.prototype.close = jest.fn(function () { this.removeAttribute('open'); });
+  const instructions = 'Account type: Dollar Savings Account\nAccount number: 310-19-000104-1\nSwift code: AUBKPHMM';
+  URL.createObjectURL = jest.fn(() => 'blob:billing-pdf'); URL.revokeObjectURL = jest.fn();
+  global.fetch = jest.fn(async () => ({ ok: true, blob: async () => new Blob(['%PDF']), json: async () => ({ reference: 'BILL-USD', paymentInstructions: instructions }) }));
+  const writeText = jest.fn().mockResolvedValue();
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+  render(<SharedBillingPage token={'a'.repeat(64)} />);
+  expect(await screen.findByTitle('Billing statement PDF')).toHaveAttribute('src', 'blob:billing-pdf');
+  expect(screen.queryByRole('button', { name: 'Copy account number' })).not.toBeInTheDocument();
+  screen.getByRole('button', { name: 'Payment details' }).focus();
+  fireEvent.click(screen.getByRole('button', { name: 'Payment details' }));
+  expect(screen.getByRole('dialog', { name: 'Payment details' })).toBeInTheDocument();
+  fireEvent.click(await screen.findByRole('button', { name: 'Copy account number' }));
+  expect(writeText).toHaveBeenLastCalledWith('310-19-000104-1');
+  expect(await screen.findByRole('status')).toHaveTextContent('Account number copied.');
+  fireEvent.click(screen.getByRole('button', { name: 'Copy payment details' }));
+  expect(writeText).toHaveBeenLastCalledWith(instructions);
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Payment details copied.'));
+  fireEvent.click(screen.getByRole('button', { name: 'Close payment details' }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Payment details' })).toHaveFocus();
+  expect(screen.getByRole('link', { name: /Open \/ download/ })).toHaveAttribute('href', expect.stringContaining(`/api/billing/${'a'.repeat(64)}/pdf`));
+});
+test('disabled links show an error without payment details', async () => {
+  global.fetch = jest.fn(async () => ({ ok: false, json: async () => ({ message: 'Billing link not found or disabled.' }) }));
+  render(<SharedBillingPage token={'b'.repeat(64)} />);
+  expect(await screen.findByRole('alert')).toHaveTextContent('Billing link not found or disabled.');
+  expect(screen.queryByRole('button')).not.toBeInTheDocument();
+});

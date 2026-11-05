@@ -1,3 +1,6 @@
+import ElectronicAcceptanceTerms from './ElectronicAcceptanceTerms';
+import PosUpgradeTerms from './PosUpgradeTerms';
+import HardwareTerms from './HardwareTerms';
 import MonthlySubscriptionSummary from './MonthlySubscriptionSummary';
 import { quotationTotals } from '../utils/quotation';
 import quotationLogo from '../assets/landing/Newlogo.png';
@@ -50,7 +53,7 @@ export default function QuotationDocument({ document, reference }) {
           <tr key={index}>
             <td>
               <p className="quotation-item-title">{item.chargeType === 'recurring' && item.subscriptionRole === 'current' && item.description?.trim().toLowerCase() === 'current subscription' ? (document.billingPeriod === 'yearly' ? 'Base Yearly Subscription' : 'Base Monthly Subscription') : item.description || 'Item description'}</p>
-              {item.chargeType && item.chargeType !== 'one_time' && <p className="quotation-item-quantity">{item.chargeType === 'recurring' ? `Subscription · ${document.billingPeriod || 'monthly'}` : item.chargeType === 'milestone' ? 'Milestone payment' : item.chargeType === 'setup' ? 'Setup fee · one-time' : 'Additional feature · one-time'}</p>}
+              {item.chargeType && item.chargeType !== 'one_time' && <p className="quotation-item-quantity">{item.chargeType === 'recurring' ? `Subscription · ${document.billingPeriod || 'monthly'}` : item.chargeType === 'milestone' ? 'Milestone payment' : item.chargeType === 'setup' ? 'Setup fee · one-time' : item.chargeType === 'hardware' ? 'Hardware · one-time' : 'Additional feature · one-time'}</p>}
               {Number(item.quantity) !== 1 && <p className="quotation-item-quantity">{item.quantity} × {money(Number(item.unitPrice) || 0)}</p>}
               {item.scope?.length > 0 && <ul className="quotation-scope">{item.scope.map((group, groupIndex) => (
                 <li key={groupIndex}>
@@ -64,6 +67,7 @@ export default function QuotationDocument({ document, reference }) {
         ))}</tbody>
       </table>
 
+      <ElectronicAcceptanceTerms document={document} /><PosUpgradeTerms document={document} /><HardwareTerms document={document} />
       {document.notes && <div className="quotation-terms"><h3>Notes / payment terms</h3><p>{document.notes}</p></div>}
       {totals.hasRecurring && !document.monthlySubscription && document.contractDetails?.billingCommencement && <div className="quotation-terms"><h3>Subscription billing commencement</h3><p>{document.contractDetails.billingCommencement}</p><p>One-time setup and additional feature charges are separate from the recurring subscription.</p></div>}
       <MonthlySubscriptionSummary document={document} />

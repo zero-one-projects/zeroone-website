@@ -21,8 +21,13 @@ router.get('/subscriptions', async (req, res, next) => {
     const subscriptions = [];
     for (const row of rows) {
       let document; try { document = subscriptionDocument(row); } catch { continue; }
+      if (document.quoteType === 'pos') continue;
       const previous = await BillingStatement.findOne({ where: { quotationId: row.id }, order: [['period', 'DESC']], logging: false });
       subscriptions.push({ id: row.id, reference: `ZO-${new Date(row.createdAt).getUTCFullYear()}-${String(row.id).padStart(5, '0')}`, clientName: document.clientName, clientEmail: document.clientEmail, title: document.title, currency: document.currency, recurringTotal: document.recurringTotal, goLiveOn: previous?.document.goLiveOn || '', lastBilledPeriod: previous?.period || '' });
+    }
+    for (const subscription of await require('../utils/pos-subscriptions').listPosSubscriptions()) {
+      const previous = await BillingStatement.findOne({ where: { quotationId: subscription.id }, order: [['period', 'DESC']], logging: false });
+      subscriptions.push({ ...subscription, goLiveOn: previous?.document.goLiveOn || '', lastBilledPeriod: previous?.period || '' });
     }
     return res.json({ subscriptions });
   } catch (error) { return next(error); }
@@ -44,9 +49,15 @@ router.post('/', async (req, res, next) => {
     }
     if (!Number.isSafeInteger(Number(req.body?.quotationId)) || Number(req.body.quotationId) < 1) return res.status(400).json({ message: 'Select a subscription.' });
     const row = await sequelize.transaction({ logging: false }, async transaction => {
-      const quotation = await Quotation.findByPk(req.body.quotationId, { transaction, lock: transaction.LOCK.UPDATE, logging: false });
+      const quotation = await Quotation.findByPk(req.body.quotationId, { transaction, lock: transaction.LOCK.UPDATE, logging: false, paranoid: false });
       if (!quotation) throw Object.assign(new Error('Subscription quotation not found.'), { statusCode: 404 });
-      const document = createBillingDocument(quotation, req.body);
+      let signedPosRate;
+      const registeredPos = await require('../models').PosSubscription.findByPk(quotation.id, { transaction, logging: false });
+      if (quotation.document.quoteType === 'pos' || registeredPos) {
+        const subscription = await require('../utils/pos-subscriptions').loadSubscription(quotation.id, transaction, true);
+        signedPosRate = require('../utils/pos-subscriptions').billingSource(subscription.revisions, req.body);
+      } else if (quotation.deletedAt) throw Object.assign(new Error('Subscription quotation not found.'), { statusCode: 404 });
+      const document = createBillingDocument(quotation, req.body, signedPosRate);
       const previous = await BillingStatement.findOne({ where: { quotationId: quotation.id }, transaction, logging: false });
       if (previous && previous.document.goLiveOn !== document.goLiveOn) throw Object.assign(new Error('Use the system go-live date recorded on the first billing statement.'), { statusCode: 400 });
       return BillingStatement.create({ quotationId: quotation.id, period: document.period, document }, { transaction, logging: false });

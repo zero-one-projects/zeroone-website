@@ -1,5 +1,5 @@
 import QuotationNotifications from './QuotationNotifications';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import QuotationListPanel from './QuotationListPanel';
 import QuotationsPanel from './QuotationsPanel';
 import { newQuotation } from '../utils/quotation';
@@ -16,6 +16,25 @@ test('list shows saved quotation details and opens the selected document', async
   expect(screen.getByText('Business website')).toBeInTheDocument();
   expect(screen.getByText('Not shared')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Open ZO-2026-00045' })).toHaveAttribute('href', '/admin/quotations?id=45');
+});
+
+test('signed POS rows distinguish pending admin confirmation, finalized agreement, and verified payment', async () => {
+  const pending = { ...sample, document: { ...sample.document, quoteType: 'pos', acceptancePolicy: { version: 2 } }, clientResponse: { action: 'accept', current: true, signedAt: '2026-11-05T01:00:00Z' }, contractState: { status: 'pending_admin_confirmation', clientSignedAt: '2026-11-05T01:00:00Z' }, paymentStatus: 'unpaid' };
+  const finalized = { ...pending, id: 46, reference: 'ZO-2026-00046', contractState: { ...pending.contractState, status: 'finalized' }, paymentStatus: 'paid' };
+  const legacy = { ...pending, id: 47, reference: 'ZO-2026-00047', document: sample.document, contractState: undefined, paymentStatus: undefined };
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotations: [pending, finalized, legacy], total: 3 }) }));
+  render(<QuotationListPanel token="test-session" />);
+  await screen.findByText('ZO-2026-00045');
+  const pendingRow = within(screen.getByText('ZO-2026-00045').closest('tr'));
+  expect(pendingRow.getByText('Pending Admin Confirmation')).toBeInTheDocument();
+  expect(pendingRow.getByText('Payment: Unpaid')).toBeInTheDocument();
+  const confirmedRow = within(screen.getByText('ZO-2026-00046').closest('tr'));
+  expect(confirmedRow.getByText('Finalized and locked')).toBeInTheDocument();
+  expect(confirmedRow.getByText('Payment: Paid')).toBeInTheDocument();
+  expect(confirmedRow.queryByText('Pending Admin Confirmation')).not.toBeInTheDocument();
+  const legacyRow = within(screen.getByText('ZO-2026-00047').closest('tr'));
+  expect(legacyRow.getByText('Contract signed')).toBeInTheDocument();
+  expect(legacyRow.queryByText(/Payment:/)).not.toBeInTheDocument();
 });
 
 test('search requests the matching server results and supports paging', async () => {

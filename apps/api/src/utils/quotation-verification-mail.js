@@ -1,7 +1,7 @@
 const { MailConfig } = require('../models');
 const { verificationMessage } = require('./quotation-code-email');
 const { deletionConfirmationMessage } = require('./quotation-deletion-email');
-const { clientAcceptanceMessage, clientSignedMessage } = require('./quotation-client-email');
+const { clientAcceptanceMessage, clientSignedMessage, clientContractConfirmedMessage } = require('./quotation-client-email');
 const { recurringChargeText } = require('./quotation-pricing');
 
 async function sendGraphMail(message, saveToSentItems = false, options = {}) {
@@ -122,6 +122,7 @@ async function sendQuotationResponseNotification(payload) {
   if (payload.action === 'payment_proof') message = await require('./payment-proof').proofMessage(payload.proofId);
   else if (payload.action === 'client_accept') message = clientAcceptanceMessage(payload);
   else if (payload.action === 'client_signed') message = clientSignedMessage(payload);
+  else if (payload.action === 'client_contract_confirmed') message = clientContractConfirmedMessage(payload);
   else if (payload.action === 'delete') message = deletionConfirmationMessage(payload);
   else if (payload.action === 'requote') message = requoteMessage(payload);
   else if (payload.action === 'requote_updated') message = updatedRequoteMessage(payload);

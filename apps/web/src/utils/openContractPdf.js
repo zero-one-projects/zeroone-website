@@ -8,7 +8,7 @@ export async function openContractPdf(document, signature, { adminToken, quotati
     if (signature && adminToken && quotationId) {
       url = `${getApiBaseUrl()}/api/admin/contracts/signed-copy`;
       options.method = 'POST'; options.headers['Content-Type'] = 'application/json'; options.body = JSON.stringify({ quotationId, documentHash: signature.documentHash });
-    } else url = adminToken ? `${getApiBaseUrl()}/api/admin/contracts/files/${document.contractPdf.id}` : `${getApiBaseUrl()}/api/quotations/${encodeURIComponent(shareToken)}/contract-pdf`;
+    } else url = adminToken ? quotationId ? `${getApiBaseUrl()}/api/admin/contracts/quotations/${quotationId}/pdf` : `${getApiBaseUrl()}/api/admin/contracts/files/${document.contractPdf.id}` : `${getApiBaseUrl()}/api/quotations/${encodeURIComponent(shareToken)}/contract-pdf`;
     const response = await fetch(url, options);
     if (!response.ok) { const payload = await response.json(); throw new Error(payload.message || 'Unable to open the PDF contract.'); }
     const objectUrl = URL.createObjectURL(await response.blob());

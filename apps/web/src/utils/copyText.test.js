@@ -42,3 +42,13 @@ test('failed copying rejects instead of reporting success', async () => {
   await expect(copyText('link')).rejects.toThrow('Clipboard access');
   expect(document.querySelector('textarea')).toBeNull();
 });
+test('copies inside the payment popup when another dialog is already open', async () => {
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+  document.body.innerHTML = '<dialog open id="preview"><dialog open id="payment"></dialog></dialog>';
+  document.execCommand = jest.fn(() => {
+    expect(document.querySelector('#payment textarea').value).toBe('account details');
+    return true;
+  });
+  await copyText('account details');
+  expect(document.querySelector('textarea')).toBeNull();
+});

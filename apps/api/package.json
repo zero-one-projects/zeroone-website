@@ -13,6 +13,7 @@
     "db:seed:chat": "node src/scripts/seed-chat-knowledge.js"
   },
   "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

@@ -1,3 +1,8 @@
+import ElectronicAcceptanceTerms from './ElectronicAcceptanceTerms';
+import { contractProvider, contractAgreementDate } from '../utils/contractIdentity';
+import PosUpgradeTerms from './PosUpgradeTerms';
+import HardwareTerms from './HardwareTerms';
+import PosContractSummary from './PosContractSummary';
 import MonthlySubscriptionSummary from './MonthlySubscriptionSummary';
 import ContractRichText from './ContractRichText';
 import logo from '../assets/landing/Newlogo.png';
@@ -33,7 +38,7 @@ body{margin:0;color:#202027;font:10pt/1.5 Arial,Helvetica,sans-serif;background:
 .contract-data p{margin:0 0 5px}
 .contract-strong td{font-weight:bold;background:#faf9fc}
 .contract-annex{break-before:page}
-.contract-signatures{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;break-inside:avoid}
+.contract-signatures{display:grid;grid-template-columns:1fr;gap:24px;margin-top:20px;break-inside:avoid}
 .contract-signatures>div{padding:14px;border:1px solid #ded7e8;border-radius:8px}
 .contract-acceptance{margin-top:30px;break-inside:avoid}
 .contract-acceptance>h2{font-size:12pt;margin-bottom:8px}
@@ -89,37 +94,41 @@ function readableDate(value) {
 }
 
 
-export default function ContractDocument({ document, reference, signature, templatePreview = false }) {
+export default function ContractDocument({ document, reference, signature, templatePreview = false, signingReview = false }) {
   const details = document.contractDetails || {};
-  const agreementDate = details.agreementDate || (signature?.signedAt ? readableDate(signature.signedAt) : '');
+  const provider = contractProvider(document);
+  const agreementDate = document.quoteType === 'pos' && !templatePreview ? contractAgreementDate(document, signature) : details.agreementDate || (signature?.signedAt ? readableDate(signature.signedAt) : '');
   const totals = quotationTotals(document);
   const money = (value) => templatePreview ? '' : `${document.currency} ${Number(value).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const showRecurring = totals.hasRecurring || (templatePreview && document.quoteType !== 'project');
   const period = templatePreview ? 'agreed billing period' : document.billingPeriod === 'yearly' ? 'year' : 'month';
   const pos = document.quoteType === 'pos';
   const showPaymentAnnex = pos || ['subscription', 'sync_court'].includes(document.quoteType);
-  const mainTitle = pos ? 'POS SYSTEM SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'sync_court' ? 'SYNC COURT SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'subscription' ? 'SUBSCRIPTION & SERVICE AGREEMENT' : 'PROJECT SERVICE AGREEMENT';
+  const mainTitle = pos && document.posPurpose === 'upgrade' ? 'POS SUBSCRIPTION UPGRADE ADDENDUM' : pos && document.posPurpose === 'customization' ? 'POS ONE-TIME CUSTOMIZATION AGREEMENT' : pos ? 'POS SYSTEM SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'sync_court' ? 'SYNC COURT SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'subscription' ? 'SUBSCRIPTION & SERVICE AGREEMENT' : 'PROJECT SERVICE AGREEMENT';
   const paymentTitle = pos ? 'POS SUBSCRIPTION ORDER FORM & PAYMENT AGREEMENT' : showRecurring ? 'SUBSCRIPTION ORDER FORM & PAYMENT AGREEMENT' : 'PROJECT ORDER FORM & PAYMENT AGREEMENT';
   const tableValue = (text) => text || '';
   const signingParties = [
-    { title: 'FOR THE PROVIDER', company: 'Zero One Information Technology Inc.', name: details.providerRepresentative, position: details.providerPosition },
-    { title: 'FOR THE CLIENT', company: document.clientName, name: signature?.signerName || details.authorizedRepresentative, position: details.clientPosition, signature }
+    { title: 'CLIENT ACCEPTANCE', company: document.clientName, name: signature?.signerName || details.authorizedRepresentative, position: details.clientPosition, signature }
   ];
-  const signatureSection = <section className="contract-signatures" aria-label="Contract signatures">
+  const signatureSection = <section className="contract-acceptance" aria-label="Client acceptance">
+    <h2>SERVICE PROVIDER</h2><p>{provider.name}</p><p>{provider.address}</p>
+    <div className="contract-signatures">
     {signingParties.map((party) => <div key={party.title}><h2>{party.title}</h2>
+      <p>{signature?.consentText || 'By signing below, I confirm that I am authorized to enter into this agreement on behalf of the client and agree to the agreement terms, payment obligations, and conditions stated above.'}</p>
       <dl className="contract-signature-fields">
-        {[['Business / Company', party.company], ['Authorized Representative', party.name], ['Position', party.position]].map(([label, content]) => <div key={label}><dt>{label}</dt><dd className={!content ? 'contract-empty-field' : undefined}>{content || '\u00a0'}</dd></div>)}
-        <div><dt>Signature</dt><dd className="contract-signing-line">{party.signature?.type === 'drawn'
+        {[['Business / Company', party.company], ['Authorized Representative', party.name], ['Position / Title', party.position]].map(([label, content]) => <div key={label}><dt>{label}</dt><dd className={!content ? 'contract-empty-field' : undefined}>{content || '\u00a0'}</dd></div>)}
+        <div><dt>Electronic Signature</dt><dd className="contract-signing-line">{party.signature?.type === 'drawn'
           ? <SignatureDrawing strokes={party.signature.strokes} className="contract-signature-image" />
           : party.signature?.type === 'typed' ? <div className="contract-typed-signature">{party.signature.typedName}</div> : null}</dd></div>
-        <div><dt>Date</dt><dd className={!party.signature?.signedAt ? 'contract-empty-field' : undefined}>{party.signature?.signedAt ? readableDate(party.signature.signedAt) : '\u00a0'}</dd></div>
+        <div><dt>Date Signed</dt><dd className={!party.signature?.signedAt ? 'contract-empty-field' : undefined}>{party.signature?.signedAt ? readableDate(party.signature.signedAt) : '\u00a0'}</dd></div>
       </dl>
       {party.signature && <p className="contract-small">Electronically signed · Verified email: {party.signature.email}<br />{party.signature.signedAt}</p>}
     </div>)}
+    </div>
   </section>;
   return <article className="contract-document">
     <img className="contract-watermark" src="/zeroone-tab-icon.svg" alt="" />
-    <table className="contract-layout"><thead><tr><th><header className="contract-letterhead"><div><strong>Zero One Information Technology Inc.</strong><p>Zone 12, Alta Tierra, Tiguma, Pagadian City, Philippines</p><p>Contact number: 0919-079-7137</p></div><img src={logo} alt="Zero One Information Technology Inc." /></header></th></tr></thead>
+    <table className="contract-layout"><thead><tr><th><header className="contract-letterhead"><div><strong>{provider.name}</strong><p>{provider.address}</p><p>Contact number: {provider.phone}</p></div><img src={logo} alt="Zero One Information Technology Inc." /></header></th></tr></thead>
     <tbody><tr><td>
       <div className="contract-agreement-title"><h1>{mainTitle}</h1>
         <div className="contract-meta"><p><strong>Quotation reference</strong>{reference || 'DRAFT'}</p><p><strong>Agreement date</strong>{agreementDate || 'To be completed'}</p></div>
@@ -127,27 +136,29 @@ export default function ContractDocument({ document, reference, signature, templ
         {templatePreview && <p className="contract-small">Template preview. Client details are filled from the quotation. Signature details are recorded when the contract is signed.</p>}
       </div>
       <section className="contract-introduction" aria-label="Parties to the agreement">
-        <p>This agreement is entered into{agreementDate ? ` on ${agreementDate}` : ''} by and between:</p>
+        <p>{details.agreementIntroduction || (details.agreementDateRule === 'signing' && !signature ? 'This agreement takes effect upon electronic signing by the Client, by and between:' : `This agreement is entered into${agreementDate ? ` on ${agreementDate}` : ''} by and between:`)}</p>
         <div className="contract-parties">
-          <div className="contract-party"><h2>Provider</h2><p><strong>ZERO ONE INFORMATION TECHNOLOGY INC.</strong></p><p>Zone 12, Alta Tierra, Tiguma, Pagadian City, Philippines</p><p className="contract-party-role">Referred to in this agreement as the Provider.</p></div>
+          <div className="contract-party"><h2>Provider</h2><p><strong>{provider.name.toUpperCase()}</strong></p><p>{provider.address}</p><p className="contract-party-role">Referred to in this agreement as the Provider.</p></div>
           <div className="contract-party"><h2>Client</h2><p><strong className={!document.clientName ? 'contract-placeholder' : undefined}>{document.clientName || 'Client / Company Name'}</strong></p><p className={!document.clientAddress ? 'contract-placeholder' : undefined}>{document.clientAddress || 'Client business address'}</p><p className="contract-party-role">Referred to in this agreement as the Client.</p></div>
         </div>
         <p>Collectively referred to as the Parties.</p>
       </section>
       <ContractRichText text={signature?.contractText || document.contractText} format={document.contractStyle} />
-      <section className="contract-acceptance"><h2>ACCEPTANCE &amp; SIGNATURES</h2>{!showPaymentAnnex && signature && <p className="contract-small">{signature.consentText}</p>}{signatureSection}</section>
+      <ElectronicAcceptanceTerms document={document} /><PosUpgradeTerms document={document} /><HardwareTerms document={document} />
+      {!showPaymentAnnex && !signingReview && signatureSection}
       {showPaymentAnnex && <section className="contract-annex"><h1>{paymentTitle}</h1>
         <p>This order form records the approved scope and charges for quotation <strong>{reference || 'DRAFT'}</strong> and is read together with the service agreement above.</p>
         <h2>1. CLIENT &amp; {showRecurring ? 'SUBSCRIPTION' : 'PROJECT'} INFORMATION</h2>
-        <table className="contract-data"><thead><tr><th>Particulars</th><th>Details</th></tr></thead><tbody>{[
+        {pos ? <PosContractSummary document={document} reference={reference} templatePreview={templatePreview} /> : <table className="contract-data"><thead><tr><th>Particulars</th><th>Details</th></tr></thead><tbody>{[
           ['Agreement Date', tableValue(details.agreementDate)], ['Client / Business Name', tableValue(document.clientName)], ['Authorized Representative', tableValue(signature?.signerName || details.authorizedRepresentative)], ['Project / Package', document.title],
-          ...(pos || showRecurring ? [['Number of Branches / Terminals', tableValue(details.branches)], ['Subscription Effective Date', tableValue(details.effectiveDate)], ['Minimum Subscription Period', tableValue(details.minimumPeriod)]] : [])
-        ].map(([label, content]) => <tr key={label}><td>{label}</td><td>{content}</td></tr>)}</tbody></table>
+          ...(showRecurring ? [['Number of Branches / Terminals', tableValue(details.branches)], ['Subscription Effective Date', tableValue(details.effectiveDate)], ['Minimum Subscription Period', tableValue(details.minimumPeriod)]] : [])
+        ].map(([label, content]) => <tr key={label}><td>{label}</td><td>{content}</td></tr>)}</tbody></table>}
+        {pos && details.branches && <p><strong>Number of Branches / Terminals:</strong> {details.branches}</p>}
         <h2>2. APPROVED FEATURES &amp; SERVICES</h2>
         <table className="contract-data contract-features"><thead><tr><th>No.</th><th>Feature / Service</th><th>Description / Scope</th></tr></thead><tbody>{templatePreview && <tr><td colSpan={3}>Approved features and services will be filled from the quotation.</td></tr>}{document.items.map((item, index) => <tr key={index}><td>{index + 1}</td><td>{item.description}</td><td>{item.scope?.length ? item.scope.map((group, groupIndex) => <p key={groupIndex}><strong>{group.title}</strong><br />{group.details}</p>) : item.description}</td></tr>)}</tbody></table>
         <h2>3. {showRecurring ? 'SUBSCRIPTION & ' : ''}PAYMENT SUMMARY</h2>
         <table className="contract-data"><thead><tr><th>Description</th><th>Amount / Payment Terms</th></tr></thead><tbody>
-          {document.items.map((item, index) => <tr key={index}><td>{item.description}{item.chargeType === 'setup' ? ' — Setup / Implementation' : item.chargeType === 'addon' ? ' — Additional Feature' : item.chargeType === 'milestone' ? ' — Milestone payment' : ''}</td><td>{money(totals.amounts[index])}{!templatePreview && (item.chargeType === 'recurring' ? ` / ${period}` : ' · One-time')}</td></tr>)}
+          {document.items.map((item, index) => <tr key={index}><td>{item.description}{item.chargeType === 'setup' ? ' — Setup / Implementation' : item.chargeType === 'addon' ? ' — Additional Feature' : item.chargeType === 'hardware' ? ' — Hardware' : item.chargeType === 'milestone' ? ' — Milestone payment' : ''}</td><td>{money(totals.amounts[index])}{!templatePreview && (item.chargeType === 'recurring' ? ` / ${period}` : ' · One-time')}</td></tr>)}
           {Number(document.discount) > 0 && <tr><td>One-Time Discount</td><td>−{money(document.discount)}</td></tr>}
           {Number(document.taxRate) > 0 && <tr><td>One-Time Tax ({document.taxRate}%)</td><td>{money(totals.tax)}</td></tr>}
           <tr className="contract-strong"><td>Total One-Time Charges</td><td>{money(totals.total)}</td></tr>
@@ -163,9 +174,7 @@ export default function ContractDocument({ document, reference, signature, templ
           {showRecurring && <><tr><td>Minimum Subscription Commitment</td><td>{tableValue(details.minimumPeriod)}</td></tr><tr><td>Early Termination Fee / Formula</td><td>{tableValue(details.terminationTerms)}</td></tr></>}
         </tbody></table>
         {document.timeline && <p><strong>Implementation timeline:</strong> {document.timeline}</p>}
-        <h2>5. SIGNATURES</h2>
-        {signature && <p className="contract-small">{signature.consentText}</p>}
-        {signatureSection}
+        {!signingReview && signatureSection}
       </section>}
     </td></tr></tbody><tfoot><tr><td><footer className="contract-footer"><a href="https://zerooneitinc.com/">zerooneitinc.com</a><span>info@zerooneitinc.com</span><a href="https://www.facebook.com/zeroone.it.inc">facebook.com/zeroone.it.inc</a></footer></td></tr></tfoot></table>
   </article>;

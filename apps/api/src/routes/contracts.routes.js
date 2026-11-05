@@ -32,6 +32,16 @@ router.get('/files/:id', async (req, res, next) => {
     return res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="contract.pdf"' }).send(file.data);
   } catch (error) { return next(error); }
 });
+router.get('/quotations/:id/pdf', async (req, res, next) => {
+  try {
+    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ message: 'Choose a saved quotation.' });
+    const row = await require('../models').Quotation.findByPk(req.params.id, { logging: false });
+    if (!row || row.document.contractSource !== 'pdf') return res.status(404).json({ message: 'Quotation PDF contract not found.' });
+    const file = await getContractFile(row.document.contractPdf, true);
+    const bytes = await require('../utils/signed-contract-pdf').renderContractReviewPdf({ bytes: file.data, document: row.document, providerAcceptance: row.contractState?.documentHash === require('../utils/quotation-response').documentHash(row.document) ? row.contractState.providerAcceptance : undefined });
+    return res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="contract.pdf"' }).send(bytes);
+  } catch (error) { return next(error); }
+});
 router.post('/signed-copy', async (req, res, next) => {
   try {
     const { quotationId, documentHash } = req.body || {};
@@ -43,7 +53,7 @@ router.post('/signed-copy', async (req, res, next) => {
     const response = history?.response || (row.clientResponse?.documentHash === documentHash ? row.clientResponse : null);
     if (!response?.signature || !response.document) return res.status(404).json({ message: 'Signed contract snapshot not found.' });
     const reference = `ZO-${new Date(row.createdAt).getUTCFullYear()}-${String(row.id).padStart(5, '0')}`;
-    const pdf = await require('../utils/signed-contract-pdf').renderSignedContractPdf({ reference, document: response.document, signature: response.signature });
+    const pdf = await require('../utils/contract-acceptance').signedCopy(row, response, req.body.copy === 'client' ? 'client' : undefined);
     return res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="Signed-Contract-${reference}.pdf"` }).send(pdf);
   } catch (error) { return next(error); }
 });

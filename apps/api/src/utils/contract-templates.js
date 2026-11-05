@@ -19,9 +19,11 @@ async function prepareQuotation(input) {
     if (selected?.source === 'pdf') input = { ...input, contractSource: 'pdf', contractPdf: selected.pdf };
   }
   if (input.contractSource === 'pdf') {
-    const file = await getContractFile(input.contractPdf);
+    const file = await getContractFile(input.contractPdf, input.quoteType === 'pos');
     if (file.quoteType !== (input.quoteType || 'project')) throw Object.assign(new Error('Choose a PDF for this quotation type.'), { statusCode: 400 });
-    return normalizeQuotation({ ...input, contractSource: 'pdf', contractPdf: fileMetadata(file), contractText: '', contractStyle: undefined });
+    const document = normalizeQuotation({ ...input, contractSource: 'pdf', contractPdf: fileMetadata(file), contractText: '', contractStyle: undefined });
+    if (document.quoteType === 'pos') document.contractAutofill = { version: 3, pdfFieldsReady: await require('./contract-autofill').hasContractFields(file.data), providerFieldsReady: await require('./contract-autofill').hasProviderField(file.data), introductionReady: await require('./contract-autofill').hasIntroductionField(file.data) };
+    return document;
   }
   const defaults = await contractDefaults();
   const type = input.quoteType || 'project';

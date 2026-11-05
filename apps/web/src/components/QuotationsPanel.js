@@ -1,4 +1,8 @@
+import ContractAcceptancePanel from './ContractAcceptancePanel';
+import PosQuotationPurpose from './PosQuotationPurpose';
+import { monthlySubscriptionSummary } from '../utils/quotation';
 import QuotationPaymentProofs from './QuotationPaymentProofs';
+import QuotationPayments from './QuotationPayments';
 import ConfirmModal from './ConfirmModal';
 import useQuotationResponseCounts from '../hooks/useQuotationResponseCounts';
 import ResponseCountBadge from './ResponseCountBadge';
@@ -9,7 +13,7 @@ import PdfContractView from './PdfContractView';
 import ContractRichText from './ContractRichText';
 import { useEffect, useRef, useState } from 'react';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
-import { newQuotation, quotationTotals, defaultBillingCommencement, defaultPosPaymentTerms } from '../utils/quotation';
+import { newQuotation, quotationTotals, defaultBillingCommencement, defaultPosPaymentTerms, defaultHardwareTerms } from '../utils/quotation';
 import QuotationDocument from './QuotationDocument';
 import QuotationLinkDialog from './QuotationLinkDialog';
 import QuotationListPanel from './QuotationListPanel';
@@ -46,6 +50,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
   const [defaultPaymentInstructions, setDefaultPaymentInstructions] = useState('');
   const [pdfPreview, setPdfPreview] = useState(false);
   const pdfDialog = useRef(null);
+  const contractLocked = Boolean(selected?.contractState?.locked || (selected?.clientResponse?.current && selected.clientResponse.signedAt));
   const totals = quotationTotals(document);
   const money = (value) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: document.currency }).format(value);
 
@@ -115,7 +120,10 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
 
   function update(field, value) {
     setDocument((current) => ({ ...current, [field]: value, ...(field === 'contractText' ? { contractStyle: undefined } : {}),
-      ...(field === 'items' && value.some((item) => item.chargeType === 'recurring') && !current.contractDetails?.billingCommencement ? { contractDetails: { ...current.contractDetails, billingCommencement: defaultBillingCommencement } } : {})
+      ...(field === 'items' ? { contractDetails: { ...current.contractDetails,
+        ...(value.some(item => item.chargeType === 'hardware') && current.contractDetails?.hardwareTerms === undefined ? { hardwareTerms: defaultHardwareTerms } : {}),
+        ...(value.some(item => item.chargeType === 'recurring') && !current.contractDetails?.billingCommencement ? { billingCommencement: defaultBillingCommencement } : {})
+      } } : {})
     }));
     setDirty(true);
     setNotice(null);
@@ -146,8 +154,9 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
       if (!items.some((item) => item.chargeType === 'recurring')) items.push({ description: 'Subscription plan', chargeType: 'recurring', quantity: 1, unitPrice: 0 });
       if (items.length > 100) { setNotice({ error: true, message: 'Remove an item to make room for the setup fee and subscription plan before changing types.' }); return; }
     }
-    setDocument((current) => ({ ...current, quoteType: value, ...(['pos', 'sync_court'].includes(value) && !(current.title || '').trim() ? { title: value === 'pos' ? 'Cloud-Based POS System' : 'Sync Court Subscription' } : {}), ...(value === 'project' ? { monthlySubscription: undefined } : {}), contractSource: defaultContracts[value]?.source || 'default', contractPdf: defaultContracts[value]?.source === 'pdf' ? defaultContracts[value].pdf : undefined, initialPaymentPercent: value === 'project' ? 20 : ['pos', 'sync_court'].includes(value) ? 100 : '', contractStyle: undefined, contractText: defaultContractTexts[value] || (value === 'project' ? defaultContractText : ''), items,
+    setDocument((current) => ({ ...current, quoteType: value, posPurpose: value === 'pos' ? 'new' : undefined, baseQuotationId: undefined, posUpgradeTerms: undefined, ...(['pos', 'sync_court'].includes(value) && !(current.title || '').trim() ? { title: value === 'pos' ? 'Cloud-Based POS System' : 'Sync Court Subscription' } : {}), ...(value === 'project' ? { monthlySubscription: undefined } : {}), contractSource: defaultContracts[value]?.source || 'default', contractPdf: defaultContracts[value]?.source === 'pdf' ? defaultContracts[value].pdf : undefined, initialPaymentPercent: value === 'project' ? 20 : ['pos', 'sync_court'].includes(value) ? 100 : '', contractStyle: undefined, contractText: defaultContractTexts[value] || (value === 'project' ? defaultContractText : ''), items,
       contractDetails: { ...current.contractDetails,
+        ...(value === 'pos' ? { agreementDateRule: current.contractDetails?.agreementDateRule || (current.contractDetails?.agreementDate ? 'fixed' : 'signing') } : {}),
         ...(value === 'sync_court' && current.quoteType !== 'sync_court' ? { paymentTerms: '' } : {}),
         ...(value === 'pos' && !current.contractDetails?.paymentTerms?.trim() ? { paymentTerms: current.billingPeriod === 'yearly' ? defaultPosPaymentTerms.replace('monthly subscription fee', 'yearly subscription fee') : defaultPosPaymentTerms } : {}),
         ...(items.some(item => item.chargeType === 'recurring') && !current.contractDetails?.billingCommencement ? { billingCommencement: defaultBillingCommencement } : {})
@@ -176,17 +185,17 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
     }
   }
 
-  async function changeSharing(revoke = false) {
-    if (!selected) return;
+  async function changeSharing(revoke = false, quotation = selected, keepFormClear = false) {
+    if (!quotation) return;
     setSharing(true);
     setNotice(null);
     try {
-      const response = await fetch(`${getApiBaseUrl()}/api/admin/quotations/${selected.id}/share`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/quotations/${quotation.id}/share`, {
         method: revoke ? 'DELETE' : 'POST', headers: { Authorization: `Bearer ${token}` }
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Unable to update client link.');
-      setSelected(payload.quotation);
+      if (!keepFormClear) setSelected(payload.quotation);
       if (!revoke) setSavedLink(payload.quotation);
       setRevision((value) => value + 1);
       setNotice({ error: false, message: revoke ? 'Client link revoked.' : 'Client link is ready to copy.' });
@@ -213,16 +222,30 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Unable to save quotation.');
-      if (!selected) {
+      const showSavedLink = !selected || payload.quotation.document.quoteType === 'pos';
+      if (payload.quotation.document.quoteType === 'pos') {
+        window.history.replaceState({}, '', '/admin/quotations');
+        setSelected(null);
+        setPdfPreview(false); setRegeneratePrompt(false);
+        setDocument({ ...newQuotation(), quoteType: 'pos', posPurpose: 'new', initialPaymentPercent: 100,
+          clientFlow: payload.quotation.document.clientFlow, contractSource: defaultContracts.pos?.source || 'default',
+          contractPdf: defaultContracts.pos?.source === 'pdf' ? defaultContracts.pos.pdf : undefined,
+          contractText: defaultContractTexts.pos || '', paymentInstructions: defaultPaymentInstructions,
+          items: [{ description: '', chargeType: 'setup', quantity: 1, unitPrice: 0 }],
+          contractDetails: { agreementDateRule: 'signing', paymentTerms: defaultPosPaymentTerms }
+        });
+        if (payload.quotation.clientResponse?.action === 'requote' && !payload.quotation.clientResponse.current && !payload.quotation.sharePath) setRegeneratePrompt({ quotation: payload.quotation, keepFormClear: true });
+      } else if (!selected) {
         window.history.replaceState({}, '', '/admin/quotations');
         setSelected(null);
         setDocument(newQuotation());
-        setSavedLink(payload.quotation);
       } else {
         setSelected(payload.quotation);
         setDocument(payload.quotation.document);
-        if (payload.quotation.clientResponse?.action === 'requote' && !payload.quotation.clientResponse.current && !payload.quotation.sharePath) setRegeneratePrompt(true);
+        if (payload.quotation.clientResponse?.action === 'requote' && !payload.quotation.clientResponse.current && !payload.quotation.sharePath) setRegeneratePrompt({ quotation: payload.quotation, keepFormClear: false });
       }
+      // Both POS delivery modes offer the saved link after create or update.
+      if (showSavedLink) setSavedLink(payload.quotation.sharePath ? payload.quotation : null);
       setDirty(false);
       setNotice({ error: false, message: `${payload.quotation.reference} saved successfully.` });
       setRevision((value) => value + 1);
@@ -254,22 +277,27 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
       {activeTab === 'create' ? <div role="tabpanel" id="quotation-panel-create" aria-labelledby="quotation-tab-create">
       {opening && <p className="quotation-controls mb-4 text-sm text-slate-500" role="status">Opening quotation...</p>}
       <div className="quotation-controls grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_19rem]">
+        {selected && <div className="xl:col-span-2"><ContractAcceptancePanel quotation={selected} token={token} dirty={dirty} onUpdated={row => { setSelected(row); setDocument(row.document); setRevision(value => value + 1); }} /></div>}
+        {selected && <div className="xl:col-span-2"><QuotationPayments key={`${selected.id}:${selected.documentVersion}`} quotation={selected} token={token} dirty={dirty} /></div>}
         <form className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" onSubmit={save}>
           <fieldset disabled={saving || sharing || opening} className="grid min-w-0 gap-5 disabled:opacity-60">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-bold">{selected ? selected.reference : 'New quotation'}</h2>
               <span className="rounded-full bg-[#f4f1f7] px-3 py-1 text-xs font-bold text-[#514568]">{dirty ? 'Unsaved changes' : selected ? 'Saved' : 'Draft'}</span>
             </div>
+            <fieldset disabled={contractLocked} className="grid min-w-0 gap-5 disabled:opacity-60">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-sm font-bold text-slate-700">Quotation type<select className={fieldClass} disabled={loading} value={document.quoteType || 'project'} onChange={(event) => changeQuoteType(event.target.value)}><option value="project">One-time payment</option><option value="subscription">Custom subscription</option><option value="pos">Cloud-Based POS System</option><option value="sync_court">Sync Court Subscription</option></select></label>
-              {document.quoteType && document.quoteType !== 'project' && <label className="grid gap-2 text-sm font-bold text-slate-700">Subscription billing<select className={fieldClass} disabled={Boolean(document.monthlySubscription)} value={document.billingPeriod || 'monthly'} onChange={(event) => update('billingPeriod', event.target.value)}><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></label>}
+              {document.quoteType && document.quoteType !== 'project' && <label className="grid gap-2 text-sm font-bold text-slate-700">Subscription billing<select className={fieldClass} disabled={Boolean(document.monthlySubscription) || document.posPurpose === 'upgrade'} value={document.billingPeriod || 'monthly'} onChange={(event) => update('billingPeriod', event.target.value)}><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></label>}
             </div>
+            {document.quoteType === 'pos' && <PosQuotationPurpose document={document} token={token} onChange={value => { setDocument(value); setDirty(true); setNotice(null); }} />}
             {document.quoteType === 'subscription' && <p className="text-sm text-slate-600">This subscription includes a one-time setup fee plus recurring plan charges. Subscription billing starts after the official system go-live date. Enter the setup price once and the subscription price per billing period.</p>}
-            {document.quoteType && document.quoteType !== 'project' && (document.billingPeriod || 'monthly') === 'monthly' && <section className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50/50 p-4" aria-label="Monthly subscription configuration">
-              <label className="flex items-start gap-3 text-sm font-bold"><input type="checkbox" className="mt-1" checked={Boolean(document.monthlySubscription)} onChange={event => toggleMonthlySubscription(event.target.checked)} />Show monthly subscription after Go-Live</label>
+            {document.quoteType && document.quoteType !== 'project' && document.posPurpose !== 'customization' && (document.billingPeriod || 'monthly') === 'monthly' && <section className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50/50 p-4" aria-label="Monthly subscription configuration">
+              <label className="flex items-start gap-3 text-sm font-bold"><input type="checkbox" className="mt-1" disabled={document.posPurpose === 'upgrade'} checked={Boolean(document.monthlySubscription)} onChange={event => toggleMonthlySubscription(event.target.checked)} />Show monthly subscription after Go-Live</label>
               {document.monthlySubscription && <>
                 <p className="text-sm text-slate-600">Enter the existing subscription and the additional recurring charge. These fields set the two recurring line items below. Monthly billing begins after official Go-Live.</p>
-                <div className="grid gap-4 sm:grid-cols-2">{[['currentAmount', 'Current monthly subscription'], ['additionalAmount', 'Additional monthly charge']].map(([key, label]) => <label className="grid gap-2 text-sm font-bold text-slate-700" key={key}>{label}{Number(document.taxRate) > 0 ? ' (before tax)' : ''}<input className={fieldClass} type="number" min="0" max="100000000" step="0.01" required value={document.monthlySubscription[key]} onChange={event => updateMonthlySubscription({ [key]: event.target.value })} /></label>)}</div>
+                <div className="grid gap-4 sm:grid-cols-2">{[['currentAmount', 'Current monthly subscription'], ['additionalAmount', 'Additional monthly charge']].map(([key, label]) => <label className="grid gap-2 text-sm font-bold text-slate-700" key={key}>{label}{Number(document.taxRate) > 0 ? ' (before tax)' : ''}<input className={fieldClass} type="number" min="0" max="100000000" step="0.01" required readOnly={key === 'currentAmount' && document.posPurpose === 'upgrade'} value={document.monthlySubscription[key]} onChange={event => updateMonthlySubscription({ [key]: event.target.value })} /></label>)}</div>
+                {document.quoteType === 'pos' && <div className="rounded-lg border border-slate-200 bg-white p-4"><p className="text-sm text-slate-500">{document.posPurpose === 'upgrade' ? 'New permanent monthly subscription' : 'Monthly Subscription'}</p><p className="mt-2 text-2xl font-bold">{money(monthlySubscriptionSummary(document).revisedAmount)}</p><p className="mt-2 text-xs text-slate-500">Effective only after client approval, electronic signing, and the agreed effective date or Go-Live.</p></div>}
                 <label className="grid gap-2 text-sm font-bold text-slate-700">System name<input className={fieldClass} required maxLength={180} value={document.monthlySubscription.systemName} onChange={event => updateMonthlySubscription({ systemName: event.target.value })} /></label>
                 <MonthlySubscriptionSummary document={document} className="rounded-lg border border-slate-200 bg-white p-4 text-sm leading-7 text-slate-700" />
               </>}
@@ -286,7 +314,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               </label>
             </div>
             <label className="grid gap-2 text-sm font-bold text-slate-700">Client address
-              <textarea className={fieldClass} rows={2} maxLength={1000} value={document.clientAddress} onChange={(e) => update('clientAddress', e.target.value)} />
+              <textarea className={fieldClass} rows={2} maxLength={1000} required={document.quoteType === 'pos' && document.clientFlow !== 'quotation_only'} value={document.clientAddress} onChange={(e) => update('clientAddress', e.target.value)} />
             </label>
             <div className="grid gap-4 sm:grid-cols-3">
               <label className="grid gap-2 text-sm font-bold text-slate-700">Issue date
@@ -303,7 +331,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               <h3 className="text-lg font-bold">Line items</h3>
               {document.items.map((item, index) => (
                 <div className="grid min-w-0 gap-3 rounded-lg border border-slate-200 bg-slate-50/50 p-4" key={index}>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">Item {index + 1} charge type<select className={fieldClass} disabled={Boolean(document.monthlySubscription && item.subscriptionRole)} value={item.chargeType || 'one_time'} onChange={(event) => updateItem(index, 'chargeType', event.target.value)}><option value="one_time">One-time charge</option><option value="milestone">Milestone payment</option><option value="setup">Setup fee</option><option value="addon">Additional feature — one-time</option>{document.quoteType && document.quoteType !== 'project' && <option value="recurring" disabled={Boolean(document.monthlySubscription)}>Subscription — {document.billingPeriod || 'monthly'}</option>}</select></label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">Item {index + 1} charge type<select className={fieldClass} disabled={Boolean(document.monthlySubscription && item.subscriptionRole)} value={item.chargeType || 'one_time'} onChange={(event) => updateItem(index, 'chargeType', event.target.value)}><option value="one_time">One-time charge</option><option value="milestone">Milestone payment</option><option value="setup">Setup fee</option><option value="addon">Additional feature — one-time</option><option value="hardware">Hardware — one-time</option>{document.quoteType && document.quoteType !== 'project' && document.posPurpose !== 'customization' && <option value="recurring" disabled={Boolean(document.monthlySubscription)}>Subscription — {document.billingPeriod || 'monthly'}</option>}</select></label>
                   <label className="grid gap-2 text-sm font-bold text-slate-700">Item {index + 1} description
                     <textarea className={fieldClass} required maxLength={2000} rows={2} value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} />
                   </label>
@@ -334,8 +362,13 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
                 </div>
               ))}
               <button className={`${secondaryClass} justify-self-start`} type="button" disabled={document.items.length >= 100} onClick={() => update('items', [...document.items, { description: '', quantity: 1, unitPrice: 0 }])}>+ Add Item</button>
-              {document.quoteType && document.quoteType !== 'project' && <div className="flex flex-wrap gap-2">{[['setup', '+ Add Setup Fee'], ['addon', '+ Add Feature'], ['recurring', '+ Add Subscription']].map(([chargeType, label]) => <button key={chargeType} className={secondaryClass} type="button" disabled={document.items.length >= 100} onClick={() => update('items', [...document.items, { description: '', quantity: 1, unitPrice: 0, chargeType }])}>{label}</button>)}</div>}
+              {document.quoteType && document.quoteType !== 'project' && <div className="flex flex-wrap gap-2">{[['setup', '+ Add Setup Fee'], ['addon', '+ Add Feature'], ['hardware', '+ Add Hardware'], ['recurring', '+ Add Subscription']].filter(([type]) => document.posPurpose !== 'customization' || type !== 'recurring').map(([chargeType, label]) => <button key={chargeType} className={secondaryClass} type="button" disabled={document.items.length >= 100} onClick={() => update('items', [...document.items, { description: '', quantity: 1, unitPrice: 0, chargeType }])}>{label}</button>)}</div>}
             </div>
+            {document.items.some(item => item.chargeType === 'hardware') && <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <label className="grid gap-2 text-sm font-bold text-slate-700">Hardware procurement and payment terms<textarea className={fieldClass} rows={6} maxLength={2000} value={document.contractDetails?.hardwareTerms || ''} onChange={event => update('contractDetails', { ...document.contractDetails, hardwareTerms: event.target.value })} /></label>
+              <p className="mt-2 text-xs text-slate-500">Review these terms before sharing. They appear in the quotation and contract; uploaded PDF contracts include them alongside the PDF and on the signed acceptance page.</p>
+              <button type="button" className={`${secondaryClass} mt-2`} onClick={() => update('contractDetails', { ...document.contractDetails, hardwareTerms: defaultHardwareTerms })}>Use standard hardware terms</button>
+            </div>}
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-sm font-bold text-slate-700">{totals.hasRecurring ? 'One-time discount' : 'Discount'} ({document.currency})
                 <input className={fieldClass} type="number" min="0" max={totals.subtotal} step="0.01" required value={document.discount} onChange={(e) => update('discount', e.target.value)} />
@@ -373,7 +406,7 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               <h3 className="text-lg font-bold">Client agreement &amp; e-signature</h3>
               <p className="text-sm text-slate-600">Choosing a quotation type automatically loads its saved contract from Contracts. You can adjust the terms for this client. Saving keeps this version with the quotation.</p>
               <label className="grid gap-2 text-sm font-bold text-slate-700">Contract source<select className={fieldClass} value={document.contractSource || 'default'} onChange={(event) => changeContractSource(event.target.value)}><option value="default">Default Contract</option><option value="pdf" disabled={!document.contractPdf && !defaultContracts[document.quoteType || 'project']?.pdf}>Uploaded PDF</option></select></label>
-              {document.contractSource === 'pdf' && document.contractPdf ? <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><p className="break-words font-bold">{document.contractPdf.fileName}</p><p className="mt-1 text-sm text-slate-500">{document.contractPdf.pageCount} pages · This PDF version will be kept with the quotation.</p><button type="button" className={`${secondaryClass} mt-3`} onClick={() => setPdfPreview(true)}>Preview PDF Contract</button><a className="ml-3 text-sm font-bold text-[#514568] underline" href="/admin/contracts" target="_blank" rel="noreferrer">Manage contracts</a></div> : <>
+              {document.contractSource === 'pdf' && document.contractPdf ? <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><p className="break-words font-bold">{document.contractPdf.fileName}</p><p className="mt-1 text-sm text-slate-500">{document.contractPdf.pageCount} pages · This PDF version will be kept with the quotation.</p><button type="button" className={`${secondaryClass} mt-3`} disabled={document.quoteType === 'pos' && (!selected || dirty)} onClick={() => setPdfPreview(true)}>Preview PDF Contract</button>{document.quoteType === 'pos' && (!selected || dirty) && <p className="mt-2 text-xs text-slate-500">Save the quotation to preview the PDF with the completed agreement date, client name, and business address.</p>}<a className="ml-3 text-sm font-bold text-[#514568] underline" href="/admin/contracts" target="_blank" rel="noreferrer">Manage contracts</a></div> : <>
               {document.contractText && document.contractText === defaultContractTexts[document.quoteType || 'project'] && <p className="text-sm font-bold text-emerald-800">Saved {document.quoteType === 'sync_court' ? 'Sync Court subscription' : document.quoteType === 'subscription' ? 'subscription' : document.quoteType === 'pos' ? 'POS' : 'one-time payment'} contract loaded.</p>}
               <label className="grid gap-2 text-sm font-bold text-slate-700">Contract terms (optional override)
                 <textarea className={fieldClass} rows={6} maxLength={30000} required={Boolean(document.quoteType && document.quoteType !== 'project' && !defaultContractTexts[document.quoteType])} value={document.contractText || ''} onChange={(e) => update('contractText', e.target.value)} placeholder="Leave blank to use the matching template, or enter this client's agreement" />
@@ -383,9 +416,10 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               {defaultContractTexts[document.quoteType || 'project'] && <button className={`${secondaryClass} justify-self-start`} type="button" onClick={() => update('contractText', defaultContractTexts[document.quoteType || 'project'])}>Use current contract template</button>}
               <details className="text-sm"><summary className="cursor-pointer font-bold text-[#514568]">Preview agreement terms</summary><div className="mt-3 max-h-80 overflow-y-auto leading-6"><ContractRichText format={document.contractStyle || (document.contractText === defaultContractTexts[document.quoteType || 'project'] ? defaultContractFormats[document.quoteType || 'project'] : undefined)} text={document.contractText?.trim() || selected?.contractText || defaultContractTexts[document.quoteType || 'project'] || ((!document.quoteType || document.quoteType === 'project') ? defaultContractText : 'Create terms in Contracts or enter them above before saving.')} /></div></details></>}
 
+              {document.quoteType === 'pos' && <label className="grid gap-2 text-sm font-bold text-slate-700">Agreement effective date rule<select className={fieldClass} value={document.contractDetails?.agreementDateRule || 'fixed'} onChange={event => update('contractDetails', { ...document.contractDetails, agreementDateRule: event.target.value, agreementDate: event.target.value === 'signing' ? '' : document.contractDetails?.agreementDate || document.issuedOn })}><option value="signing">Effective upon electronic signing</option><option value="fixed">Use an agreed calendar date</option></select><span className="text-xs font-normal text-slate-500">The client reviews this condition before accepting. When signing is the agreed trigger, the actual date is recorded from the client's signing timestamp.</span></label>}
               <details className="text-sm"><summary className="cursor-pointer font-bold text-[#514568]">Contract &amp; payment agreement details</summary><p className="mt-3 text-xs text-slate-500">Complete the agreed details for this client. Blank fields stay blank in the PDF; example prices and payment conditions are not filled automatically.</p><div className="mt-4 grid gap-4 sm:grid-cols-2">{[
                 ['agreementDate', 'Agreement date'], ['authorizedRepresentative', 'Client authorized representative'], ['clientPosition', 'Client representative position'], ['providerRepresentative', 'Zero One authorized representative'], ['providerPosition', 'Zero One representative position'], ['branches', 'Branches / terminals'], ['effectiveDate', 'Subscription effective date'], ['minimumPeriod', 'Minimum subscription period'], ['billingCommencement', 'Subscription payment commencement'], ['initialBillingTerms', 'Initial billing arrangements'], ['paymentTerms', 'Payment due date / terms'], ['gracePeriod', 'Payment grace period'], ['terminationTerms', 'Early termination fee / formula']
-              ].map(([key, label]) => <label key={key} className="grid gap-2 font-bold text-slate-700">{label}<textarea className={fieldClass} rows={key === 'paymentTerms' || key === 'terminationTerms' ? 3 : 2} readOnly={key === 'billingCommencement' && Boolean(document.monthlySubscription)} maxLength={key === 'paymentTerms' || key === 'terminationTerms' ? 2000 : 500} value={document.contractDetails?.[key] || ''} onChange={(event) => update('contractDetails', { ...document.contractDetails, [key]: event.target.value })} /></label>)}</div></details>
+              ].filter(([key]) => !(key === 'agreementDate' && document.quoteType === 'pos' && document.contractDetails?.agreementDateRule === 'signing')).map(([key, label]) => <label key={key} className="grid gap-2 font-bold text-slate-700">{label}<textarea className={fieldClass} rows={key === 'paymentTerms' || key === 'terminationTerms' ? 3 : 2} readOnly={key === 'billingCommencement' && Boolean(document.monthlySubscription)} maxLength={key === 'paymentTerms' || key === 'terminationTerms' ? 2000 : 500} value={document.contractDetails?.[key] || (key === 'agreementDate' && document.quoteType === 'pos' ? document.issuedOn : '')} onChange={(event) => update('contractDetails', { ...document.contractDetails, [key]: event.target.value })} /></label>)}</div></details>
             </section>
             </>}
             <div className="rounded-lg bg-slate-50 p-4 text-sm">
@@ -395,8 +429,9 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
               <div className="mt-4 flex justify-between gap-3 border-t border-slate-200 pt-4 text-lg font-bold"><span>{totals.hasRecurring ? 'One-time charges' : 'Total'}</span><output aria-label="Quotation total">{money(totals.total)}</output></div>
               {totals.hasRecurring && <><div className="mt-3 flex justify-between gap-3 text-lg font-bold"><span>Subscription</span><output aria-label="Recurring total">{money(totals.recurringTotal)} / {document.billingPeriod === 'yearly' ? 'year' : 'month'}</output></div><p className="mt-2 text-xs text-slate-500">One-time charges and recurring subscription are separate. Recurring subtotal: {money(totals.recurringSubtotal)}; tax: {money(totals.recurringTax)}.</p>{document.contractDetails?.billingCommencement && <p className="mt-2 text-sm font-bold text-[#514568]">Subscription billing starts: {document.contractDetails.billingCommencement}</p>}</>}
             </div>
+            </fieldset>
             <div className="flex flex-wrap gap-3">
-              <button className={primaryClass} type="submit">{saving ? 'Saving...' : selected ? 'Save Changes' : 'Save Quotation'}</button>
+              <button className={primaryClass} type="submit" disabled={contractLocked}>{saving ? 'Saving...' : selected ? 'Save Changes' : 'Save Quotation'}</button>
               <button className={secondaryClass} type="button" disabled={!selected || dirty} onClick={printQuotation}>Print / Save PDF</button>
               <button className={secondaryClass} type="button" disabled={!selected || dirty || document.clientFlow === 'quotation_only'} onClick={async () => { try { await printContract({ ...selected.document, contractText: selected.contractText }, selected.reference, selected.clientResponse?.current ? selected.clientResponse.signature : null, { adminToken: token, quotationId: selected.id }); } catch (error) { setNotice({ error: true, message: error.message }); } }}>Contract / Save PDF</button>
             </div>
@@ -455,9 +490,9 @@ export default function QuotationsPanel({ token, initialTab = 'create' }) {
         setRevision((value) => value + 1);
         if (selected?.id === row.id) { setSelected(null); setDocument(newQuotation()); setDirty(false); }
       }} /></div>}
-      <ConfirmModal isOpen={regeneratePrompt} title="Generate a new client link?" message="The revised quotation is saved. The previous link is inactive. Generate a new link to share the updated quotation with the client." confirmLabel="Generate New Link" cancelLabel="Later" onCancel={() => setRegeneratePrompt(false)} onConfirm={() => { setRegeneratePrompt(false); changeSharing(); }} />
+      <ConfirmModal isOpen={Boolean(regeneratePrompt)} title="Generate a new client link?" message="The revised quotation is saved. The previous link is inactive. Generate a new link to share the updated quotation with the client." confirmLabel="Generate New Link" cancelLabel="Later" onCancel={() => setRegeneratePrompt(false)} onConfirm={() => { const { quotation, keepFormClear } = regeneratePrompt; setRegeneratePrompt(false); changeSharing(false, quotation, keepFormClear); }} />
       {savedLink?.sharePath && <QuotationLinkDialog quotation={savedLink} onClose={() => setSavedLink(null)} />}
-      {pdfPreview && document.contractPdf && <dialog ref={pdfDialog} aria-label="Quotation PDF contract preview" className="fixed inset-0 m-auto w-[94vw] max-w-5xl rounded-xl border border-slate-200 bg-white p-4 shadow-2xl backdrop:bg-slate-950/60" onCancel={(event) => { event.preventDefault(); setPdfPreview(false); }}><div className="mb-3 flex items-center justify-between gap-3"><h2 className="truncate font-bold">{document.contractPdf.fileName}</h2><button type="button" className={secondaryClass} onClick={() => setPdfPreview(false)}>Close Preview</button></div><PdfContractView token={token} url={`${getApiBaseUrl()}/api/admin/contracts/files/${document.contractPdf.id}`} className="h-[75dvh] w-full rounded border border-slate-200" /></dialog>}
+      {pdfPreview && document.contractPdf && <dialog ref={pdfDialog} aria-label="Quotation PDF contract preview" className="fixed inset-0 m-auto w-[94vw] max-w-5xl rounded-xl border border-slate-200 bg-white p-4 shadow-2xl backdrop:bg-slate-950/60" onCancel={(event) => { event.preventDefault(); setPdfPreview(false); }}><div className="mb-3 flex items-center justify-between gap-3"><h2 className="truncate font-bold">{document.contractPdf.fileName}</h2><button type="button" className={secondaryClass} onClick={() => setPdfPreview(false)}>Close Preview</button></div><PdfContractView token={token} url={document.quoteType === 'pos' && selected ? `${getApiBaseUrl()}/api/admin/contracts/quotations/${selected.id}/pdf` : `${getApiBaseUrl()}/api/admin/contracts/files/${document.contractPdf.id}`} className="h-[75dvh] w-full rounded border border-slate-200" /></dialog>}
     </div>
   );
 }

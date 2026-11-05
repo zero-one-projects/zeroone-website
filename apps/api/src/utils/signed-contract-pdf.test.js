@@ -64,3 +64,86 @@ test('default contract downloads are unsigned PDFs and leave saved terms unchang
   assert(pdf.getPageCount() > 0);
   assert.equal(JSON.stringify(document), before);
 });
+
+test('signed PDF identifies the provider and records a single client signature and acceptance timestamp', async () => {
+  const PDFDocument = require('pdfkit');
+  const original = PDFDocument.prototype.text;
+  const captured = [];
+  PDFDocument.prototype.text = function (value, ...args) { captured.push(String(value)); return original.call(this, value, ...args); };
+  try {
+    await renderSignedContractPdf(record);
+    assert(captured.includes('SERVICE PROVIDER'));
+    assert(captured.includes('Zero One Information Technology Inc.'));
+    assert.equal(captured.filter(text => text === 'CLIENT ACCEPTANCE').length, 1);
+    assert.equal(captured.filter(text => text === 'Electronic Signature').length, 1);
+    assert.equal(captured.filter(text => text === record.signature.typedName).length, 1);
+    assert(captured.includes(`Date Signed: ${record.signature.signedAt}`));
+    assert(captured.includes(`Verified email: ${record.signature.email}`));
+    assert(!captured.includes('FOR THE PROVIDER'));
+  } finally { PDFDocument.prototype.text = original; }
+});
+
+test('POS signed PDFs render client-specific pricing rows from each approved quotation', async () => {
+  const PDFDocument = require('pdfkit');
+  const { PDFDocument: ReadPdf } = require('pdf-lib');
+  const original = PDFDocument.prototype.text;
+  const captured = [];
+  PDFDocument.prototype.text = function (value, ...args) { captured.push(String(value)); return original.call(this, value, ...args); };
+  try {
+    for (const setupPrice of [30000, 38000]) {
+      captured.length = 0;
+      const document = { ...record.document, quoteType: 'pos', currency: 'PHP', billingPeriod: 'monthly', total: setupPrice + 2500, hasRecurring: true, recurringTotal: 1200, items: [
+        { description: 'POS setup', chargeType: 'setup', quantity: 1, unitPrice: setupPrice },
+        { description: 'Extra feature', chargeType: 'addon', quantity: 1, unitPrice: 2500 },
+        { description: 'Monthly plan', chargeType: 'recurring', quantity: 1, unitPrice: 1200 }
+      ], contractDetails: { billingCommencement: 'Upon official Go-Live', minimumPeriod: 'Agreed period' } };
+      const pdf = await ReadPdf.load(await renderSignedContractPdf({ ...record, document }));
+      assert(pdf.getPageCount() > 0);
+      assert(captured.includes('One-Time Setup & Implementation Fee'));
+      assert(captured.includes(`PHP ${setupPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`));
+      assert(captured.includes('PHP 1,200.00'));
+      assert(captured.includes('Extra feature — PHP 2,500.00'));
+      assert(captured.includes('Upon official Go-Live'));
+      assert(captured.includes(record.reference));
+      assert.equal(captured.filter(value => value === 'Electronic Signature').length, 1);
+    }
+  } finally { PDFDocument.prototype.text = original; }
+});
+
+
+test('signed PDF includes the saved hardware clause without adding terms to legacy records', async () => {
+  const PDFDocument = require('pdfkit');
+  const original = PDFDocument.prototype.text;
+  const captured = [];
+  PDFDocument.prototype.text = function (value, ...args) { captured.push(String(value)); return original.call(this, value, ...args); };
+  try {
+    const document = { ...record.document, items: [{ description: 'Printer', chargeType: 'hardware' }], contractDetails: { hardwareTerms: 'Saved client hardware payment terms.' }, contractPdf: { fileName: 'Agreement.pdf', sha256: 'a'.repeat(64) } };
+    await renderSignedContractPdf({ ...record, document });
+    assert(captured.includes(document.contractDetails.hardwareTerms));
+    captured.length = 0;
+    await renderSignedContractPdf({ ...record, document: { ...document, contractDetails: {} } });
+    assert(!captured.includes('HARDWARE PROCUREMENT AND PAYMENT TERMS'));
+  } finally { PDFDocument.prototype.text = original; }
+});
+
+test('POS acceptance review uses the uploaded page size, matching body text and branded heading without a blank extra page', async () => {
+  const { PDFDocument: ReadPdf } = require('pdf-lib');
+  const PDFDocument = require('pdfkit');
+  const { typography } = require('./contract-pdf-typography');
+  const { renderContractReviewPdf } = require('./signed-contract-pdf');
+  const source = await ReadPdf.create(); source.addPage([612, 792]);
+  const bytes = Buffer.from(await source.save());
+  const policy = require('./contract-acceptance').acceptancePolicy;
+  const document = { ...record.document, quoteType: 'pos', acceptancePolicy: policy };
+  const original = PDFDocument.prototype.text, captured = [];
+  PDFDocument.prototype.text = function(value, ...args) { captured.push({ value: String(value), size: this._fontSize }); return original.call(this, value, ...args); };
+  try {
+    const pdf = await ReadPdf.load(await renderContractReviewPdf({ bytes, document, reference: record.reference }));
+    assert.equal(pdf.getPageCount(), 2);
+    assert.deepEqual(pdf.getPage(1).getSize(), pdf.getPage(0).getSize());
+    assert.equal(captured.find(entry => entry.value === policy.terms).size, typography.bodySize);
+    assert.equal(captured.find(entry => entry.value === policy.title.toUpperCase()).size, typography.titleSize);
+    assert(captured.some(entry => entry.value === 'Agreement status: Pending Admin Confirmation.'));
+    assert.equal((await ReadPdf.load(bytes)).getPageCount(), 1);
+  } finally { PDFDocument.prototype.text = original; }
+});

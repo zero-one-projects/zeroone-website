@@ -1,3 +1,4 @@
+import { contractProvider } from '../utils/contractIdentity';
 import { readSigningSession, storeSigningSession } from '../utils/quotationSigningSession';
 import QuotationPaymentStep from './QuotationPaymentStep';
 import ContractReview from './ContractReview';
@@ -9,6 +10,7 @@ import SignaturePad from './SignaturePad';
 const field = 'w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950';
 
 export default function QuotationResponsePanel({ quotation, token, onResponse, onPrintQuotation, onDecideLater }) {
+  const reviewBeforeAcceptance = quotation.document.quoteType === 'pos' && quotation.document.clientFlow !== 'quotation_only';
   const quotationOnly = quotation.document.clientFlow === 'quotation_only';
   const followUpMessage = 'You will receive another email from Zero One with your contract, payment details, and terms.';
   const [action, setAction] = useState(() => new URLSearchParams(window.location.search).get('sign') === '1' && !quotationOnly && quotation.clientResponse?.current && quotation.clientResponse.action === 'accept' && !quotation.clientResponse.signedAt ? 'sign' : '');
@@ -184,7 +186,7 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
       </>}
       {action && <dialog
         ref={dialogRef}
-        className={`quotation-controls fixed inset-0 m-auto max-h-[90dvh] w-[92vw] ${isSigning ? 'max-w-5xl' : 'max-w-xl'} overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 text-slate-950 shadow-2xl backdrop:bg-slate-950/55 backdrop:backdrop-blur-sm sm:p-6`}
+        className={`quotation-controls fixed inset-0 m-auto max-h-[90dvh] w-[92vw] ${isSigning || (action === 'accept' && reviewBeforeAcceptance) ? 'max-w-5xl' : 'max-w-xl'} overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 text-slate-950 shadow-2xl backdrop:bg-slate-950/55 backdrop:backdrop-blur-sm sm:p-6`}
         aria-labelledby={dialogTitleId}
         onCancel={(event) => { event.preventDefault(); closeDialog(); }}
       >
@@ -220,10 +222,10 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
             <button type="button" className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700" onClick={signLater}>Sign Later</button>
           </div>
         </section> : <>
-        {isSigning && !verified && <section className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4" aria-label="Contract preview">
-          <h3 className="font-bold">Your accepted quotation · {quotation.reference}</h3>
-          <p className="mt-2 text-sm text-slate-600">Review your agreement below. Verify the email that accepted this quotation before signing.</p>
-          {quotation.document.contractSource === 'pdf' ? <div className="mt-3"><ContractReview document={quotation.document} reference={quotation.reference} shareToken={token} /></div> : <details className="mt-3 text-sm" open><summary className="cursor-pointer font-bold">Contract terms</summary><div className="mt-3 max-h-60 overflow-y-auto leading-6"><ContractRichText text={quotation.contractText} format={quotation.document.contractStyle} /></div></details>}
+        {((isSigning && !verified) || (action === 'accept' && reviewBeforeAcceptance)) && <section className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4" aria-label="Contract preview">
+          <h3 className="font-bold">{isSigning ? 'Your accepted quotation' : 'Review the complete agreement'} · {quotation.reference}</h3>
+          <p className="mt-2 text-sm text-slate-600">{isSigning ? 'Review your agreement below. Verify the email that accepted this quotation before signing.' : 'Review the completed agreement, including the client details, pricing, and terms, before confirming acceptance.'}</p>
+          {reviewBeforeAcceptance || quotation.document.contractSource === 'pdf' ? <div className="mt-3"><ContractReview document={quotation.document} reference={quotation.reference} shareToken={token} /></div> : <details className="mt-3 text-sm" open><summary className="cursor-pointer font-bold">Contract terms</summary><div className="mt-3 max-h-60 overflow-y-auto leading-6"><ContractRichText text={quotation.contractText} format={quotation.document.contractStyle} /></div></details>}
         </section>}
         <form onSubmit={!challenge ? sendCode : action !== 'requote' && !verified ? verifyEmail : submit}>
         <fieldset disabled={busy} className="grid gap-4 rounded-lg bg-slate-50 p-4 disabled:opacity-60">
@@ -234,7 +236,7 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
           </label>
           {action === 'requote' && <p className="text-sm text-slate-600">Submitting a revision request will deactivate this link. Zero One will review your requested changes and share a new link for the updated quotation.</p>}
           {challenge && <>
-            {(action === 'requote' || verified) && <>
+            {(action === 'requote' || (verified && !isSigning)) && <>
             <label className="grid gap-2 text-sm font-bold text-slate-700">Your full name
               <input className={field} required maxLength={180} autoComplete="name" readOnly={isSigning && Boolean(signingSession?.name || quotation.document.contractDetails?.authorizedRepresentative || quotation.document.clientName)} value={name} onChange={(event) => setName(event.target.value)} />
             </label>
@@ -253,8 +255,18 @@ export default function QuotationResponsePanel({ quotation, token, onResponse, o
                 {quotation.document.notes && <p className="mt-3 whitespace-pre-wrap text-sm">{quotation.document.notes}</p>}
                 <div className="mt-4"><ContractReview document={{ ...quotation.document, contractText: verified.contractText }} reference={quotation.reference} shareToken={token} /></div>
               </section>
-              <SignaturePad value={strokes} onChange={setStrokes} disabled={busy} />
-              <label className="flex items-start gap-3 text-sm leading-6"><input className="mt-1 h-4 w-4 shrink-0 accent-[#514568]" type="checkbox" required checked={agreed} onChange={(event) => setAgreed(event.target.checked)} /><span>{verified.consentText}</span></label>
+              <section className="grid gap-5 rounded-xl border border-slate-200 bg-white p-5" aria-label="Client acceptance">
+                <div><h3 className="text-sm font-bold uppercase text-slate-700">Service Provider</h3><p className="mt-2 text-sm text-slate-900">{contractProvider(quotation.document).name}</p><p className="mt-1 text-xs text-slate-500">{contractProvider(quotation.document).address}</p></div>
+                <div><h3 className="text-lg font-bold text-slate-900">Client Acceptance</h3><p className="mt-2 text-sm leading-6 text-slate-600">Confirm that you are authorized to sign on behalf of the client. Review the agreement above, draw your signature, and check the acceptance box below.</p></div>
+                <label className="grid gap-2 text-sm font-bold text-slate-700">Your full name
+                  <span className="text-xs font-normal text-slate-500">Authorized Representative</span>
+                  <input aria-label="Your full name" className={field} required maxLength={180} autoComplete="name" readOnly={Boolean(signingSession?.name || quotation.document.contractDetails?.authorizedRepresentative || quotation.document.clientName)} value={name} onChange={(event) => setName(event.target.value)} />
+                </label>
+                {quotation.document.contractDetails?.clientPosition && <div className="text-sm"><p className="font-bold text-slate-700">Position / Title</p><p className="mt-2 text-slate-900">{quotation.document.contractDetails.clientPosition}</p></div>}
+                <SignaturePad value={strokes} onChange={setStrokes} disabled={busy} />
+                <label className="flex items-start gap-3 text-sm leading-6"><input className="mt-1 h-4 w-4 shrink-0 accent-[#514568]" type="checkbox" required checked={agreed} onChange={(event) => setAgreed(event.target.checked)} /><span>{verified.consentText}</span></label>
+                <div className="border-t border-slate-200 pt-4 text-sm"><p className="font-bold text-slate-700">Date Signed</p><p className="mt-2 text-slate-500">Recorded automatically when you submit your signature. Your signed PDF will include your signature and signing timestamp.</p></div>
+              </section>
             </>}
             {(action === 'requote' || verified) && <label className="grid gap-2 text-sm font-bold text-slate-700">{action === 'requote' ? 'What would you like changed or added?' : 'Message (optional)'}
               <textarea className={field} required={action === 'requote'} maxLength={5000} rows={4} value={note} onChange={(event) => setNote(event.target.value)} />

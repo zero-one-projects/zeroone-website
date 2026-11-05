@@ -13,5 +13,6 @@ module.exports = sequelize.define('QuotationPaymentProof', {
   mimeType: { type: DataTypes.STRING(40), allowNull: false, field: 'mime_type' },
   sha256: { type: DataTypes.STRING(64), allowNull: false },
   data: { type: DataTypes.BLOB('medium'), allowNull: false },
-  snapshot: { type: DataTypes.JSON, allowNull: false }
+  snapshot: { type: DataTypes.JSON, allowNull: false },
+  verification: { type: DataTypes.JSON, allowNull: true }
 }, { tableName: 'quotation_payment_proofs', underscored: true, updatedAt: false, indexes: [{ fields: ['quotation_id'] }] });

@@ -55,6 +55,7 @@ router.post('/:token/verification', async (req, res, next) => {
     const row = await Quotation.findOne({ where: { shareToken: req.params.token }, logging: false });
     if (!row) return res.status(404).json({ message: 'Quotation link not found.' });
     if (quotationExpired(row.document)) return res.status(410).json({ message: 'This quotation has expired.' });
+    if (action === 'accept') require('../utils/contract-autofill').assertContractReady(row.document);
     const version = documentHash(row.document);
     if (req.body.documentVersion !== version) return res.status(409).json({ message: 'This quotation has changed. Refresh and review it before responding.' });
     if (action === 'payment' && (!signedCurrent(row) || email !== row.clientResponse.email)) return res.status(403).json({ message: 'Use the email that signed this contract to submit payment proof.' });
@@ -126,6 +127,7 @@ router.post('/:token/respond', async (req, res, next) => {
         if (!crypto.timingSafeEqual(Buffer.from(candidate, 'hex'), Buffer.from(challenge.codeHash, 'hex'))) return { status: 400, message: 'Incorrect code. Please check your inbox and try again.' };
       }
       const version = documentHash(row.document);
+      if (action === 'accept') require('../utils/contract-autofill').assertContractReady(row.document);
       if (challenge.documentHash !== version || (row.document.clientEmail && row.document.clientEmail.toLowerCase() !== challenge.email)) return { status: 409, message: 'The quotation changed. Refresh and review it before responding.' };
       if (row.clientResponse?.documentHash === version) return { status: 409, message: 'A response has already been recorded for this quotation.' };
       const response = { action, email: challenge.email, name, note, respondedAt: new Date().toISOString(), documentHash: version, document: row.document };
@@ -133,7 +135,10 @@ router.post('/:token/respond', async (req, res, next) => {
       if (signature) response.signature = { ...signature, signerName: name, email: challenge.email, signedAt: response.respondedAt,
         contractText: quotationContract(row.document), documentHash: version, ipAddress: req.ip,
         userAgent: String(req.get('user-agent') || '').slice(0, 500) };
+      if (response.signature) Object.assign(response.signature, require('../utils/contract-autofill').agreementSignatureDetails(response.document, response.signature.signedAt));
       await recordResponse(QuotationResponseHistory, row, response, transaction);
+      const contractRecord = response.signature ? await require('../utils/contract-acceptance').recordClientSignature(row, response, transaction) : null;
+      if (response.signature && !require('../utils/contract-acceptance').usesConfirmation(response.document)) await require('../utils/pos-subscriptions').recordSignedPos(row, response, transaction);
       await row.update({ clientResponse: response, ...(action === 'requote' ? { shareToken: null } : {}) }, { transaction, logging: false });
       await challenge.update({ consumedAt: new Date() }, { transaction, logging: false });
       await QuotationNotification.create({ id: crypto.randomUUID(), quotationId: row.id, payload: {
@@ -143,7 +148,7 @@ router.post('/:token/respond', async (req, res, next) => {
           total: row.document.total, currency: row.document.currency, validUntil: row.document.validUntil,
           hasRecurring: row.document.hasRecurring, recurringTotal: row.document.recurringTotal, billingPeriod: row.document.billingPeriod,
           billingCommencement: row.document.contractDetails?.billingCommencement, monthlySubscriptionNotice: row.document.monthlySubscription?.notice,
-          respondedAt: row.clientResponse.respondedAt, documentVersion: version, note, signedAt: response.signature?.signedAt, ...(signature ? { signedContract: { reference: serializeQuotation(row).reference, document: response.document, signature: response.signature } } : {}), clientFlow: row.document.clientFlow, signaturePending: action === 'accept' && !signature && row.document.clientFlow !== 'quotation_only'
+          respondedAt: row.clientResponse.respondedAt, documentVersion: version, note, signedAt: response.signature?.signedAt, ...(signature ? { signedContract: { reference: serializeQuotation(row).reference, document: response.document, signature: response.signature, ...(contractRecord ? { recordId: contractRecord.id, copy: contractRecord.finalPdf ? 'final' : 'client' } : {}) } } : {}), clientFlow: row.document.clientFlow, signaturePending: action === 'accept' && !signature && row.document.clientFlow !== 'quotation_only'
         } }, { transaction, logging: false });
       if (action === 'accept') await QuotationNotification.create({ id: crypto.randomUUID(), quotationId: row.id, payload: {
         action: 'client_accept', reference: serializeQuotation(row).reference, title: row.document.title,
@@ -151,7 +156,7 @@ router.post('/:token/respond', async (req, res, next) => {
         hasRecurring: row.document.hasRecurring, recurringTotal: row.document.recurringTotal, billingPeriod: row.document.billingPeriod,
         billingCommencement: row.document.contractDetails?.billingCommencement, monthlySubscriptionNotice: row.document.monthlySubscription?.notice,
         respondedAt: response.respondedAt, signedAt: response.signature?.signedAt, clientFlow: row.document.clientFlow, signaturePending: !signature && row.document.clientFlow !== 'quotation_only',
-        validUntil: row.document.validUntil, clientUrl: clientQuotationUrl(row.shareToken, row.document.clientFlow), ...(signature ? { signedContract: { reference: serializeQuotation(row).reference, document: response.document, signature: response.signature } } : {})
+        validUntil: row.document.validUntil, clientUrl: clientQuotationUrl(row.shareToken, row.document.clientFlow), ...(signature ? { signedContract: { reference: serializeQuotation(row).reference, document: response.document, signature: response.signature, ...(contractRecord ? { recordId: contractRecord.id, copy: contractRecord.finalPdf ? 'final' : 'client' } : {}) } } : {})
       } }, { transaction, logging: false });
       return { status: 200, quotation: serializeQuotation(row), ...(action === 'accept' && !signature && row.document.clientFlow !== 'quotation_only' ? { signingSession: openPageSession(row, challenge) } : {}), notifyTeam: true };
     });
@@ -171,22 +176,26 @@ router.post('/:token/sign', async (req, res, next) => {
       if (!row) return { status: 404, message: 'Quotation link not found.' };
       if (quotationExpired(row.document)) return { status: 410, message: 'This link has expired. Contact Zero One to extend access before signing.' };
       if (!pendingSignature(row)) return { status: 409, message: 'This quotation must be accepted and awaiting signature. Refresh the page.' };
+      require('../utils/contract-autofill').assertContractReady(row.document);
       const challenge = await QuotationVerification.findByPk(challengeId, { transaction, lock: transaction.LOCK.UPDATE, logging: false });
       const response = row.clientResponse;
       const sessionValid = challenge && verifySigningSession(verificationProof, challenge, row, signingContract(row));
       if (!challenge || challenge.quotationId !== row.id || challenge.action !== 'accept' || challenge.email !== response.email || challenge.documentHash !== response.documentHash || (challenge.consumedAt && response.verificationChallengeId !== challenge.id) || (!sessionValid && (new Date(challenge.expiresAt).getTime() <= Date.now() || !verifyAcceptanceProof(verificationProof, challenge, signingContract(row))))) return { status: 400, message: 'Your verification is invalid or expired. Request a new code to sign.' };
       const updated = { ...response, signature: { ...signature, signerName: name, email: challenge.email, signedAt: new Date().toISOString(), contractText: signingContract(row), documentHash: response.documentHash, ipAddress: req.ip, userAgent: String(req.get('user-agent') || '').slice(0, 500) } };
+      Object.assign(updated.signature, require('../utils/contract-autofill').agreementSignatureDetails(response.document || row.document, updated.signature.signedAt));
+      const contractRecord = await require('../utils/contract-acceptance').recordClientSignature(row, updated, transaction);
+      if (!require('../utils/contract-acceptance').usesConfirmation(response.document || row.document)) await require('../utils/pos-subscriptions').recordSignedPos(row, updated, transaction);
       await row.update({ clientResponse: updated }, { transaction, logging: false });
       const [history] = await QuotationResponseHistory.findOrCreate({ where: { quotationId: row.id, documentHash: response.documentHash }, defaults: { response }, transaction, logging: false });
       await history.update({ response: updated }, { transaction, logging: false });
       await challenge.update({ consumedAt: new Date() }, { transaction, logging: false });
       const notificationPayload = {
-        action: 'signed', reference: serializeQuotation(row).reference, title: row.document.title, clientCompany: row.document.clientName,
+        action: 'signed', contractConfirmationPending: Boolean(contractRecord && !contractRecord.finalPdf), reference: serializeQuotation(row).reference, title: row.document.title, clientCompany: row.document.clientName,
         clientName: name, clientEmail: challenge.email, total: row.document.total, currency: row.document.currency,
         hasRecurring: row.document.hasRecurring, recurringTotal: row.document.recurringTotal, billingPeriod: row.document.billingPeriod,
         billingCommencement: row.document.contractDetails?.billingCommencement, monthlySubscriptionNotice: row.document.monthlySubscription?.notice,
         validUntil: row.document.validUntil, respondedAt: response.respondedAt, signedAt: updated.signature.signedAt, documentVersion: response.documentHash,
-        signedContract: { reference: serializeQuotation(row).reference, document: response.document || row.document, signature: updated.signature }
+        signedContract: { reference: serializeQuotation(row).reference, document: response.document || row.document, signature: updated.signature, ...(contractRecord ? { recordId: contractRecord.id, copy: contractRecord.finalPdf ? 'final' : 'client' } : {}) }
       };
       await QuotationNotification.create({ id: crypto.randomUUID(), quotationId: row.id, payload: notificationPayload }, { transaction, logging: false });
       await QuotationNotification.create({ id: crypto.randomUUID(), quotationId: row.id, payload: { ...notificationPayload, action: 'client_signed' } }, { transaction, logging: false });
@@ -213,7 +222,7 @@ router.post('/:token/signed-contract', async (req, res, next) => {
     const challenge = await QuotationVerification.findByPk(challengeId, { logging: false });
     if (!response?.signature || response.documentHash !== documentHash(row.document) || !challenge || challenge.quotationId !== row.id || challenge.email !== response.email || !verifySigningSession(verificationProof, challenge, row, response.contractText || quotationContract(row.document))) return res.status(403).json({ message: 'Use the verified session that signed this contract. A copy is also sent to your email.' });
     const reference = serializeQuotation(row).reference;
-    const pdf = await require('../utils/signed-contract-pdf').renderSignedContractPdf({ reference, document: response.document || row.document, signature: response.signature });
+    const pdf = await require('../utils/contract-acceptance').signedCopy(row, response);
     return res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="Signed-Contract-${reference}.pdf"` }).send(pdf);
   } catch (error) { return next(error); }
 });
@@ -227,7 +236,8 @@ router.get('/:token/contract-pdf', async (req, res, next) => {
     if (row.document.clientFlow === 'quotation_only') return res.status(404).json({ message: 'Contract signing is not included with this quotation.' });
     if (row.document.contractSource !== 'pdf') return res.status(404).json({ message: 'This quotation uses a default contract.' });
     const file = await require('../utils/contract-files').getContractFile(row.document.contractPdf, true);
-    return res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="contract.pdf"' }).send(file.data);
+    const bytes = await require('../utils/signed-contract-pdf').renderContractReviewPdf({ bytes: file.data, document: row.document, providerAcceptance: row.contractState?.documentHash === documentHash(row.document) ? row.contractState.providerAcceptance : undefined, reference: serializeQuotation(row).reference });
+    return res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="contract.pdf"' }).send(bytes);
   } catch (error) { return next(error); }
 });
 

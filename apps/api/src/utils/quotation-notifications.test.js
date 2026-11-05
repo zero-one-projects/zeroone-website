@@ -95,3 +95,27 @@ test('saved requote email includes the revised prices, scope, original request, 
   for (const text of ['40,000.00', '1,699.00 / month', 'Please add online ordering.', 'Online orders and order status', 'admin@example.com', 'new-version']) assert(message.body.content.includes(text));
   assert.equal(message.replyTo[0].emailAddress.address, 'client@example.com');
 });
+
+test('agreement confirmation notifies the verified client with the preserved final PDF and separate payment status', async () => {
+  const { MailConfig } = require('../models');
+  const { sendQuotationResponseNotification } = require('./quotation-verification-mail');
+  const signedContract = { recordId: 'record-id', documentHash: 'signed-version', copy: 'final' };
+  const pdf = Buffer.from('%PDF-preserved-final');
+  const messages = [];
+  mock.method(MailConfig, 'findOne', async () => ({ tenantId: 'test', clientId: 'test', clientSecret: 'test', senderEmail: 'info@zerooneitinc.com' }));
+  const render = mock.method(require('./signed-contract-pdf'), 'renderSignedContractPdf', async payload => { assert.deepEqual(payload, signedContract); return pdf; });
+  mock.method(global, 'fetch', async (url, options) => {
+    if (String(url).includes('/oauth2/')) return { ok: true, json: async () => ({ access_token: 'test-token' }) };
+    messages.push(JSON.parse(options.body).message);
+    return { ok: true };
+  });
+  try {
+    await sendQuotationResponseNotification({ action: 'client_contract_confirmed', reference: 'ZO-2026-00024', title: 'POS', clientName: '<Client>', clientEmail: 'verified@example.com', confirmedBy: 'Authorized Admin', confirmedAt: '2026-11-05T01:00:00Z', signedContract });
+    assert.equal(messages.length, 1);
+    assert.equal(render.mock.callCount(), 1);
+    assert.deepEqual(messages[0].toRecipients, [{ emailAddress: { address: 'verified@example.com' } }]);
+    assert.match(messages[0].subject, /Agreement confirmed/);
+    for (const text of ['Authorized Admin', 'Manila time', '&lt;Client&gt;', 'Payment verification is recorded separately', 'separate agreement or addendum']) assert(messages[0].body.content.includes(text));
+    assert.equal(messages[0].attachments[0].contentBytes, pdf.toString('base64'));
+  } finally { mock.restoreAll(); }
+});

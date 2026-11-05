@@ -24,7 +24,7 @@ test('billing emails use the billing mailbox, attach the PDF, and escape client 
     assert.deepEqual(message.ccRecipients, [{ emailAddress: { address: 'billing@zerooneitinc.com', name: 'ZeroOne Billing' } }, { emailAddress: { address: 'accounts@example.com' } }]);
     assert(message.body.content.includes('₱1,402.88')); assert(message.body.content.includes('Advance payment / deduction applied: ₱500.00'));
     assert(message.body.content.includes('&lt;Client&gt;')); assert(!message.body.content.includes('<script>'));
-    assert(message.body.content.includes(`https://zerooneitinc.com${bill.sharePath}`));
+    assert(message.body.content.includes(`https://zerooneitinc.com/billing/${'a'.repeat(64)}`));
     assert.equal(Buffer.from(message.attachments[0].contentBytes, 'base64').subarray(0, 5).toString(), '%PDF-');
   } finally { mock.restoreAll(); if (previous === undefined) delete process.env.CLIENT_WEB_URL; else process.env.CLIENT_WEB_URL = previous; }
 });

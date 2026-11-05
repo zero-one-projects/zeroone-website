@@ -19,6 +19,8 @@ function serializeQuotation(row, includeShare = false) {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     clientResponse: responseSummary(row, includeShare),
+    contractState: require('./contract-acceptance').publicState(row, includeShare),
+    ...require('./payment-verification').publicPaymentState(row),
     ...(includeShare ? {
       sharePath: row.shareToken ? `/quotation/${row.shareToken}` : null,
       expiresAt: quotationExpiresAt(row.document.validUntil)

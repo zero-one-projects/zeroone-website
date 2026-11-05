@@ -13,7 +13,7 @@ export async function copyText(text, input) {
     target.value = text;
     target.readOnly = true;
     target.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px;';
-    (document.querySelector('dialog[open]') || document.body).appendChild(target);
+    (Array.from(document.querySelectorAll('dialog[open]')).pop() || document.body).appendChild(target);
   }
   try {
     target.focus(); target.select(); target.setSelectionRange(0, text.length);

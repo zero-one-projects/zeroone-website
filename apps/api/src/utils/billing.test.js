@@ -18,8 +18,10 @@ test('monthly billing snapshots only recurring charges and their tax, excluding 
   row.document.clientName = 'Changed';
   assert.equal(bill.clientName, 'Example client');
 });
-test('billing requires a current accepted signed monthly custom subscription', () => {
-  for (const type of ['project', 'pos']) assert.throws(() => subscriptionDocument(subscription({ quoteType: type })), /custom subscription/);
+test('billing requires a current signed monthly subscription and rejects upgrade quotations as separate billing accounts', () => {
+  assert.throws(() => subscriptionDocument(subscription({ quoteType: 'project' })), /custom subscription/);
+  assert.equal(subscriptionDocument(subscription({ quoteType: 'pos' })).quoteType, 'pos');
+  for (const posPurpose of ['upgrade', 'customization']) assert.throws(() => subscriptionDocument(subscription({ quoteType: 'pos', posPurpose })), /original POS/);
   assert.throws(() => subscriptionDocument(subscription({ billingPeriod: 'yearly' })), /monthly/);
   const row = subscription(); row.clientResponse.signature = null;
   assert.throws(() => subscriptionDocument(row), /signed contract/);
@@ -105,4 +107,22 @@ test('Sync Court uses the signed monthly subscription billing flow and excludes 
   assert.equal(subscriptionDocument(row).quoteType, 'sync_court');
   const bill = createBillingDocument(row, input);
   assert.equal(bill.items.length, 1); assert.equal(bill.total, 1680);
+});
+
+test('USD billing uses the dollar account for defaults and retains custom instructions', async () => {
+  const { createManualBillingDocument, billingPaymentInstructions, serializeBill, usdPaymentInstructions } = require('./billing');
+  const { defaultPaymentInstructions } = require('./quotation-payment');
+  const manual = createManualBillingDocument({ clientName: 'USD Client', title: 'IT Support', currency: 'USD', issuedOn: '2026-11-04', dueOn: '2026-11-11', items: [{ description: 'Email support', quantity: 1, unitPrice: 23.60 }] });
+  assert.equal(manual.paymentInstructions, usdPaymentInstructions);
+  assert.match(manual.paymentInstructions, /310-19-000104-1/);
+  assert.match(manual.paymentInstructions, /Swift code: AUBKPHMM/);
+  assert.match(manual.paymentInstructions, /Dollar Savings Account/);
+  assert.equal(createBillingDocument(subscription({ currency: 'USD', paymentInstructions: defaultPaymentInstructions }), input).paymentInstructions, usdPaymentInstructions);
+  assert.equal(billingPaymentInstructions('PHP', ''), defaultPaymentInstructions);
+  assert.equal(billingPaymentInstructions('USD', 'Custom bank'), 'Custom bank');
+  const row = { id: 1, createdAt: '2026-11-04', document: { ...manual, paymentInstructions: defaultPaymentInstructions } };
+  assert.equal(serializeBill(row).document.paymentInstructions, usdPaymentInstructions);
+  assert.equal(row.document.paymentInstructions, defaultPaymentInstructions);
+  const pdf = await require('pdf-lib').PDFDocument.load(await require('./billing-pdf').renderBillingPdf({ reference: 'USD-BILL', document: manual }));
+  assert(pdf.getPageCount() >= 1 && pdf.getPageCount() <= 2);
 });

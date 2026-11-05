@@ -1,6 +1,6 @@
 const PDFDocument = require('pdfkit');
 const path = require('path');
-const { isNonVatBilling, nonVatBillingNote } = require('./billing');
+const { isNonVatBilling, nonVatBillingNote, billingPaymentInstructions } = require('./billing');
 
 function renderBillingPdf(bill) {
   return new Promise((resolve, reject) => {
@@ -93,6 +93,10 @@ function renderBillingPdf(bill) {
       text('Items', left, y, 65, { bold: true, size: 15, color: colors.purple });
       const titleHeight = d.title ? paragraph(d.title, left + 75, y + 3, width - 75, { size: 9, bold: true }) : 0;
       y += Math.max(24, titleHeight + 7);
+      if (d.rateQuotationReference) {
+        ensure(45);
+        y += paragraph(`Agreed rate: ${d.rateQuotationReference} · Effective ${d.rateEffectiveOn}`, left, y, width, { size: 8 }) + 10;
+      }
       const columnWidths = (nonVat ? [.49, .13, .19, .19] : [.42, .12, .17, .10, .19]).map(fraction => width * fraction);
       function tableHeader() {
         let x = left;
@@ -140,11 +144,11 @@ function renderBillingPdf(bill) {
       y += summaryHeight + 4;
       if (d.advancePayment > 0 && d.deductionNote) { flowing(`Deduction details: ${d.deductionNote}`, { size: 8 }); y += 4; }
       y += 7; ensure(64); rule(y); y += 13; heading('Payment method:');
-      const instructions = String(d.paymentInstructions || '').split('\n');
+      const instructions = billingPaymentInstructions(d.currency, d.paymentInstructions).split('\n');
       for (const instruction of instructions) {
-        const match = instruction.match(/^(Bank(?: name)?|Account name|Account number)\s*:\s*(.*)$/i);
+        const match = instruction.match(/^(Bank(?: name)?|Account type|Account name|Account number|Swift code)\s*:\s*(.*)$/i);
         if (!match) { if (instruction.trim()) { flowing(instruction); y += 6; } continue; }
-        const label = /^bank/i.test(match[1]) ? 'Bank Name:' : /^account name/i.test(match[1]) ? 'Account Name:' : 'Account Number:';
+        const label = { bank: 'Bank Name:', 'bank name': 'Bank Name:', 'account type': 'Account Type:', 'account name': 'Account Name:', 'account number': 'Account Number:', 'swift code': 'Swift Code:' }[match[1].toLowerCase()];
         const labelWidth = width * .35, valueWidth = width - labelWidth;
         const valueLines = lines(match[2], valueWidth - 14, 10, label === 'Account Number:');
         for (let offset = 0; offset < valueLines.length;) {

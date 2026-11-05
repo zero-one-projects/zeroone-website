@@ -29,7 +29,7 @@ test('billing API authenticates, saves monthly snapshots, rejects duplicates, an
     await quotation.update({ document: { ...document, clientName: 'Changed after billing' } }, { logging: false });
     const listed = await (await fetch(`${base}?search=Temporary%20billing%20test`, { headers })).json();
     assert(listed.statements.some(row => row.id === statement.id && row.document.clientName === 'Temporary billing test'));
-    const manualInput = { kind: 'manual', clientName: 'Manual test client', title: 'Manual statement fixture', advancePayment: 1250, deductionNote: 'Advance received', taxTreatment: 'non_vat', issuedOn: '2026-10-30', dueOn: '2026-11-06', items: [{ description: 'Project payment', quantity: 1, unitPrice: 5000 }] };
+    const manualInput = { kind: 'manual', currency: 'USD', clientName: 'Manual test client', title: 'Manual statement fixture', advancePayment: 1250, deductionNote: 'Advance received', taxTreatment: 'non_vat', issuedOn: '2026-10-30', dueOn: '2026-11-06', items: [{ description: 'Project payment', quantity: 1, unitPrice: 5000 }] };
     assert.equal((await fetch(base, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(manualInput) })).status, 401);
     const created = await fetch(base, { method: 'POST', headers, body: JSON.stringify(manualInput) });
     assert.equal(created.status, 201);
@@ -39,6 +39,10 @@ test('billing API authenticates, saves monthly snapshots, rejects duplicates, an
     assert.equal(share.status, 200); const shared = (await share.json()).statement;
     assert.match(shared.sharePath, /^\/api\/billing\/[a-f0-9]{64}\/pdf$/);
     const publicUrl = `http://127.0.0.1:${server.address().port}${shared.sharePath}`;
+    const metadata = await fetch(publicUrl.replace(/\/pdf$/, ''));
+    assert.equal(metadata.status, 200); assert.equal(metadata.headers.get('cache-control'), 'no-store');
+    const details = await metadata.json(); assert.match(details.paymentInstructions, /310-19-000104-1/); assert.match(details.paymentInstructions, /AUBKPHMM/);
+    assert.deepEqual(Object.keys(details).sort(), ['paymentInstructions', 'reference']);
     const publicPdf = await fetch(publicUrl);
     assert.equal(publicPdf.status, 200); assert.match(publicPdf.headers.get('content-disposition'), /^inline;/);
     assert.equal(publicPdf.headers.get('cache-control'), 'no-store');
@@ -63,6 +67,7 @@ test('billing API authenticates, saves monthly snapshots, rejects duplicates, an
     } finally { mock.restoreAll(); }
     assert.equal((await fetch(`${base}/${manualId}/share`, { method: 'DELETE', headers })).status, 200);
     assert.equal((await fetch(publicUrl)).status, 404);
+    assert.equal((await fetch(publicUrl.replace(/\/pdf$/, ''))).status, 404);
   } finally {
     if (manualId) await BillingStatement.destroy({ where: { id: manualId }, logging: false });
     if (quotation) { await BillingStatement.destroy({ where: { quotationId: quotation.id }, logging: false }); await quotation.destroy({ force: true, logging: false }); }

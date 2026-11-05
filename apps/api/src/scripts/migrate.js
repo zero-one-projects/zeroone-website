@@ -22,6 +22,9 @@ async function migrate() {
   const normalizedTables = tables.map((table) => (typeof table === 'string' ? table : table.tableName));
 
   await require('../models/Client').sync();
+  await require('../models/PosSubscription').sync();
+  await require('../models/QuotationContract').sync();
+  await ensureColumn(queryInterface, 'quotation_contracts', await queryInterface.describeTable('quotation_contracts'), 'prior_provider_acceptance', { type: DataTypes.JSON, allowNull: true });
   const clientColumns = await queryInterface.describeTable('clients');
   await ensureColumn(queryInterface, 'clients', clientColumns, 'is_active', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true });
 
@@ -257,6 +260,8 @@ async function migrate() {
 
   await require('../models/Quotation').sync();
   const quotationColumns = await queryInterface.describeTable('quotations');
+  await ensureColumn(queryInterface, 'quotations', quotationColumns, 'payment_state', { type: DataTypes.JSON, allowNull: true });
+  await ensureColumn(queryInterface, 'quotations', quotationColumns, 'contract_state', { type: DataTypes.JSON, allowNull: true });
   await ensureColumn(queryInterface, 'quotations', quotationColumns, 'deleted_at', { type: DataTypes.DATE, allowNull: true });
   if (!quotationColumns.share_token) {
     await queryInterface.addColumn('quotations', 'share_token', {
@@ -272,6 +277,8 @@ async function migrate() {
   await require('../models/QuotationResponseHistory').sync();
   await require('../models/QuotationNotificationRead').sync();
   await require('../models/QuotationPaymentProof').sync();
+  await require('../models/QuotationPayment').sync();
+  await ensureColumn(queryInterface, 'quotation_payment_proofs', await queryInterface.describeTable('quotation_payment_proofs'), 'verification', { type: DataTypes.JSON, allowNull: true });
   await require('../models/ContractFile').sync();
   await require('../models/ContractTemplate').sync();
   const contractColumns = await queryInterface.describeTable('contract_templates');

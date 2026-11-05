@@ -183,3 +183,33 @@ test('Sync Court matches POS charge options and upfront defaults while keeping i
   assert.throws(() => normalizeQuotation({ ...input, clientFlow: 'full' }), /contract terms/);
   assert.equal(normalizeQuotation({ ...input, clientFlow: 'full', contractText: 'Agreed Sync Court subscription terms' }).contractText, 'Agreed Sync Court subscription terms');
 });
+
+
+test('hardware is preserved as a one-time purchase across quotation types', () => {
+  for (const quoteType of ['project', 'subscription', 'pos', 'sync_court']) {
+    const items = [
+      { description: 'Receipt printer', chargeType: 'hardware', quantity: 2, unitPrice: 3500 },
+      { description: 'Setup', chargeType: 'setup', quantity: 1, unitPrice: 1000 },
+      ...(quoteType === 'project' ? [] : [{ description: 'Plan', chargeType: 'recurring', quantity: 1, unitPrice: 1500 }])
+    ];
+    const q = normalizeQuotation(sample({ quoteType, contractText: 'Agreed terms', items, discount: 500 }));
+    assert.equal(q.items[0].chargeType, 'hardware');
+    assert.equal(q.items[0].amount, 7000);
+    assert.equal(q.subtotal, 8000);
+    assert.equal(q.total, 8400);
+    assert.equal(q.recurringTotal, quoteType === 'project' ? 0 : 1680);
+    assert.deepEqual(normalizeQuotation(q).items, q.items);
+  }
+});
+
+
+test('hardware terms default on save, preserve custom or cleared terms, and reject oversized terms', () => {
+  const { defaultHardwareTerms } = require('./quotation-hardware');
+  const input = sample({ items: [{ description: 'Printer', chargeType: 'hardware', quantity: 1, unitPrice: 3500 }] });
+  assert.equal(normalizeQuotation(input).contractDetails.hardwareTerms, defaultHardwareTerms);
+  for (const hardwareTerms of ['Delivery and payment as agreed with client.', '']) {
+    assert.equal(normalizeQuotation({ ...input, contractDetails: { hardwareTerms } }).contractDetails.hardwareTerms, hardwareTerms);
+  }
+  assert.equal(normalizeQuotation(sample()).contractDetails.hardwareTerms, undefined);
+  assert.throws(() => normalizeQuotation({ ...input, contractDetails: { hardwareTerms: 'x'.repeat(2001) } }), { statusCode: 400 });
+});

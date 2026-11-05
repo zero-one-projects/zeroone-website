@@ -1,3 +1,8 @@
+import ElectronicAcceptanceTerms from './ElectronicAcceptanceTerms';
+import ContractPartiesSummary from './ContractPartiesSummary';
+import PosUpgradeTerms from './PosUpgradeTerms';
+import HardwareTerms from './HardwareTerms';
+import PosContractSummary from './PosContractSummary';
 import PdfContractView from './PdfContractView';
 import { getApiBaseUrl } from '../utils/apiBaseUrl';
 import { useState } from 'react';
@@ -10,11 +15,11 @@ function DefaultContractReview({ document, reference }) {
   const [target, setTarget] = useState(null);
   return <>
     <iframe title="Contract to review" className="h-[55dvh] min-h-80 w-full rounded-lg border border-slate-200 bg-white" sandbox="allow-same-origin allow-modals" srcDoc={reviewHtml} onLoad={(event) => setTarget(event.currentTarget.contentDocument?.getElementById('contract-preview-root'))} />
-    {target && createPortal(<ContractDocument document={document} reference={reference} />, target)}
+    {target && createPortal(<ContractDocument document={document} reference={reference} signingReview />, target)}
   </>;
 }
 
 export default function ContractReview({ document, reference, shareToken, adminToken }) {
-  if (document.contractSource === 'pdf' && document.contractPdf) return <PdfContractView url={adminToken ? `${getApiBaseUrl()}/api/admin/contracts/files/${document.contractPdf.id}` : `${getApiBaseUrl()}/api/quotations/${encodeURIComponent(shareToken)}/contract-pdf`} token={adminToken} title="PDF contract to review" />;
+  if (document.contractSource === 'pdf' && document.contractPdf) return <><ElectronicAcceptanceTerms document={document} />{document.quoteType === 'pos' && <ContractPartiesSummary document={document} />}<PosUpgradeTerms document={document} />{document.quoteType === 'pos' && <PosContractSummary document={document} reference={reference} />}<HardwareTerms document={document} /><PdfContractView url={adminToken ? `${getApiBaseUrl()}/api/admin/contracts/files/${document.contractPdf.id}` : `${getApiBaseUrl()}/api/quotations/${encodeURIComponent(shareToken)}/contract-pdf`} token={adminToken} title="PDF contract to review" /></>;
   return <DefaultContractReview document={document} reference={reference} />;
 }

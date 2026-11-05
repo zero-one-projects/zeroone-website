@@ -13,6 +13,17 @@ test('configured bank instructions are shown and initial charges exclude recurri
   expect(screen.getByText(/Example Bank/)).toBeInTheDocument();
 });
 
+test('client can see payment instructions while awaiting admin confirmation and signing does not mark paid', () => {
+  const signed = { ...quotation, contractState: { status: 'pending_admin_confirmation' }, document: { ...quotation.document, acceptancePolicy: { version: 2 }, paymentInstructions: 'Approved Bank Instructions' } };
+  const { rerender } = render(<QuotationPaymentStep quotation={signed} />);
+  expect(screen.getByText('Pending Admin Confirmation')).toBeInTheDocument();
+  expect(screen.getByText('Approved Bank Instructions')).toBeInTheDocument();
+  expect(screen.getByText('Payment status: Awaiting payment verification')).toBeInTheDocument();
+  rerender(<QuotationPaymentStep quotation={{ ...signed, paymentStatus: 'paid', contractState: { status: 'finalized' } }} />);
+  expect(screen.getByText('Finalized and locked')).toBeInTheDocument();
+  expect(screen.getByText('Payment status: Paid')).toBeInTheDocument();
+});
+
 test('bank details supplied outside a legacy signed document appear after signing', () => {
   render(<QuotationPaymentStep quotation={{ ...quotation, paymentInstructions: 'Bank: AUB (ASIA UNITED BANK)\nAccount name: Zero One Information Technology Inc.\nAccount number: 310-11-003883-1', document: { ...quotation.document, paymentInstructions: '' } }} />);
   expect(screen.getByText(/AUB/)).toHaveTextContent('310-11-003883-1');

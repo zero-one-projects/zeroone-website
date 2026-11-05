@@ -15,7 +15,11 @@ function monthlySubscriptionSummary(document) {
   const revised = currentCents + additionalCents + Math.round((currentCents + additionalCents) * taxRate / 100);
   const money = amount => new Intl.NumberFormat('en-PH', { style: 'currency', currency: document.currency || 'PHP' }).format(amount / 100);
   const systemName = config.systemName || (document.quoteType === 'pos' ? 'POS System' : document.quoteType === 'sync_court' ? 'Sync Court' : 'System');
-  const notice = additionalCents > 0
+  const notice = document.posPurpose === 'upgrade'
+    ? `The approved upgrade changes the monthly subscription from ${money(current)} to ${money(revised)} per month. The new permanent rate takes effect after client approval and electronic signing, from ${document.contractDetails?.effectiveDate || 'the agreed upgrade effective date'}, continues through renewals, and does not automatically revert when usage or features are reduced. Further changes require mutual written agreement.`
+    : document.posPurpose === 'new'
+    ? `Your initial monthly subscription of ${money(revised)} per month will commence only after the official Go-Live of your ${systemName}.`
+    : additionalCents > 0
     ? `This will require an additional monthly charge of ${money(revised - current)}, adjusting your subscription from ${money(current)} to ${money(revised)} per month. Please note that the revised monthly subscription will only commence after the official Go-Live of your ${systemName}.`
     : `Your monthly subscription of ${money(revised)} will only commence after the official Go-Live of your ${systemName}.`;
   return { currentAmount: current / 100, additionalAmount: (revised - current) / 100, revisedAmount: revised / 100, systemName, notice };

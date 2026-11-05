@@ -10,6 +10,7 @@ COPY apps/api/package*.json apps/api/
 RUN npm ci --omit=dev --workspace apps/api --include-workspace-root=false
 
 COPY apps/api apps/api
+COPY apps/web/src/content/companyIdentity.json apps/web/src/content/companyIdentity.json
 
 WORKDIR /app/apps/api
 

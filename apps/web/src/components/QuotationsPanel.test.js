@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import QuotationsPanel from './QuotationsPanel';
-import { quotationTotals } from '../utils/quotation';
+import { defaultHardwareTerms, quotationTotals, newQuotation } from '../utils/quotation';
 import QuotationDocument from './QuotationDocument';
+import ContractDocument from './ContractDocument';
 
 const originalFetch = global.fetch;
 const originalClipboard = navigator.clipboard;
@@ -136,6 +137,54 @@ test('reports save failures without claiming the quotation was saved', async () 
   expect(screen.getByRole('button', { name: 'Print / Save PDF' })).toBeDisabled();
 });
 
+test.each([
+  { editing: false, clientFlow: 'quotation_only' }, { editing: true, clientFlow: 'quotation_only' },
+  { editing: false, clientFlow: 'full' }, { editing: true, clientFlow: 'full' }
+])('POS $clientFlow save clears the form and opens the client-link popup (editing: $editing)', async ({ editing, clientFlow }) => {
+  const before = window.location.pathname + window.location.search;
+  window.history.replaceState({}, '', editing ? '/admin/quotations?id=197' : '/admin/quotations');
+  let stored = editing ? { id: 197, reference: 'ZO-2026-00197', documentVersion: 'saved-pos', sharePath: '/quotation/saved-pos-link', document: { ...newQuotation(), quoteType: 'pos', posPurpose: 'new', clientFlow, title: 'Saved POS', clientName: 'Existing client', clientAddress: 'Old address', items: [{ description: 'Setup', chargeType: 'setup', quantity: 1, unitPrice: 5000 }], acceptancePolicy: clientFlow === 'full' ? { version: 2 } : undefined } } : null;
+  global.fetch = jest.fn(async (url, options = {}) => {
+    if (url.endsWith('/history')) return { ok: true, json: async () => ({ history: [] }) };
+    if (url.endsWith('/payments')) return { ok: true, json: async () => ({ payments: [], paymentStatus: 'unpaid' }) };
+    if (url.endsWith('/payment-proofs')) return { ok: true, json: async () => ({ proofs: [] }) };
+    if (options.method === 'POST' || options.method === 'PUT') {
+      const document = JSON.parse(options.body).document;
+      stored = { id: 197, reference: 'ZO-2026-00197', documentVersion: 'saved-pos', sharePath: '/quotation/saved-pos-link', document: { ...document, ...quotationTotals(document), acceptancePolicy: clientFlow === 'full' ? { version: 2 } : undefined } };
+      return { ok: true, json: async () => ({ quotation: stored }) };
+    }
+    if (url.endsWith('/197')) return { ok: true, json: async () => ({ quotation: stored }) };
+    return { ok: true, json: async () => ({ quotations: stored ? [stored] : [], defaultContractTexts: { pos: 'POS template terms' }, defaultPaymentInstructions: 'Default bank instructions' }) };
+  });
+  try {
+    render(<QuotationsPanel token="admin-token" />);
+    if (editing) await screen.findByDisplayValue('Saved POS');
+    else { await screen.findByText(/No quotations yet/); fireEvent.change(screen.getByLabelText('Quotation type'), { target: { value: 'pos' } }); }
+    fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: clientFlow } });
+    fireEvent.change(screen.getByLabelText('Project / quotation title'), { target: { value: 'POS for next client' } });
+    fireEvent.change(screen.getByLabelText('Client / company name'), { target: { value: 'New POS client' } });
+    fireEvent.change(screen.getByLabelText('Client address'), { target: { value: '123 Client Street' } });
+    fireEvent.change(screen.getByLabelText('Item 1 description'), { target: { value: 'Client-specific setup' } });
+    fireEvent.change(screen.getByLabelText('Unit price'), { target: { value: '38000' } });
+    fireEvent.submit(screen.getByRole('button', { name: editing ? 'Save Changes' : 'Save Quotation' }).closest('form'));
+    await screen.findByText('ZO-2026-00197 saved successfully.');
+    expect(stored.document.clientName).toBe('New POS client');
+    expect(stored.document.clientFlow).toBe(clientFlow);
+    expect(stored.document.items[0].unitPrice).toBe('38000');
+    expect(screen.getByLabelText('Quotation type')).toHaveValue('pos');
+    expect(screen.getByLabelText('Client / company name')).toHaveValue('');
+    expect(screen.getByLabelText('Client address')).toHaveValue('');
+    expect(screen.getByLabelText('Project / quotation title')).toHaveValue('');
+    expect(screen.getByLabelText('Item 1 description')).toHaveValue('');
+    expect(screen.getByLabelText('Unit price')).toHaveValue(0);
+    expect(screen.getByRole('button', { name: 'Save Quotation' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Contract acceptance and status' })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Your client link is ready' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Client quotation link')).toHaveValue(`${window.location.origin}/quotation/saved-pos-link`);
+    expect(window.location.search).toBe('');
+  } finally { window.history.replaceState({}, '', before); }
+});
+
 test('new quotations follow the selected PDF and can switch back to the kept default contract', async () => {
   const pdf = { id:'12345678-1234-4234-8234-123456789012', fileName:'Selected contract.pdf', pageCount:2, byteLength:1000, sha256:'a'.repeat(64) };
   global.fetch = jest.fn(async()=>({ok:true,json:async()=>({quotations:[],defaultContractText:'My saved default',defaultContractTexts:{project:'My saved default'},defaultContracts:{project:{source:'pdf',pdf}}})}));
@@ -197,7 +246,9 @@ test('POS monthly Go-Live option combines current and additional subscription ch
   expect(screen.getByLabelText('Payment due date / terms').value).toContain('payable in full (100%)');
   expect(screen.getByLabelText('Item 1 description')).toHaveValue('');
   fireEvent.click(screen.getByLabelText('Show monthly subscription after Go-Live'));
+  expect(screen.getByLabelText('Current monthly subscription')).not.toHaveAttribute('readonly');
   fireEvent.change(screen.getByLabelText('Current monthly subscription'), { target: { value: '1699' } });
+  expect(screen.getByLabelText('Current monthly subscription')).toHaveValue(1699);
   expect(screen.getByLabelText('Item 2 description')).toBeInTheDocument();
   expect(screen.queryByLabelText('Item 3 description')).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Additional monthly charge'), { target: { value: '2000' } });
@@ -234,10 +285,10 @@ test('client flow selector hides contract and payment setup and restores it when
   expect(screen.getByLabelText('Contract terms (optional override)')).toHaveValue('Saved terms');
 });
 
-test('requote requires a saved edit and prompts the admin to generate a replacement link', async () => {
+test.each(['project', 'pos'])('%s requote requires a saved edit and prompts the admin to generate a replacement link', async quoteType => {
   const { newQuotation } = require('../utils/quotation');
   window.history.replaceState({}, '', '/admin/quotations?id=24');
-  let row = { id: 24, reference: 'ZO-2026-00024', sharePath: null, document: { ...newQuotation(), title: 'Original project', clientName: 'Client', items: [{ description: 'Service', quantity: 1, unitPrice: 100 }] }, clientResponse: { action: 'requote', current: true, name: 'Client', email: 'client@example.com', note: 'Add online ordering.', respondedAt: '2026-11-03T01:00:00Z' } };
+  let row = { id: 24, reference: 'ZO-2026-00024', sharePath: null, document: { ...newQuotation(), quoteType, posPurpose: quoteType === 'pos' ? 'new' : undefined, title: 'Original project', clientName: 'Client', items: [{ description: 'Service', quantity: 1, unitPrice: 100 }] }, clientResponse: { action: 'requote', current: true, name: 'Client', email: 'client@example.com', note: 'Add online ordering.', respondedAt: '2026-11-03T01:00:00Z' } };
   global.fetch = jest.fn(async (url, options = {}) => {
     if (url.endsWith('/counts')) return { ok: true, json: async () => ({ unreadCount: 1, quotations: { 24: 1 } }) };
     if (url.endsWith('/history')) return { ok: true, json: async () => ({ history: [] }) };
@@ -256,6 +307,10 @@ test('requote requires a saved edit and prompts the admin to generate a replacem
   expect(await screen.findByRole('dialog', { name: 'Your client link is ready' })).toBeInTheDocument();
   expect(screen.getByLabelText('Client quotation link')).toHaveValue(`${window.location.origin}/quotation/replacement-link`);
   expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/24/share'), expect.objectContaining({ method: 'POST' }));
+  if (quoteType === 'pos') {
+    expect(screen.getByLabelText('Client / company name')).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Save Quotation' })).toBeInTheDocument();
+  }
   window.history.replaceState({}, '', '/');
 });
 
@@ -301,4 +356,87 @@ test('Sync Court matches POS setup and subscription options and leaves its contr
   expect(screen.getByLabelText('Contract terms (optional override)')).toHaveValue('');
   expect(screen.getByLabelText('Payment due date / terms')).toHaveValue('');
   expect(screen.getByLabelText('Initial payment (%)')).toHaveValue(100);
+});
+
+
+test('hardware can be selected or added and prints as a one-time purchase', async () => {
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotations: [] }) }));
+  render(<QuotationsPanel token="test-session" />);
+  await screen.findByText(/No quotations yet/);
+  fireEvent.change(screen.getByLabelText('Item 1 charge type'), { target: { value: 'hardware' } });
+  expect(screen.getByLabelText('Item 1 charge type')).toHaveValue('hardware');
+  fireEvent.change(screen.getByLabelText('Quotation type'), { target: { value: 'pos' } });
+  fireEvent.click(screen.getByRole('button', { name: '+ Add Hardware' }));
+  const types = screen.getAllByLabelText(/Item \d+ charge type/);
+  expect(types[types.length - 1]).toHaveValue('hardware');
+  const doc = { quoteType: 'pos', billingPeriod: 'monthly', currency: 'PHP', discount: 500, taxRate: 12, items: [
+    { description: 'Receipt printer', chargeType: 'hardware', quantity: 2, unitPrice: 3500 },
+    { description: 'POS subscription', chargeType: 'recurring', quantity: 1, unitPrice: 1500 }
+  ] };
+  expect(quotationTotals(doc)).toMatchObject({ subtotal: 7000, total: 7280, recurringTotal: 1680 });
+  const preview = render(<QuotationDocument document={doc} reference="HARDWARE-TEST" />);
+  expect(within(preview.container).getByText('Hardware · one-time')).toBeInTheDocument();
+  const contract = render(<ContractDocument document={doc} reference="HARDWARE-TEST" contractText="Agreed terms" />);
+  expect(within(contract.container).getByText('Receipt printer — Hardware')).toBeInTheDocument();
+});
+
+
+test('hardware terms appear automatically, remain editable, and are included in quotation and contract previews', async () => {
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotations: [] }) }));
+  render(<QuotationsPanel token="test-session" />);
+  await screen.findByText(/No quotations yet/);
+  expect(screen.queryByLabelText('Hardware procurement and payment terms', { selector: 'textarea' })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Item 1 charge type'), { target: { value: 'hardware' } });
+  const field = screen.getByLabelText('Hardware procurement and payment terms', { selector: 'textarea' });
+  expect(field).toHaveValue(defaultHardwareTerms);
+  fireEvent.change(field, { target: { value: 'Client-specific hardware payment and delivery terms.' } });
+  fireEvent.click(screen.getByRole('button', { name: '+ Add Item' }));
+  expect(field).toHaveValue('Client-specific hardware payment and delivery terms.');
+  const doc = { quoteType: 'project', currency: 'PHP', discount: 0, taxRate: 0, items: [{ description: 'Printer', chargeType: 'hardware', quantity: 1, unitPrice: 3500 }], contractDetails: { hardwareTerms: field.value } };
+  for (const Component of [QuotationDocument, ContractDocument]) {
+    const view = render(<Component document={doc} reference="HW-TERMS" />);
+    expect(within(view.container).getByText(field.value)).toBeInTheDocument();
+    view.unmount();
+  }
+  fireEvent.change(screen.getByLabelText('Item 1 charge type'), { target: { value: 'one_time' } });
+  expect(screen.queryByLabelText('Hardware procurement and payment terms', { selector: 'textarea' })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Item 1 charge type'), { target: { value: 'hardware' } });
+  expect(screen.getByLabelText('Hardware procurement and payment terms', { selector: 'textarea' })).toHaveValue(doc.contractDetails.hardwareTerms);
+  fireEvent.click(screen.getByRole('button', { name: 'Use standard hardware terms' }));
+  expect(screen.getByLabelText('Hardware procurement and payment terms', { selector: 'textarea' })).toHaveValue(defaultHardwareTerms);
+});
+
+test('POS agreements can take effect upon signing or use an explicitly agreed calendar date', async () => {
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ quotations: [], total: 0, defaultContractTexts: { project: 'Project terms', pos: 'POS terms' } }) }));
+  render(<QuotationsPanel token="test-session" />);
+  await screen.findByText(/No quotations yet/);
+  fireEvent.change(screen.getByLabelText('Quotation type'), { target: { value: 'pos' } });
+  fireEvent.change(screen.getByLabelText('After the client accepts'), { target: { value: 'full' } });
+  const rule = screen.getByLabelText(/Agreement effective date rule/);
+  expect(rule).toHaveValue('signing');
+  expect(screen.queryByLabelText('Agreement date')).not.toBeInTheDocument();
+  fireEvent.change(rule, { target: { value: 'fixed' } });
+  expect(screen.getByLabelText('Agreement date')).toHaveValue(screen.getByLabelText('Issue date').value);
+  fireEvent.change(screen.getByLabelText('Agreement date'), { target: { value: '2026-12-01' } });
+  expect(screen.getByLabelText('Agreement date')).toHaveValue('2026-12-01');
+});
+
+test('signed agreements disable editing while final downloads, payment reviews, and new quotations remain available', async () => {
+  const before = window.location.pathname + window.location.search;
+  window.history.replaceState({}, '', '/admin/quotations?id=991');
+  const row = { id: 991, reference: 'ZO-LOCKED', documentVersion: 'locked-version', document: { ...newQuotation(), quoteType: 'pos', clientFlow: 'full', title: 'Locked signed agreement', clientName: 'Accepted Client', clientAddress: 'Accepted address', contractText: 'Frozen agreed terms', acceptancePolicy: { version: 1, title: 'Electronic Acceptance and Confirmation', terms: 'Recorded acceptance terms.' } }, contractState: { status: 'finalized', locked: true, providerAcceptance: { name: 'Authorized Staff', confirmedAt: '2026-11-05T01:00:00Z' } }, clientResponse: { action: 'accept', current: true, signedAt: '2026-11-05T00:00:00Z' } };
+  global.fetch = jest.fn(async url => ({ ok: true, json: async () => url.endsWith('/991') ? { quotation: row } : url.endsWith('/payment-proofs') ? { proofs: [] } : url.endsWith('/payments') ? { payments: [], paymentStatus: 'unpaid' } : url.endsWith('/history') ? { history: [] } : { quotations: [row], total: 1, unreadCount: 0 } }));
+  try {
+    render(<QuotationsPanel token="admin-token" />);
+    await screen.findByDisplayValue('Locked signed agreement');
+    await screen.findByText('No proof of payment submitted yet.');
+    expect(screen.getByLabelText('Project / quotation title')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Download Final Contract PDF' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Refresh proofs' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Verify Payment' })).toBeEnabled();
+    expect(screen.getByText('Unpaid')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'New Quotation' }));
+    expect(screen.getByLabelText('Project / quotation title')).toBeEnabled();
+  } finally { window.history.replaceState({}, '', before); }
 });

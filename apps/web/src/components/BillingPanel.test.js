@@ -72,8 +72,8 @@ test('manual billing saves client charges and creates a copyable PDF link', asyn
   await screen.findByText('Manual billing statement saved.');
   expect(JSON.parse(fetch.mock.calls.find(([, options]) => options.method === 'POST')[1].body)).toMatchObject({ kind: 'manual', clientName: 'My client', taxTreatment: 'non_vat', advancePayment: '500', items: [{ description: 'Development', quantity: 1, unitPrice: '5000' }] });
   fireEvent.click(screen.getAllByRole('button', { name: 'Copy Client Link' })[0]);
-  expect(await screen.findByLabelText('Client PDF link')).toHaveValue('http://localhost/api/billing/abc/pdf');
-  expect(screen.getByRole('link', { name: 'Open client PDF' })).toHaveAttribute('href', 'http://localhost/api/billing/abc/pdf');
+  expect(await screen.findByLabelText('Client billing link')).toHaveValue('http://localhost/billing/abc');
+  expect(screen.getByRole('link', { name: 'Open client billing' })).toHaveAttribute('href', 'http://localhost/billing/abc');
 });
 
 test('sending a saved statement reviews the client email and submits only on Send Email', async () => {
@@ -134,4 +134,27 @@ test('bulk billing deletion waits for an OTP and deletes only the selected state
   expect(screen.getByRole('dialog', { name: 'Delete billing statement?' })).toHaveTextContent('BILL-TEST-3');
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+
+test('PDF preview offers copying the saved payment details and individual account number', async () => {
+  const instructions = 'Account number: 310-19-000104-1\nSwift code: AUBKPHMM';
+  const bill = { id: 10, reference: 'BILL-COPY', period: '2026-11', document: { clientName: 'Client', title: 'Website', currency: 'USD', total: 100, paymentInstructions: instructions } };
+  const originalClipboard = navigator.clipboard;
+  const writeText = jest.fn().mockResolvedValue();
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+  HTMLDialogElement.prototype.showModal = jest.fn(function () { this.setAttribute('open', ''); });
+  HTMLDialogElement.prototype.close = jest.fn(function () { this.removeAttribute('open'); });
+  URL.createObjectURL = jest.fn(() => 'blob:bill'); URL.revokeObjectURL = jest.fn();
+  global.fetch = jest.fn(async url => url.endsWith('/pdf') ? { ok: true, blob: async () => new Blob(['%PDF']) } : { ok: true, json: async () => url.endsWith('/subscriptions') ? { subscriptions: [] } : { statements: [bill], total: 1 } });
+  try {
+    render(<BillingPanel token="test-admin" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Preview' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Payment details' }));
+    const copyAll = await screen.findByRole('button', { name: 'Copy payment details' });
+    fireEvent.click(copyAll);
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(instructions));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy account number' }));
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith('310-19-000104-1'));
+    expect(await screen.findByText('Account number copied.')).toBeInTheDocument();
+  } finally { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: originalClipboard }); }
 });

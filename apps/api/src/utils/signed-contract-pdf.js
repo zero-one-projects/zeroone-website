@@ -1,8 +1,10 @@
 const PDFDocument = require('pdfkit');
 const path = require('path');
 const { contractBlocks } = require('./contract-formatting');
+const { posContractRows } = require('./pos-contract-summary');
+const companyIdentity = require('../../../web/src/content/companyIdentity.json');
 
-function renderDefaultSignedContractPdf({ document, signature, reference, signaturePageOnly = false, template = false }) {
+function renderDefaultSignedContractPdf({ document, signature, reference, signaturePageOnly = false, template = false, providerAcceptance }) {
   if (!document || (!template && (!signature?.signedAt || !signature.email))) throw new Error('A recorded contract signature is required.');
   if (template) signature = {};
   return new Promise((resolve, reject) => {
@@ -31,13 +33,15 @@ function renderDefaultSignedContractPdf({ document, signature, reference, signat
         }
       }
       const details = document.contractDetails || {};
-      text(signaturePageOnly ? 'ELECTRONIC SIGNATURE & ACCEPTANCE' : document.quoteType === 'pos' ? 'POS SYSTEM SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'sync_court' ? 'SYNC COURT SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'subscription' ? 'SUBSCRIPTION & SERVICE AGREEMENT' : 'PROJECT SERVICE AGREEMENT', { size: 16, color: '#514568', bold: true });
+      const provider = document.providerProfile || companyIdentity;
+      const effectiveDate = require('./contract-autofill').agreementDate(document, signature);
+      text(signaturePageOnly ? 'ELECTRONIC SIGNATURE & ACCEPTANCE' : document.quoteType === 'pos' && document.posPurpose === 'upgrade' ? 'POS SUBSCRIPTION UPGRADE ADDENDUM' : document.quoteType === 'pos' && document.posPurpose === 'customization' ? 'POS ONE-TIME CUSTOMIZATION AGREEMENT' : document.quoteType === 'pos' ? 'POS SYSTEM SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'sync_court' ? 'SYNC COURT SUBSCRIPTION & SERVICE AGREEMENT' : document.quoteType === 'subscription' ? 'SUBSCRIPTION & SERVICE AGREEMENT' : 'PROJECT SERVICE AGREEMENT', { size: 16, color: '#514568', bold: true });
       pdf.moveDown(.7);
       if (!template) {
         text(`Quotation reference: ${reference}`, { size: 9 });
         text(`Project / package: ${document.title}`, { size: 10, bold: true });
       }
-      text(`Agreement date: ${details.agreementDate || (template ? 'To be completed' : new Date(signature.signedAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'long' }))}`, { size: 9 });
+      text(`Agreement date: ${document.contractDetails?.agreementDateRule === 'signing' ? effectiveDate : details.agreementDate || (template ? 'To be completed' : new Date(signature.signedAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'long' }))}`, { size: 9 });
       pdf.moveDown();
       if (signaturePageOnly) {
         text(`Contract PDF: ${document.contractPdf.fileName}`, { size: 10, bold: true });
@@ -45,10 +49,10 @@ function renderDefaultSignedContractPdf({ document, signature, reference, signat
         text('This signature page records acceptance of the PDF contract preceding it and its linked quotation.', { size: 10 });
         if (document.monthlySubscription?.notice) text(document.monthlySubscription.notice.replaceAll('₱', 'PHP '));
       } else {
-      text('This agreement is entered into by and between:', { size: 10 }); pdf.moveDown(.5);
+      text(details.agreementIntroduction || 'This agreement is entered into by and between:', { size: 10 }); pdf.moveDown(.5);
       text('PROVIDER', { size: 9, color: '#514568', bold: true });
-      text('Zero One Information Technology Inc.', { bold: true });
-      text('Zone 12, Alta Tierra, Tiguma, Pagadian City, Philippines');
+      text(provider.name, { bold: true });
+      text(provider.address);
       text('Referred to in this agreement as the Provider.', { size: 9 }); pdf.moveDown(.7);
       text('CLIENT', { size: 9, color: '#514568', bold: true });
       text(document.clientName, { bold: true }); text(document.clientAddress);
@@ -70,25 +74,74 @@ function renderDefaultSignedContractPdf({ document, signature, reference, signat
         for (const [label, value] of [['Billing commencement', details.billingCommencement], ['Payment terms', details.paymentTerms || document.notes], ['Initial billing', details.initialBillingTerms], ['Commitment', details.minimumPeriod], ['Termination terms', details.terminationTerms]]) if (value) text(`${label}: ${value}`);
       }
       }
-      room(330); pdf.moveDown(); text('ACCEPTANCE & SIGNATURES', { size: 12, bold: true, color: '#514568' }); pdf.moveDown(.5);
-      text(signature.consentText || (template ? 'By signing below, the Parties confirm their agreement to these terms.' : 'The client has reviewed and electronically signed this agreement.'), { size: 9 }); pdf.moveDown();
+      if (document.posUpgradeTerms) {
+        room(90); text(require('./pos-upgrade').title, { size: 12, bold: true, color: '#514568' });
+        text(document.posUpgradeTerms); pdf.moveDown();
+      }
+      if (document.acceptancePolicy) {
+        room(100); text(document.acceptancePolicy.title, { size: 12, bold: true, color: '#514568' });
+        text(document.acceptancePolicy.terms); pdf.moveDown();
+        if (providerAcceptance) text(`ZeroOne confirmed acceptance: ${providerAcceptance.name} · ${providerAcceptance.confirmedAt}`, { size: 9 });
+        else text('Agreement status: Pending Admin Confirmation.', { size: 9 });
+        text('Payment verification is recorded separately from contract acceptance.', { size: 9 });
+      }
+      if (document.quoteType === 'pos' && document.posPurpose) {
+        text(`Quotation purpose: ${document.posPurpose === 'upgrade' ? 'Existing POS Subscription Upgrade' : document.posPurpose === 'customization' ? 'Additional One-Time Customization Only' : 'POS Subscription'}`, { size: 10, bold: true });
+        if (document.baseQuotationId) text(`Original subscription: ${document.baseQuotationReference || 'Linked signed POS agreement'}`);
+        if (document.posPurpose === 'upgrade') text(`Agreed upgrade effective date: ${details.effectiveDate}`);
+        if (document.posPurpose === 'customization') text('This quotation covers one-time customization only and does not change the existing recurring subscription rate.');
+      }
+      if (document.quoteType === 'pos') {
+        room(90); pdf.moveDown();
+        text('POS SUBSCRIPTION ORDER FORM & PAYMENT AGREEMENT', { size: 13, bold: true, color: '#514568' }); pdf.moveDown(.5);
+        const labelWidth = width * .46;
+        const drawRow = (label, value, header = false) => {
+          pdf.font(header ? boldFont : baseFont).fontSize(textSize(9));
+          const height = Math.max(pdf.heightOfString(label, { width: labelWidth - 16 }), pdf.heightOfString(value || ' ', { width: width - labelWidth - 16 })) + 16;
+          room(height);
+          const y = pdf.y;
+          if (header) pdf.rect(46, y, width, height).fill('#eeebf3');
+          pdf.strokeColor('#d4cbe1').lineWidth(.5).rect(46, y, width, height).stroke();
+          pdf.moveTo(46 + labelWidth, y).lineTo(46 + labelWidth, y + height).stroke();
+          pdf.fillColor('#202027').text(label, 54, y + 8, { width: labelWidth - 16 });
+          pdf.text(value || ' ', 54 + labelWidth, y + 8, { width: width - labelWidth - 16 });
+          pdf.x = 46; pdf.y = y + height;
+        };
+        drawRow('Particulars', 'Details', true);
+        for (const [label, value] of posContractRows(document, reference, template)) {
+          // Keep long approved feature lists readable across pages.
+          const lines = value.split('\n');
+          for (let index = 0; index < lines.length; index += 1) drawRow(index ? `${label} (continued)` : label, lines[index]);
+        }
+        pdf.moveDown(.5);
+        if (!template) text('Setup and additional feature fees are before quotation-level discounts and tax. The subscription fee includes any quoted recurring tax. See the approved quotation for the total one-time charges.', { size: 8 });
+      }
+      if (document.items?.some(item => item.chargeType === 'hardware') && details.hardwareTerms) {
+        room(100); text('HARDWARE PROCUREMENT AND PAYMENT TERMS', { size: 12, bold: true, color: '#514568' });
+        text(details.hardwareTerms); pdf.moveDown();
+      }
+      room(350); pdf.moveDown();
+      text('SERVICE PROVIDER', { size: 12, bold: true, color: '#514568' });
+      text(provider.name); text(provider.address); pdf.moveDown();
+      text('CLIENT ACCEPTANCE', { size: 12, bold: true, color: '#514568' }); pdf.moveDown(.5);
+      text(signature.consentText || (template ? 'By signing below, I confirm that I am authorized to enter into this agreement on behalf of the client and agree to the agreement terms, payment obligations, and conditions stated above.' : 'The client has reviewed and electronically signed this agreement.'), { size: 9 }); pdf.moveDown();
       const top = pdf.y;
-      const boxWidth = (width - 24) / 2;
-      const card = (x, client) => {
-        pdf.font('Helvetica-Bold').fontSize(textSize(9)).fillColor('#514568').text(client ? 'FOR THE CLIENT' : 'FOR THE PROVIDER', x, top, { width: boxWidth });
-        pdf.font('Helvetica').fontSize(textSize(9)).fillColor('#202027').text(client ? document.clientName : 'Zero One Information Technology Inc.', x, top + 20, { width: boxWidth });
-        pdf.text(client ? signature.signerName || details.authorizedRepresentative || '' : details.providerRepresentative || 'Authorized representative', x, top + 50, { width: boxWidth });
-        pdf.text(client ? details.clientPosition || '' : details.providerPosition || '', x, top + 70, { width: boxWidth });
-        if (client && signature.type === 'typed') pdf.font('Times-Italic').fontSize(textSize(22)).text(signature.typedName, x, top + 100, { width: boxWidth });
-        if (client && signature.type === 'drawn') {
+      const boxWidth = width;
+      const card = (x) => {
+        pdf.font('Helvetica').fontSize(textSize(9)).fillColor('#202027').text(`Client / Business: ${document.clientName || ''}`, x, top, { width: boxWidth });
+        pdf.text(`Authorized Representative: ${signature.signerName || details.authorizedRepresentative || ''}`, x, top + 25, { width: boxWidth });
+        pdf.text(`Position / Title: ${details.clientPosition || ''}`, x, top + 50, { width: boxWidth });
+        pdf.text('Electronic Signature', x, top + 75, { width: boxWidth });
+        if (signature.type === 'typed') pdf.font('Times-Italic').fontSize(textSize(22)).text(signature.typedName, x, top + 100, { width: boxWidth });
+        if (signature.type === 'drawn') {
           pdf.save().strokeColor('#26293c').lineWidth(1.4).lineCap('round');
           for (const stroke of signature.strokes || []) { stroke.forEach(([px, py], i) => i ? pdf.lineTo(x + px * boxWidth, top + 90 + py * 65) : pdf.moveTo(x + px * boxWidth, top + 90 + py * 65)); pdf.stroke(); }
           pdf.restore();
         }
         pdf.moveTo(x, top + 165).lineTo(x + boxWidth, top + 165).strokeColor('#bbbbbb').lineWidth(.5).stroke();
-        pdf.font('Helvetica').fontSize(textSize(8)).fillColor('#555555').text(client && !template ? `Signed: ${signature.signedAt}` : 'Signature / Date', x, top + 172, { width: boxWidth });
+        pdf.font('Helvetica').fontSize(textSize(8)).fillColor('#555555').text(!template ? `Date Signed: ${signature.signedAt}` : 'Date Signed: Recorded automatically when signed', x, top + 172, { width: boxWidth });
       };
-      card(46, false); card(46 + boxWidth + 24, true);
+      card(46);
       pdf.x = 46; pdf.y = top + 200;
       if (!template) {
         text(`Verified email: ${signature.email}`, { size: 8 });
@@ -98,9 +151,9 @@ function renderDefaultSignedContractPdf({ document, signature, reference, signat
       const range = pdf.bufferedPageRange();
       for (let i = range.start; i < range.start + range.count; i += 1) {
         pdf.switchToPage(i);
-        pdf.font('Helvetica-Bold').fontSize(textSize(13)).fillColor('#514568').text('Zero One Information Technology Inc.', 46, 38, { width: 350, lineBreak: false });
-        pdf.font('Helvetica').fontSize(textSize(8)).fillColor('#202027').text('Zone 12, Alta Tierra, Tiguma, Pagadian City, Philippines', 46, 59, { lineBreak: false });
-        pdf.text('Contact number: 0919-079-7137', 46, 72, { lineBreak: false });
+        pdf.font('Helvetica-Bold').fontSize(textSize(13)).fillColor('#514568').text(provider.name, 46, 38, { width: 350, lineBreak: false });
+        pdf.font('Helvetica').fontSize(textSize(8)).fillColor('#202027').text(provider.address, 46, 59, { lineBreak: false });
+        pdf.text(`Contact number: ${provider.phone || companyIdentity.phone}`, 46, 72, { lineBreak: false });
         pdf.image(path.resolve(__dirname, '../assets/contract-logo.png'), pdf.page.width - 139, 38, { fit: [93, 42] });
         pdf.moveTo(46, 94).lineTo(pdf.page.width - 46, 94).strokeColor('#75618e').lineWidth(1).stroke();
         const footer = pdf.page.height - 50;
@@ -117,16 +170,57 @@ function renderDefaultSignedContractPdf({ document, signature, reference, signat
 async function signUploadedContract(record) {
   const { PDFDocument: UploadedPDF } = require('pdf-lib');
   const { getContractFile } = require('./contract-files');
-  const file = await getContractFile(record.document.contractPdf, true);
-  const original = await UploadedPDF.load(file.data, { updateMetadata: false });
-  const signaturePage = await UploadedPDF.load(await renderDefaultSignedContractPdf({ ...record, signaturePageOnly: true }));
-  const pages = await original.copyPages(signaturePage, signaturePage.getPageIndices());
-  pages.forEach((page) => original.addPage(page));
+  const file = await getContractFile(record.document.contractPdf, true, { transaction: record.transaction });
+  const original = await UploadedPDF.load(await require('./contract-autofill').fillContractPdf(file.data, record.document, record.signature), { updateMetadata: false });
+  if (record.document.quoteType === 'pos') {
+    const annex = await require('./pos-signature-annex').renderPosSignatureAnnex(record, { ...original.getPage(0).getSize(), pageOffset: original.getPageCount() });
+    await require('./pos-contract-pdf-layout').appendMatchingPages(original, await UploadedPDF.load(annex));
+  } else {
+    const signaturePage = await UploadedPDF.load(await renderDefaultSignedContractPdf({ ...record, signaturePageOnly: true }));
+    const pages = await original.copyPages(signaturePage, signaturePage.getPageIndices());
+    pages.forEach((page) => original.addPage(page));
+  }
   original.setTitle(`Signed contract ${record.reference}`);
   return Buffer.from(await original.save());
 }
 function renderSignedContractPdf(record) {
+  if (record.recordId) return require('./contract-acceptance').recordedPdf(record.recordId, record.signature?.documentHash || record.documentHash, record.copy);
   if (record.document?.contractSource === 'pdf') return signUploadedContract(record);
   return renderDefaultSignedContractPdf(record);
 }
-module.exports = { renderSignedContractPdf, renderDefaultContractPdf: (document) => renderDefaultSignedContractPdf({ document, template: true }) };
+async function renderContractReviewPdf({ document, bytes, providerAcceptance, reference }) {
+  const filled = await require('./contract-autofill').fillContractPdf(bytes, document);
+  if (!document.acceptancePolicy) return filled;
+  const { PDFDocument: UploadedPDF } = require('pdf-lib');
+  const original = await UploadedPDF.load(filled, { updateMetadata: false });
+  const pos = document.quoteType === 'pos';
+  const { style, registerFonts, bodyLineGap, drawLetterhead, appendMatchingPages } = require('./pos-contract-pdf-layout');
+  const firstPage = original.getPage(0);
+  const supplement = await new Promise((resolve, reject) => {
+    const pdf = new PDFDocument(pos ? { size: [firstPage.getWidth(), firstPage.getHeight()], margins: { top: 112, bottom: 72, left: style.left, right: style.right }, bufferPages: true } : { size: 'A4', margin: 46 }); const chunks = [];
+    pdf.on('data', chunk => chunks.push(chunk)); pdf.on('error', reject); pdf.on('end', () => resolve(Buffer.concat(chunks)));
+    const provider = document.providerProfile || companyIdentity;
+    if (pos) {
+      registerFonts(pdf);
+      pdf.font('ContractBold').fontSize(style.titleSize).fillColor(style.headingColor).text(document.acceptancePolicy.title.toUpperCase(), { align: 'center' });
+      pdf.moveDown(1.2);
+      pdf.font('ContractBody').fontSize(style.bodySize).fillColor('#000000');
+      if (reference) { pdf.text(`Quotation: ${reference}`, { lineGap: bodyLineGap(pdf) }); pdf.moveDown(); }
+      pdf.text(document.acceptancePolicy.terms, { lineGap: bodyLineGap(pdf) }); pdf.moveDown();
+      pdf.text(providerAcceptance ? `ZeroOne confirmed acceptance: ${providerAcceptance.name} · ${providerAcceptance.confirmedAt}` : 'Agreement status: Pending Admin Confirmation.', { lineGap: bodyLineGap(pdf) });
+      drawLetterhead(pdf, provider, original.getPageCount());
+      pdf.end(); return;
+    }
+    pdf.font('Helvetica-Bold').fontSize(15).text(provider.name); pdf.font('Helvetica').fontSize(10).text(provider.address); pdf.moveDown(2);
+    pdf.font('Helvetica-Bold').fontSize(16).text(document.acceptancePolicy.title); pdf.moveDown();
+    if (reference) { pdf.font('Helvetica').fontSize(10).text(`Quotation: ${reference}`); pdf.moveDown(); }
+    pdf.font('Helvetica').fontSize(11).text(document.acceptancePolicy.terms, { lineGap: 5 }); pdf.moveDown();
+    pdf.text(providerAcceptance ? `ZeroOne confirmed acceptance: ${providerAcceptance.name} · ${providerAcceptance.confirmedAt}` : 'Agreement status: Pending Admin Confirmation.', { lineGap: 4 });
+    pdf.end();
+  });
+  const addition = await UploadedPDF.load(supplement);
+  if (pos) await appendMatchingPages(original, addition);
+  else for (const page of await original.copyPages(addition, addition.getPageIndices())) original.addPage(page);
+  return Buffer.from(await original.save());
+}
+module.exports = { renderSignedContractPdf, renderContractReviewPdf, renderDefaultContractPdf: (document) => renderDefaultSignedContractPdf({ document, template: true }) };
